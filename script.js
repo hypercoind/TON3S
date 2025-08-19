@@ -162,6 +162,26 @@ function setupEventListeners() {
                 }
             }, 0);
         });
+        
+        // Enable tab key for indentation
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                
+                // Insert tab character
+                editor.value = value.substring(0, start) + '\t' + value.substring(end);
+                
+                // Move cursor after the tab
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                
+                // Trigger input event for auto-save
+                editor.dispatchEvent(new Event('input'));
+            }
+        });
     }
 }
 
