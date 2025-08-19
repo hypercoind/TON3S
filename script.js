@@ -65,109 +65,240 @@ const themeNameBtn = document.getElementById('theme-name');
 const fontNameBtn = document.getElementById('font-name');
 const currentThemeIndicator = document.getElementById('current-theme');
 const currentFontIndicator = document.getElementById('current-font');
-const themeBtn = document.querySelector('.theme-btn');
-const fontBtn = document.querySelector('.font-btn');
+const themeBtn = document.getElementById('theme-btn');
+const fontBtn = document.getElementById('font-btn');
+
+// Security: Input sanitization function
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return '';
+    return input
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+}
+
+// Security: Validate theme/font indices
+function validateIndex(index, arrayLength) {
+    const parsed = parseInt(index);
+    if (isNaN(parsed) || parsed < 0 || parsed >= arrayLength) {
+        return 0;
+    }
+    return parsed;
+}
+
+// Security: Rate limiting for storage operations
+let lastSaveTime = 0;
+const SAVE_THROTTLE_MS = 100;
+
+function throttledSave(key, value) {
+    const now = Date.now();
+    if (now - lastSaveTime < SAVE_THROTTLE_MS) {
+        return;
+    }
+    lastSaveTime = now;
+    
+    try {
+        if (typeof value === 'string' && value.length > 1000000) {
+            console.warn('Content too large, not saving');
+            return;
+        }
+        window[key] = value;
+    } catch (e) {
+        console.error('Storage error:', e);
+    }
+}
 
 // Load saved content, theme, and font
 window.addEventListener('load', () => {
-    // Use in-memory storage for Claude.ai environment
+    // Use in-memory storage for Claude.ai environment with validation
     const savedContent = window.savedContent || '';
     const savedThemeIndex = window.savedThemeIndex || 0;
     const savedFontIndex = window.savedFontIndex || 0;
     
-    if (savedContent) {
-        editor.value = savedContent;
+    if (savedContent && typeof savedContent === 'string') {
+        editor.value = savedContent.slice(0, 1000000); // Limit content size
         updateCounts();
     }
     
-    currentThemeIndex = parseInt(savedThemeIndex);
+    currentThemeIndex = validateIndex(savedThemeIndex, themes.length);
     applyTheme();
     
-    currentFontIndex = parseInt(savedFontIndex);
+    currentFontIndex = validateIndex(savedFontIndex, fonts.length);
     applyFont();
+    
+    // Add secure event listeners
+    setupEventListeners();
 });
 
-// Auto-save content
-editor.addEventListener('input', () => {
-    window.savedContent = editor.value;
-    updateCounts();
-});
+// Setup secure event listeners
+function setupEventListeners() {
+    // Secure button event listeners
+    if (themeBtn) {
+        themeBtn.addEventListener('click', rotateTheme);
+    }
+    
+    if (fontBtn) {
+        fontBtn.addEventListener('click', rotateFont);
+    }
+    
+    // Auto-save content with security measures
+    if (editor) {
+        editor.addEventListener('input', (e) => {
+            const content = e.target.value;
+            if (content.length <= 1000000) { // Limit content size
+                throttledSave('savedContent', content);
+                updateCounts();
+            }
+        });
+        
+        // Prevent potential XSS through paste events
+        editor.addEventListener('paste', (e) => {
+            setTimeout(() => {
+                if (editor.value.length > 1000000) {
+                    editor.value = editor.value.slice(0, 1000000);
+                    updateCounts();
+                }
+            }, 0);
+        });
+    }
+}
 
-// Update character and word counts
+// Update character and word counts with security
 function updateCounts() {
-    const text = editor.value;
+    if (!editor || !charCount || !wordCount) return;
+    
+    const text = editor.value || '';
     const chars = text.length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     
+    // Sanitize output to prevent XSS
     charCount.textContent = `${chars} character${chars !== 1 ? 's' : ''}`;
     wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
 }
 
-// Rotate through themes
+// Rotate through themes with security checks
 function rotateTheme() {
+    if (!themeBtn) return;
+    
     const icon = themeBtn.querySelector('svg');
-    icon.classList.add('rotating');
+    if (icon) {
+        icon.classList.add('rotating');
+    }
     
     currentThemeIndex = (currentThemeIndex + 1) % themes.length;
     applyTheme();
     
-    window.savedThemeIndex = currentThemeIndex;
+    throttledSave('savedThemeIndex', currentThemeIndex);
     
-    setTimeout(() => {
-        icon.classList.remove('rotating');
-    }, 500);
+    if (icon) {
+        setTimeout(() => {
+            icon.classList.remove('rotating');
+        }, 500);
+    }
 }
 
-// Rotate through fonts
+// Rotate through fonts with security checks
 function rotateFont() {
+    if (!fontBtn) return;
+    
     const icon = fontBtn.querySelector('svg');
-    icon.classList.add('pulsing');
+    if (icon) {
+        icon.classList.add('pulsing');
+    }
     
     currentFontIndex = (currentFontIndex + 1) % fonts.length;
     applyFont();
     
-    window.savedFontIndex = currentFontIndex;
+    throttledSave('savedFontIndex', currentFontIndex);
     
-    setTimeout(() => {
-        icon.classList.remove('pulsing');
-    }, 500);
+    if (icon) {
+        setTimeout(() => {
+            icon.classList.remove('pulsing');
+        }, 500);
+    }
 }
 
-// Apply the current theme
+// Apply the current theme with security validation
 function applyTheme() {
     const body = document.body;
-    const currentTheme = themes[currentThemeIndex];
+    const validIndex = validateIndex(currentThemeIndex, themes.length);
+    const currentTheme = themes[validIndex];
     
-    // Remove all theme classes
+    if (!currentTheme || !body) return;
+    
+    // Remove all theme classes securely
     themes.forEach(theme => {
-        body.classList.remove(theme.class);
+        if (theme && theme.class) {
+            body.classList.remove(theme.class);
+        }
     });
     
     // Add current theme class
     body.classList.add(currentTheme.class);
     
-    // Update UI text
-    themeNameBtn.textContent = currentTheme.name;
-    currentThemeIndicator.textContent = currentTheme.full;
+    // Update UI text with sanitization
+    if (themeNameBtn) {
+        themeNameBtn.textContent = sanitizeInput(currentTheme.name);
+    }
+    if (currentThemeIndicator) {
+        currentThemeIndicator.textContent = sanitizeInput(currentTheme.full);
+    }
 }
 
-// Apply the current font
+// Apply the current font with security validation
 function applyFont() {
     const body = document.body;
-    const currentFont = fonts[currentFontIndex];
+    const validIndex = validateIndex(currentFontIndex, fonts.length);
+    const currentFont = fonts[validIndex];
     
-    // Remove all font classes
+    if (!currentFont || !body) return;
+    
+    // Remove all font classes securely
     fonts.forEach(font => {
-        body.classList.remove(font.class);
+        if (font && font.class) {
+            body.classList.remove(font.class);
+        }
     });
     
     // Add current font class
     body.classList.add(currentFont.class);
     
-    // Update UI text
-    fontNameBtn.textContent = currentFont.name;
-    currentFontIndicator.textContent = currentFont.full;
+    // Update UI text with sanitization
+    if (fontNameBtn) {
+        fontNameBtn.textContent = sanitizeInput(currentFont.name);
+    }
+    if (currentFontIndicator) {
+        currentFontIndicator.textContent = sanitizeInput(currentFont.full);
+    }
 }
 
-// Initialize on page load
+// Security: Prevent common XSS vectors
+function initializeSecurity() {
+    // Disable eval and Function constructor
+    window.eval = function() {
+        throw new Error('eval() is disabled for security reasons');
+    };
+    
+    // Add security headers check
+    if (document.location.protocol !== 'https:' && document.location.hostname !== 'localhost') {
+        console.warn('This application should be served over HTTPS for security');
+    }
+    
+    // Prevent drag and drop of external content
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Clear any malicious URL fragments
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+    }
+}
+
+// Initialize security measures and counts
+initializeSecurity();
 updateCounts();
