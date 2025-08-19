@@ -38,7 +38,7 @@ body {
 .logo {
     font-size: 1.5rem;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.4rem;
     color: var(--accent);
 }
 
@@ -98,16 +98,17 @@ body {
 .editor::placeholder {
     color: var(--secondary);
     opacity: 0.7;
+    padding: 0 0 0 0.2rem;
 }
 
 .status {
-    padding: 1.5rem 3rem;
+    padding: 1.33rem 3rem;
     border-top: 1px solid var(--secondary);
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
-    color: var(--secondary);
+    color: var(--accent);
     flex-wrap: wrap;
     gap: 1rem;
 }
