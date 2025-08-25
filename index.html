@@ -57,24 +57,22 @@
         </div>
     </div>
     
-    <div class="container">
-        <div class="editor-layout">
-            <div class="text-style-controls">
-                <button class="text-style-btn" id="title-btn" data-style="title" title="Apply Title Style to Selection">Title</button>
-                <button class="text-style-btn" id="heading-btn" data-style="heading" title="Apply Heading Style to Selection">Heading</button>
-                <button class="text-style-btn" id="body-btn" data-style="body" title="Apply Body Style to Selection">Body</button>
-            </div>
-            <textarea 
+    <div class="main-content">
+        <div class="text-style-controls">
+            <button class="text-style-btn" id="title-btn" data-style="title" title="Apply Title Style to Selection">Title</button>
+            <button class="text-style-btn" id="heading-btn" data-style="heading" title="Apply Heading Style to Selection">Heading</button>
+            <button class="text-style-btn" id="body-btn" data-style="body" title="Apply Body Style to Selection">Body</button>
+        </div>
+        <div class="container">
+            <div 
                 class="editor" 
-                placeholder="Write to inspire..."
+                contenteditable="true"
                 spellcheck="false"
-                autofocus
-                maxlength="1000000"
-                autocomplete="off"
+                data-placeholder="Write to inspire..."
                 data-gramm="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"
-            ></textarea>
+            ></div>
         </div>
     </div>
     

@@ -120,7 +120,8 @@ window.addEventListener('load', () => {
     const savedFontIndex = parseInt(localStorage.getItem('savedFontIndex')) || window.savedFontIndex || 0;
     
     if (savedContent && typeof savedContent === 'string') {
-        editor.value = savedContent.slice(0, 1000000); // Limit content size
+        // For contenteditable, we save/load HTML
+        editor.innerHTML = savedContent.slice(0, 1000000); // Limit content size
         updateCounts();
     }
     
@@ -163,40 +164,45 @@ function setupEventListeners() {
         });
     }
     
-    // Auto-save content with security measures
+    // Note: Auto-save is now handled in setupTextStyles for contenteditable
+    // Enable tab key for indentation in contenteditable
     if (editor) {
-        editor.addEventListener('input', (e) => {
-            const content = e.target.value;
-            if (content.length <= 1000000) { // Limit content size
-                throttledSave('savedContent', content);
-                updateCounts();
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                // Insert tab character in contenteditable
+                const selection = window.getSelection();
+                if (selection.rangeCount) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode('\t'));
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    
+                    // Trigger input event for auto-save
+                    editor.dispatchEvent(new Event('input'));
+                }
             }
         });
         
         // Prevent potential XSS through paste events
         editor.addEventListener('paste', (e) => {
-            setTimeout(() => {
-                if (editor.value.length > 1000000) {
-                    editor.value = editor.value.slice(0, 1000000);
-                    updateCounts();
-                }
-            }, 0);
-        });
-        
-        // Enable tab key for indentation
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                
-                const start = editor.selectionStart;
-                const end = editor.selectionEnd;
-                const value = editor.value;
-                
-                // Insert tab character
-                editor.value = value.substring(0, start) + '\t' + value.substring(end);
-                
-                // Move cursor after the tab
-                editor.selectionStart = editor.selectionEnd = start + 1;
+            e.preventDefault();
+            
+            // Get plain text from clipboard
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            
+            // Insert as plain text
+            const selection = window.getSelection();
+            if (selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(document.createTextNode(text));
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
                 
                 // Trigger input event for auto-save
                 editor.dispatchEvent(new Event('input'));
@@ -209,7 +215,8 @@ function setupEventListeners() {
 function updateCounts() {
     if (!editor || !charCount || !wordCount) return;
     
-    const text = editor.value || '';
+    // For contenteditable, get the text content (without HTML tags)
+    const text = editor.textContent || '';
     const chars = text.length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     
@@ -474,7 +481,7 @@ function setupPrivacyPopup() {
                 
                 // Reset UI to defaults
                 if (editor) {
-                    editor.value = '';
+                    editor.innerHTML = '<p><br></p>';
                     updateCounts();
                 }
                 
@@ -484,11 +491,19 @@ function setupPrivacyPopup() {
                 currentFontIndex = 0;
                 applyFont();
                 
-                // Update text style button states
+                // Reset text style buttons to body style
                 const textStyleBtns = document.querySelectorAll('.text-style-btn');
                 if (textStyleBtns.length) {
                     textStyleBtns.forEach(btn => {
-                        btn.disabled = true; // Disable since there's no selection
+                        if (btn.dataset.style === 'body') {
+                            btn.style.background = 'var(--accent)';
+                            btn.style.color = 'var(--bg)';
+                            btn.style.opacity = '1';
+                        } else {
+                            btn.style.background = 'transparent';
+                            btn.style.color = 'var(--accent)';
+                            btn.style.opacity = '0.6';
+                        }
                     });
                 }
                 
@@ -510,77 +525,246 @@ function setupPrivacyPopup() {
     });
 }
 
-// Text style functionality for selected text
+// Visual text style functionality for contenteditable
 function setupTextStyles() {
     const textStyleBtns = document.querySelectorAll('.text-style-btn');
     const editor = document.querySelector('.editor');
     
     if (!editor || !textStyleBtns.length) return;
     
-    // Update button states based on selection
+    // Track current typing style
+    let currentTypingStyle = 'body';
+    
+    // Update button active states based on current typing style
     function updateButtonStates() {
-        const hasSelection = editor.selectionStart !== editor.selectionEnd;
         textStyleBtns.forEach(btn => {
-            btn.disabled = !hasSelection;
+            if (btn.dataset.style === currentTypingStyle) {
+                btn.style.background = 'var(--accent)';
+                btn.style.color = 'var(--bg)';
+                btn.style.opacity = '1';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--accent)';
+                btn.style.opacity = '0.6';
+            }
         });
+    }
+    
+    // Get current block element or create one
+    function getCurrentBlock() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return null;
+        
+        let node = selection.anchorNode;
+        
+        // If we're in a text node, get its parent
+        if (node.nodeType === Node.TEXT_NODE) {
+            node = node.parentElement;
+        }
+        
+        // If we're directly in the editor, we need to find/create a block
+        if (node === editor) {
+            // Create a new paragraph if we're at the root
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            editor.appendChild(p);
+            
+            // Move cursor to the new paragraph
+            const range = document.createRange();
+            range.setStart(p, 0);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            return p;
+        }
+        
+        // Find the closest block-level element
+        while (node && node !== editor && !['H1', 'H2', 'P'].includes(node.tagName)) {
+            node = node.parentElement;
+        }
+        
+        return node === editor ? null : node;
+    }
+    
+    // Convert element to specified style
+    function convertElementStyle(element, style) {
+        if (!element || element === editor) return;
+        
+        const content = element.textContent || '';
+        let newElement;
+        
+        switch (style) {
+            case 'title':
+                newElement = document.createElement('h1');
+                break;
+            case 'heading':
+                newElement = document.createElement('h2');
+                break;
+            case 'body':
+            default:
+                newElement = document.createElement('p');
+                break;
+        }
+        
+        // Preserve content or add line break if empty
+        if (content.trim()) {
+            newElement.textContent = content;
+        } else {
+            newElement.innerHTML = '<br>';
+        }
+        
+        // Replace the old element
+        element.parentNode.replaceChild(newElement, element);
+        
+        // Restore cursor position in the new element
+        const selection = window.getSelection();
+        const range = document.createRange();
+        
+        if (newElement.firstChild) {
+            if (newElement.firstChild.nodeType === Node.TEXT_NODE) {
+                range.setStart(newElement.firstChild, Math.min(newElement.firstChild.length, newElement.textContent.length));
+            } else {
+                range.setStart(newElement, 0);
+            }
+        } else {
+            range.setStart(newElement, 0);
+        }
+        
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        return newElement;
+    }
+    
+    // Handle Enter key to reset style and create new paragraph
+    editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            
+            // Create new paragraph
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            
+            // Insert after current position
+            const selection = window.getSelection();
+            if (selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                const currentBlock = getCurrentBlock();
+                
+                if (currentBlock) {
+                    currentBlock.parentNode.insertBefore(p, currentBlock.nextSibling);
+                } else {
+                    editor.appendChild(p);
+                }
+                
+                // Move cursor to new paragraph
+                const newRange = document.createRange();
+                newRange.setStart(p, 0);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+            
+            // Reset to body style for new line
+            currentTypingStyle = 'body';
+            updateButtonStates();
+        }
+    });
+    
+    // Handle input events for persistence and auto-save
+    editor.addEventListener('input', (e) => {
+        // Ensure we always have proper block elements
+        if (editor.childNodes.length === 0) {
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            editor.appendChild(p);
+        }
+        
+        // Auto-save content
+        try {
+            const content = editor.innerHTML;
+            localStorage.setItem('savedContent', content);
+        } catch (e) {
+            window.savedContent = editor.innerHTML;
+        }
+        
+        // Update word/char counts
+        updateCounts();
+    });
+    
+    // Initialize with default paragraph if empty
+    if (editor.innerHTML.trim() === '') {
+        const p = document.createElement('p');
+        p.innerHTML = '<br>';
+        editor.appendChild(p);
     }
     
     // Initial state
     updateButtonStates();
-    
-    // Update button states when selection changes
-    editor.addEventListener('selectionchange', updateButtonStates);
-    editor.addEventListener('mouseup', updateButtonStates);
-    editor.addEventListener('keyup', updateButtonStates);
     
     textStyleBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const style = btn.dataset.style;
             if (!style) return;
             
-            const selectionStart = editor.selectionStart;
-            const selectionEnd = editor.selectionEnd;
-            
-            // Check if there's selected text
-            if (selectionStart === selectionEnd) {
-                return; // No selection, do nothing
-            }
-            
-            const selectedText = editor.value.substring(selectionStart, selectionEnd);
-            const beforeText = editor.value.substring(0, selectionStart);
-            const afterText = editor.value.substring(selectionEnd);
-            
-            let wrappedText = '';
-            
-            // Apply markdown-style formatting based on style
-            switch (style) {
-                case 'title':
-                    wrappedText = `# ${selectedText}`;
-                    break;
-                case 'heading':
-                    wrappedText = `## ${selectedText}`;
-                    break;
-                case 'body':
-                    // For body style, just remove any existing formatting
-                    wrappedText = selectedText.replace(/^#+\s*/, '');
-                    break;
-                default:
-                    wrappedText = selectedText;
-            }
-            
-            // Replace the selected text with the wrapped version
-            editor.value = beforeText + wrappedText + afterText;
-            
-            // Restore selection to the modified text
-            const newStart = beforeText.length;
-            const newEnd = newStart + wrappedText.length;
-            editor.setSelectionRange(newStart, newEnd);
-            
-            // Trigger input event for auto-save
-            editor.dispatchEvent(new Event('input'));
-            
-            // Update button states
+            // Update current typing style
+            currentTypingStyle = style;
             updateButtonStates();
+            
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount === 0) {
+                editor.focus();
+                return;
+            }
+            
+            // Check if we have selected text across elements or just cursor position
+            const range = selection.getRangeAt(0);
+            
+            if (range.collapsed) {
+                // No selection - apply to current block
+                const currentBlock = getCurrentBlock();
+                if (currentBlock) {
+                    convertElementStyle(currentBlock, style);
+                }
+            } else {
+                // Has selection - apply to all blocks that intersect the selection
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+                
+                // Find all block elements that intersect the selection
+                const blocksToConvert = new Set();
+                
+                // Add block containing start of selection
+                let startBlock = startContainer.nodeType === Node.TEXT_NODE ? 
+                                 startContainer.parentElement : startContainer;
+                while (startBlock && startBlock !== editor && !['H1', 'H2', 'P'].includes(startBlock.tagName)) {
+                    startBlock = startBlock.parentElement;
+                }
+                if (startBlock && startBlock !== editor) {
+                    blocksToConvert.add(startBlock);
+                }
+                
+                // Add block containing end of selection (if different)
+                let endBlock = endContainer.nodeType === Node.TEXT_NODE ? 
+                               endContainer.parentElement : endContainer;
+                while (endBlock && endBlock !== editor && !['H1', 'H2', 'P'].includes(endBlock.tagName)) {
+                    endBlock = endBlock.parentElement;
+                }
+                if (endBlock && endBlock !== editor && endBlock !== startBlock) {
+                    blocksToConvert.add(endBlock);
+                }
+                
+                // Convert all blocks in the set
+                blocksToConvert.forEach(block => {
+                    convertElementStyle(block, style);
+                });
+            }
+            
+            // Focus back to editor
+            editor.focus();
         });
     });
 }
