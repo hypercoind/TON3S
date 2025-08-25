@@ -1017,11 +1017,30 @@ function saveDocument(format) {
         return;
     }
     
+    // Prompt user for filename
+    const defaultExtension = format === 'markdown' ? 'md' : 'pdf';
+    const defaultFilename = `document.${defaultExtension}`;
+    let filename = prompt(`Enter filename (without extension):`, 'document');
+    
+    // Handle user cancellation
+    if (filename === null) {
+        return;
+    }
+    
+    // Clean up filename and ensure it's not empty
+    filename = filename.trim();
+    if (!filename) {
+        filename = 'document';
+    }
+    
+    // Remove any existing extension and add the correct one
+    filename = filename.replace(/\.[^/.]+$/, '');
+    filename = `${filename}.${defaultExtension}`;
+    
     switch (format) {
         case 'markdown':
             const markdown = htmlToMarkdown(content);
             const blob = new Blob([markdown], { type: 'text/markdown' });
-            const filename = 'document.md';
             
             // Create and trigger download
             const url = URL.createObjectURL(blob);
@@ -1043,7 +1062,7 @@ function saveDocument(format) {
             
             const doc = generatePDF(contentBlocks);
             if (doc) {
-                doc.save('document.pdf');
+                doc.save(filename);
             }
             return; // Exit early for PDF
         default:

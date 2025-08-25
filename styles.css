@@ -20,12 +20,45 @@ body {
     background: var(--bg);
     color: var(--fg);
     height: 100vh;
-    display: flex;
-    flex-direction: column;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    max-width: 1400px;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: color-mix(in srgb, var(--bg) 92%, #000000 8%);
+    z-index: -2;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1800px;
+    height: 100%;
+    background: var(--bg);
+    border-left: 1px solid var(--secondary);
+    border-right: 1px solid var(--secondary);
+    z-index: -1;
+    opacity: 0.8;
+}
+
+.app-container {
+    max-width: 1800px;
     margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
 }
 
 .header {
@@ -368,8 +401,8 @@ body {
 }
 
 .privacy-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 21px;
+    height: 21px;
 }
 
 .privacy-overlay {
