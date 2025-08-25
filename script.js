@@ -769,9 +769,292 @@ function setupTextStyles() {
     });
 }
 
+// Save functionality
+function setupSaveControls() {
+    const saveBtn = document.getElementById('save-btn');
+    const saveDropdownBtn = document.getElementById('save-dropdown');
+    const saveDropdownMenu = document.getElementById('save-dropdown-menu');
+    
+    if (saveDropdownBtn) {
+        saveDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown('save-dropdown-menu');
+        });
+    }
+    
+    if (saveDropdownMenu) {
+        saveDropdownMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const format = e.target.dataset.format;
+                saveDocument(format);
+                closeDropdown('save-dropdown-menu');
+            }
+        });
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            // Default to markdown if clicked directly
+            saveDocument('markdown');
+        });
+    }
+}
+
+// Convert HTML content to markdown
+function htmlToMarkdown(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    let markdown = '';
+    
+    // Process each block element
+    const blocks = tempDiv.querySelectorAll('h1, h2, p');
+    blocks.forEach(block => {
+        const text = block.textContent.trim();
+        if (!text) return;
+        
+        switch (block.tagName.toLowerCase()) {
+            case 'h1':
+                markdown += '# ' + text + '\n\n';
+                break;
+            case 'h2':
+                markdown += '## ' + text + '\n\n';
+                break;
+            case 'p':
+            default:
+                markdown += text + '\n\n';
+                break;
+        }
+    });
+    
+    return markdown.trim();
+}
+
+// Parse HTML content for PDF generation
+function parseContentForPDF(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    const contentBlocks = [];
+    
+    // Process each block element
+    const blocks = tempDiv.querySelectorAll('h1, h2, p');
+    blocks.forEach(block => {
+        const text = block.textContent.trim();
+        if (!text) return;
+        
+        let blockType, fontSize, fontStyle;
+        
+        switch (block.tagName.toLowerCase()) {
+            case 'h1':
+                blockType = 'title';
+                fontSize = 20;
+                fontStyle = 'bold';
+                break;
+            case 'h2':
+                blockType = 'heading';
+                fontSize = 16;
+                fontStyle = 'bold';
+                break;
+            case 'p':
+            default:
+                blockType = 'body';
+                fontSize = 12;
+                fontStyle = 'normal';
+                break;
+        }
+        
+        contentBlocks.push({
+            type: blockType,
+            text: text,
+            fontSize: fontSize,
+            fontStyle: fontStyle
+        });
+    });
+    
+    return contentBlocks;
+}
+
+// Get current theme colors for PDF
+function getThemeColors() {
+    const body = document.body;
+    const computedStyle = getComputedStyle(body);
+    
+    // Extract CSS custom properties
+    const bg = computedStyle.getPropertyValue('--bg').trim();
+    const fg = computedStyle.getPropertyValue('--fg').trim();
+    const accent = computedStyle.getPropertyValue('--accent').trim();
+    
+    // Convert hex colors to RGB for jsPDF
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 }; // Default to black if parsing fails
+    }
+    
+    return {
+        text: hexToRgb(fg),
+        accent: hexToRgb(accent),
+        background: hexToRgb(bg)
+    };
+}
+
+// Get current font family
+function getCurrentFont() {
+    const body = document.body;
+    const computedStyle = getComputedStyle(body);
+    const fontFamily = computedStyle.getPropertyValue('--font').trim();
+    
+    // Extract the first font name for PDF (jsPDF has limited font support)
+    const fontMatch = fontFamily.match(/'([^']+)'/);
+    return fontMatch ? fontMatch[1] : 'Arial'; // Fallback to Arial
+}
+
+// Generate PDF using jsPDF
+function generatePDF(contentBlocks) {
+    // Check if jsPDF is available
+    if (!window.jspdf) {
+        console.error('jsPDF library not loaded');
+        alert('PDF generation is not available. Please refresh the page and try again.');
+        return null;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Get theme colors and font
+    const colors = getThemeColors();
+    const currentFont = getCurrentFont();
+    
+    // Set default text color
+    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+    
+    let currentY = 30; // Starting Y position (more space for header)
+    const pageHeight = doc.internal.pageSize.height;
+    const lineHeight = 7;
+    const margin = 20;
+    
+    // Reset text color for content
+    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+    
+    contentBlocks.forEach(block => {
+        // Check if we need a new page
+        if (currentY > pageHeight - 40) {
+            doc.addPage();
+            currentY = 30;
+        }
+        
+        // Set font style and color based on block type
+        if (block.type === 'title') {
+            doc.setTextColor(colors.accent.r, colors.accent.g, colors.accent.b);
+            doc.setFont(undefined, 'bold');
+        } else if (block.type === 'heading') {
+            doc.setTextColor(colors.accent.r, colors.accent.g, colors.accent.b);
+            doc.setFont(undefined, 'bold');
+        } else {
+            doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+            doc.setFont(undefined, 'normal');
+        }
+        
+        // Set font size
+        doc.setFontSize(block.fontSize);
+        
+        // Add text with word wrapping
+        const splitText = doc.splitTextToSize(block.text, doc.internal.pageSize.width - 2 * margin);
+        doc.text(splitText, margin, currentY);
+        
+        // Calculate space used
+        const linesUsed = Array.isArray(splitText) ? splitText.length : 1;
+        currentY += (linesUsed * lineHeight) + (block.fontSize / 2);
+        
+        // Add extra space after titles and headings
+        if (block.type === 'title') {
+            currentY += 8;
+        } else if (block.type === 'heading') {
+            currentY += 5;
+        } else {
+            currentY += 3;
+        }
+    });
+    
+    // Add footer on each page
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(
+            `Page ${i} of ${pageCount}`, 
+            doc.internal.pageSize.width / 2, 
+            doc.internal.pageSize.height - 15, 
+            { align: 'center' }
+        );
+    }
+    
+    return doc;
+}
+
+// Save document in specified format
+function saveDocument(format) {
+    console.log('Save document called with format:', format);
+    
+    if (!editor) {
+        console.error('Editor not found');
+        return;
+    }
+    
+    const content = editor.innerHTML;
+    const textContent = editor.textContent.trim();
+    
+    console.log('Content length:', textContent.length);
+    
+    if (!textContent) {
+        alert('Document is empty. Nothing to save.');
+        return;
+    }
+    
+    switch (format) {
+        case 'markdown':
+            const markdown = htmlToMarkdown(content);
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const filename = 'document.md';
+            
+            // Create and trigger download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        case 'pdf':
+            // Generate PDF using jsPDF
+            const contentBlocks = parseContentForPDF(content);
+            if (contentBlocks.length === 0) {
+                alert('No content to export to PDF.');
+                return;
+            }
+            
+            const doc = generatePDF(contentBlocks);
+            if (doc) {
+                doc.save('document.pdf');
+            }
+            return; // Exit early for PDF
+        default:
+            return;
+    }
+}
+
 // Initialize security measures and counts
 initializeSecurity();
 updateCounts();
 populateDropdowns();
 setupPrivacyPopup();
 setupTextStyles();
+setupSaveControls();

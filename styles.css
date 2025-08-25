@@ -24,6 +24,8 @@ body {
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .header {
@@ -172,6 +174,14 @@ body {
     padding: 2rem 0 2rem 1.5rem;
 }
 
+.save-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding: 2rem 1.5rem 2rem 0;
+}
+
 .container {
     flex: 1;
     max-width: 900px;
@@ -210,6 +220,18 @@ body {
 
 .text-style-btn:disabled:hover {
     background: transparent;
+}
+
+.save-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 80px;
+}
+
+.save-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .editor {
