@@ -19,14 +19,15 @@ body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--fg);
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
 .header {
-    padding: 2rem 3rem;
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -52,7 +53,7 @@ body {
     background: var(--secondary);
     color: var(--fg);
     border: none;
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
     font-family: var(--font);
     font-size: 0.9rem;
@@ -85,7 +86,7 @@ body {
     background: var(--secondary);
     color: var(--fg);
     border: none;
-    padding: 0.75rem 0.75rem;
+    padding: 0.5rem 0.5rem;
     border-radius: 0 8px 8px 0;
     margin-left: -1px;
     cursor: pointer;
@@ -162,12 +163,59 @@ body {
     max-width: 900px;
     width: 100%;
     margin: 0 auto;
-    padding: 3rem;
+    padding: 2rem 3rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.editor-layout {
+    flex: 1;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    min-height: 0;
+}
+
+.text-style-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.text-style-btn {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+    min-width: 70px;
+    white-space: nowrap;
+}
+
+.text-style-btn:hover {
+    background: var(--secondary);
+    opacity: 1;
+}
+
+.text-style-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.text-style-btn:disabled:hover {
+    background: transparent;
 }
 
 .editor {
     width: 100%;
-    min-height: 500px;
+    flex: 1;
     background: transparent;
     border: none;
     color: var(--fg);
@@ -176,7 +224,10 @@ body {
     line-height: 1.8;
     resize: none;
     outline: none;
+    min-height: 0;
+    transition: all 0.3s ease;
 }
+
 
 .editor::placeholder {
     color: var(--secondary);
@@ -185,7 +236,7 @@ body {
 }
 
 .status {
-    padding: 1.33rem 3rem;
+    padding: 1rem 3rem;
     border-top: 1px solid var(--secondary);
     display: flex;
     justify-content: space-between;
@@ -194,6 +245,7 @@ body {
     color: var(--accent);
     flex-wrap: wrap;
     gap: 1rem;
+    position: relative;
 }
 
 .word-count {
@@ -205,6 +257,9 @@ body {
     display: flex;
     gap: 2rem;
     align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .indicator {
@@ -218,6 +273,176 @@ body {
     height: 10px;
     border-radius: 50%;
     background: var(--accent);
+}
+
+.privacy-btn {
+    background: transparent;
+    color: var(--accent);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.privacy-btn:hover {
+    background: var(--secondary);
+    opacity: 1;
+}
+
+.privacy-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.privacy-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.privacy-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.privacy-popup {
+    background: var(--bg);
+    border: 1px solid var(--secondary);
+    border-radius: 12px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.privacy-overlay.show .privacy-popup {
+    transform: translateY(0);
+}
+
+.privacy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--secondary);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 1;
+}
+
+.privacy-header h3 {
+    margin: 0;
+    color: var(--fg);
+    font-size: 1.2rem;
+}
+
+.privacy-close {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.privacy-close:hover {
+    background: var(--secondary);
+}
+
+.privacy-content {
+    padding: 1.5rem;
+}
+
+.privacy-content h4 {
+    color: var(--accent);
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+}
+
+.privacy-content p {
+    color: var(--fg);
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+}
+
+.privacy-content ul {
+    color: var(--fg);
+    margin: 0 0 1.5rem 0;
+    padding-left: 1.5rem;
+    line-height: 1.6;
+}
+
+.privacy-content li {
+    margin-bottom: 0.5rem;
+}
+
+.privacy-content strong {
+    color: var(--accent);
+    font-weight: bold;
+    font-style: italic;
+}
+
+.privacy-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--secondary);
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items:stretch;
+    flex-wrap: wrap;
+}
+
+.privacy-clear {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+}
+
+.privacy-clear:hover {
+    opacity: 0.9;
+}
+
+.privacy-verify {
+    background: var(--secondary);
+    color: var(--fg);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.privacy-verify:hover {
+    background: var(--hover);
+    color: var(--fg);
+    text-decoration: none;
 }
 
 /* Font families */

@@ -104,18 +104,20 @@ function throttledSave(key, value) {
             console.warn('Content too large, not saving');
             return;
         }
-        window[key] = value;
+        localStorage.setItem(key, value);
     } catch (e) {
         console.error('Storage error:', e);
+        // Fallback to in-memory storage if localStorage fails
+        window[key] = value;
     }
 }
 
 // Load saved content, theme, and font
 window.addEventListener('load', () => {
-    // Use in-memory storage for Claude.ai environment with validation
-    const savedContent = window.savedContent || '';
-    const savedThemeIndex = window.savedThemeIndex || 0;
-    const savedFontIndex = window.savedFontIndex || 0;
+    // Try localStorage first, fallback to in-memory storage
+    const savedContent = localStorage.getItem('savedContent') || window.savedContent || '';
+    const savedThemeIndex = parseInt(localStorage.getItem('savedThemeIndex')) || window.savedThemeIndex || 0;
+    const savedFontIndex = parseInt(localStorage.getItem('savedFontIndex')) || window.savedFontIndex || 0;
     
     if (savedContent && typeof savedContent === 'string') {
         editor.value = savedContent.slice(0, 1000000); // Limit content size
@@ -422,7 +424,170 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// Privacy popup functionality
+function setupPrivacyPopup() {
+    const privacyBtn = document.getElementById('privacy-btn');
+    const privacyOverlay = document.getElementById('privacy-overlay');
+    const privacyClose = document.getElementById('privacy-close');
+    const privacyClear = document.getElementById('privacy-clear');
+    
+    if (privacyBtn) {
+        privacyBtn.addEventListener('click', () => {
+            if (privacyOverlay) {
+                privacyOverlay.classList.add('show');
+            }
+        });
+    }
+    
+    if (privacyClose) {
+        privacyClose.addEventListener('click', () => {
+            if (privacyOverlay) {
+                privacyOverlay.classList.remove('show');
+            }
+        });
+    }
+    
+    if (privacyOverlay) {
+        privacyOverlay.addEventListener('click', (e) => {
+            if (e.target === privacyOverlay) {
+                privacyOverlay.classList.remove('show');
+            }
+        });
+    }
+    
+    if (privacyClear) {
+        privacyClear.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all your stored data? This action cannot be undone.')) {
+                // Clear localStorage
+                try {
+                    localStorage.removeItem('savedContent');
+                    localStorage.removeItem('savedThemeIndex');
+                    localStorage.removeItem('savedFontIndex');
+                } catch (e) {
+                    console.warn('Could not clear localStorage:', e);
+                }
+                
+                // Clear in-memory storage as fallback
+                window.savedContent = '';
+                window.savedThemeIndex = 0;
+                window.savedFontIndex = 0;
+                
+                // Reset UI to defaults
+                if (editor) {
+                    editor.value = '';
+                    updateCounts();
+                }
+                
+                currentThemeIndex = 0;
+                applyTheme();
+                
+                currentFontIndex = 0;
+                applyFont();
+                
+                // Update text style button states
+                const textStyleBtns = document.querySelectorAll('.text-style-btn');
+                if (textStyleBtns.length) {
+                    textStyleBtns.forEach(btn => {
+                        btn.disabled = true; // Disable since there's no selection
+                    });
+                }
+                
+                // Close popup
+                if (privacyOverlay) {
+                    privacyOverlay.classList.remove('show');
+                }
+                
+                alert('All your data has been cleared successfully.');
+            }
+        });
+    }
+    
+    // Close popup with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && privacyOverlay && privacyOverlay.classList.contains('show')) {
+            privacyOverlay.classList.remove('show');
+        }
+    });
+}
+
+// Text style functionality for selected text
+function setupTextStyles() {
+    const textStyleBtns = document.querySelectorAll('.text-style-btn');
+    const editor = document.querySelector('.editor');
+    
+    if (!editor || !textStyleBtns.length) return;
+    
+    // Update button states based on selection
+    function updateButtonStates() {
+        const hasSelection = editor.selectionStart !== editor.selectionEnd;
+        textStyleBtns.forEach(btn => {
+            btn.disabled = !hasSelection;
+        });
+    }
+    
+    // Initial state
+    updateButtonStates();
+    
+    // Update button states when selection changes
+    editor.addEventListener('selectionchange', updateButtonStates);
+    editor.addEventListener('mouseup', updateButtonStates);
+    editor.addEventListener('keyup', updateButtonStates);
+    
+    textStyleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const style = btn.dataset.style;
+            if (!style) return;
+            
+            const selectionStart = editor.selectionStart;
+            const selectionEnd = editor.selectionEnd;
+            
+            // Check if there's selected text
+            if (selectionStart === selectionEnd) {
+                return; // No selection, do nothing
+            }
+            
+            const selectedText = editor.value.substring(selectionStart, selectionEnd);
+            const beforeText = editor.value.substring(0, selectionStart);
+            const afterText = editor.value.substring(selectionEnd);
+            
+            let wrappedText = '';
+            
+            // Apply markdown-style formatting based on style
+            switch (style) {
+                case 'title':
+                    wrappedText = `# ${selectedText}`;
+                    break;
+                case 'heading':
+                    wrappedText = `## ${selectedText}`;
+                    break;
+                case 'body':
+                    // For body style, just remove any existing formatting
+                    wrappedText = selectedText.replace(/^#+\s*/, '');
+                    break;
+                default:
+                    wrappedText = selectedText;
+            }
+            
+            // Replace the selected text with the wrapped version
+            editor.value = beforeText + wrappedText + afterText;
+            
+            // Restore selection to the modified text
+            const newStart = beforeText.length;
+            const newEnd = newStart + wrappedText.length;
+            editor.setSelectionRange(newStart, newEnd);
+            
+            // Trigger input event for auto-save
+            editor.dispatchEvent(new Event('input'));
+            
+            // Update button states
+            updateButtonStates();
+        });
+    });
+}
+
 // Initialize security measures and counts
 initializeSecurity();
 updateCounts();
 populateDropdowns();
+setupPrivacyPopup();
+setupTextStyles();
