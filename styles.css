@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fira+Code:wght@400;600&family=Source+Code+Pro:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&family=Inconsolata:wght@400;600&family=Cousine:wght@400;700&family=Anonymous+Pro:wght@400;700&family=Overpass+Mono:wght@400;600&family=Red+Hat+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fira+Code:wght@400;600&family=Source+Code+Pro:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&family=Inconsolata:wght@400;600&family=Cousine:wght@400;700&family=Overpass+Mono:wght@400;600&family=Red+Hat+Mono:wght@400;600&family=PT+Mono:wght@400&family=Oxygen+Mono:wght@400&family=Noto+Sans+Mono:wght@400;600&family=Recursive:wght@400&family=Cutive+Mono:wght@400&family=Nova+Mono:wght@400&family=Martian+Mono:wght@400&family=B612+Mono:wght@400&display=swap');
 
 :root {
-    --bg: #1e1e2e;
-    --fg: #cdd6f4;
-    --accent: #89b4fa;
-    --secondary: #313244;
-    --hover: #45475a;
-    --font: 'JetBrains Mono', monospace;
+    --bg: #000000;
+    --fg: #e0def4;
+    --accent: #ff8c69;
+    --secondary: #1f1d2e;
+    --hover: #26233a;
+    --font: 'Times New Roman', 'Times', serif;
 }
 
 * {
@@ -82,6 +82,7 @@ body::after {
     font-weight: 600;
     letter-spacing: 0.4rem;
     color: var(--accent);
+    cursor: default;
 }
 
 .controls {
@@ -358,28 +359,6 @@ body::after {
     gap: 2rem;
 }
 
-.indicators {
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.theme-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--accent);
-}
-
 .privacy-btn {
     background: transparent;
     color: var(--accent);
@@ -560,14 +539,34 @@ body::after {
 .font-ubuntu { --font: 'Ubuntu Mono', monospace; }
 .font-inconsolata { --font: 'Inconsolata', monospace; }
 .font-cousine { --font: 'Cousine', monospace; }
-.font-anonymous { --font: 'Anonymous Pro', monospace; }
 .font-overpass { --font: 'Overpass Mono', monospace; }
 .font-redhat { --font: 'Red Hat Mono', monospace; }
 .font-monaco { --font: 'Monaco', 'Courier New', monospace; }
 .font-menlo { --font: 'Menlo', 'Courier New', monospace; }
 .font-consolas { --font: 'Consolas', 'Courier New', monospace; }
+.font-cascadia { --font: 'Cascadia Code', 'Consolas', monospace; }
+.font-sf-mono { --font: 'SF Mono', 'Monaco', monospace; }
+.font-dejavu { --font: 'DejaVu Sans Mono', 'Courier New', monospace; }
+.font-liberation { --font: 'Liberation Mono', 'Courier New', monospace; }
+.font-pt-mono { --font: 'PT Mono', 'Courier New', monospace; }
+.font-oxygen { --font: 'Oxygen Mono', 'Courier New', monospace; }
+.font-noto { --font: 'Noto Sans Mono', 'Courier New', monospace; }
+.font-recursive { --font: 'Recursive', 'Monaco', monospace; }
+.font-cutive { --font: 'Cutive Mono', 'Courier New', monospace; }
+.font-nova { --font: 'Nova Mono', 'Courier New', monospace; }
+.font-martian { --font: 'Martian Mono', 'Monaco', monospace; }
+.font-b612 { --font: 'B612 Mono', 'Monaco', monospace; }
+.font-times { --font: 'Times New Roman', 'Times', serif; }
 
 /* Theme definitions */
+.theme-ton3s {
+    --bg: #000000;
+    --fg: #e0def4;
+    --accent: #ff8c69;
+    --secondary: #1f1d2e;
+    --hover: #26233a;
+}
+
 .theme-catppuccin-mocha {
     --bg: #1e1e2e;
     --fg: #cdd6f4;
@@ -862,6 +861,270 @@ body::after {
     --accent: #d7827e;
     --secondary: #fffaf3;
     --hover: #f2e9e1;
+}
+
+.theme-catppuccin-latte {
+    --bg: #eff1f5;
+    --fg: #4c4f69;
+    --accent: #1e66f5;
+    --secondary: #dce0e8;
+    --hover: #bcc0cc;
+}
+
+.theme-dracula-soft {
+    --bg: #282a36;
+    --fg: #f8f8f2;
+    --accent: #8be9fd;
+    --secondary: #44475a;
+    --hover: #6272a4;
+}
+
+.theme-gruvbox-material {
+    --bg: #1d2021;
+    --fg: #fbf1c7;
+    --accent: #fabd2f;
+    --secondary: #3c3836;
+    --hover: #504945;
+}
+
+.theme-tokyo-night-light {
+    --bg: #d5d6db;
+    --fg: #565a6e;
+    --accent: #34548a;
+    --secondary: #cbccd1;
+    --hover: #9699a3;
+}
+
+.theme-nord-aurora {
+    --bg: #2e3440;
+    --fg: #eceff4;
+    --accent: #bf616a;
+    --secondary: #3b4252;
+    --hover: #434c5e;
+}
+
+.theme-monokai-ristretto {
+    --bg: #2c2525;
+    --fg: #fff1f3;
+    --accent: #fd6a85;
+    --secondary: #403838;
+    --hover: #72696a;
+}
+
+.theme-one-dark-pro {
+    --bg: #282c34;
+    --fg: #abb2bf;
+    --accent: #c678dd;
+    --secondary: #21252b;
+    --hover: #2c313c;
+}
+
+.theme-material-lighter {
+    --bg: #fafafa;
+    --fg: #90a4ae;
+    --accent: #00bcd4;
+    --secondary: #f5f5f5;
+    --hover: #e0e0e0;
+}
+
+.theme-tomorrow-night-blue {
+    --bg: #002451;
+    --fg: #ffffff;
+    --accent: #7285b7;
+    --secondary: #003f8e;
+    --hover: #0056d6;
+}
+
+.theme-base16-onedark {
+    --bg: #282c34;
+    --fg: #abb2bf;
+    --accent: #61afef;
+    --secondary: #3e4451;
+    --hover: #5c6370;
+}
+
+.theme-base16-atelier {
+    --bg: #1b181b;
+    --fg: #8b8792;
+    --accent: #955ae7;
+    --secondary: #2d2a2e;
+    --hover: #5e5a65;
+}
+
+.theme-horizon-bright {
+    --bg: #fdf0ed;
+    --fg: #16161c;
+    --accent: #e95678;
+    --secondary: #f7ebe8;
+    --hover: #fadad7;
+}
+
+.theme-cyberpunk {
+    --bg: #000b1a;
+    --fg: #00ff9f;
+    --accent: #ff0040;
+    --secondary: #001933;
+    --hover: #003366;
+}
+
+.theme-light-owl {
+    --bg: #fbfbfb;
+    --fg: #403f53;
+    --accent: #0c969b;
+    --secondary: #f0f0f0;
+    --hover: #e0e7ea;
+}
+
+.theme-kanagawa {
+    --bg: #1f1f28;
+    --fg: #dcd7ba;
+    --accent: #7e9cd8;
+    --secondary: #16161d;
+    --hover: #2a2a37;
+}
+
+.theme-kanagawa-wave {
+    --bg: #223249;
+    --fg: #dcd7ba;
+    --accent: #7fb4ca;
+    --secondary: #2d4f67;
+    --hover: #49443c;
+}
+
+.theme-kanagawa-lotus {
+    --bg: #f2ecbc;
+    --fg: #545464;
+    --accent: #8992a7;
+    --secondary: #e7dba0;
+    --hover: #d0ca97;
+}
+
+.theme-github-dark {
+    --bg: #0d1117;
+    --fg: #c9d1d9;
+    --accent: #58a6ff;
+    --secondary: #21262d;
+    --hover: #30363d;
+}
+
+.theme-github-light {
+    --bg: #ffffff;
+    --fg: #24292f;
+    --accent: #0969da;
+    --secondary: #f6f8fa;
+    --hover: #d1d9e0;
+}
+
+.theme-vscode-dark {
+    --bg: #1e1e1e;
+    --fg: #cccccc;
+    --accent: #007acc;
+    --secondary: #2d2d30;
+    --hover: #3e3e42;
+}
+
+.theme-vscode-light {
+    --bg: #ffffff;
+    --fg: #000000;
+    --accent: #005fb8;
+    --secondary: #f3f3f3;
+    --hover: #e5e5e5;
+}
+
+.theme-atom-one-dark {
+    --bg: #282c34;
+    --fg: #abb2bf;
+    --accent: #56b6c2;
+    --secondary: #3e4451;
+    --hover: #4b5263;
+}
+
+.theme-atom-one-light {
+    --bg: #fafafa;
+    --fg: #383a42;
+    --accent: #0184bc;
+    --secondary: #f0f0f1;
+    --hover: #e5e5e6;
+}
+
+.theme-high-contrast-dark {
+    --bg: #000000;
+    --fg: #ffffff;
+    --accent: #00ff00;
+    --secondary: #1a1a1a;
+    --hover: #333333;
+}
+
+.theme-high-contrast-light {
+    --bg: #ffffff;
+    --fg: #000000;
+    --accent: #0000ff;
+    --secondary: #e6e6e6;
+    --hover: #cccccc;
+}
+
+.theme-paper {
+    --bg: #f7f3e9;
+    --fg: #444444;
+    --accent: #8b4513;
+    --secondary: #f0ead6;
+    --hover: #e8dcc0;
+}
+
+.theme-sepia {
+    --bg: #f4ecd8;
+    --fg: #704214;
+    --accent: #8b4513;
+    --secondary: #ede0c8;
+    --hover: #e0d3b7;
+}
+
+.theme-midnight {
+    --bg: #0f0f23;
+    --fg: #cccccc;
+    --accent: #00cc00;
+    --secondary: #1a1a2e;
+    --hover: #16213e;
+}
+
+.theme-forest {
+    --bg: #1b2f1b;
+    --fg: #c8e6c8;
+    --accent: #90ee90;
+    --secondary: #2d4a2d;
+    --hover: #3d5a3d;
+}
+
+.theme-ocean-deep {
+    --bg: #001122;
+    --fg: #b3d9ff;
+    --accent: #00ccff;
+    --secondary: #002244;
+    --hover: #003366;
+}
+
+.theme-sunset {
+    --bg: #2d1b0e;
+    --fg: #ffcc99;
+    --accent: #ff6600;
+    --secondary: #4a2c1a;
+    --hover: #5c3520;
+}
+
+.theme-aurora {
+    --bg: #0a1420;
+    --fg: #a3c3e8;
+    --accent: #00ff7f;
+    --secondary: #1a2536;
+    --hover: #243447;
+}
+
+.theme-neon {
+    --bg: #0d001a;
+    --fg: #ff00ff;
+    --accent: #00ffff;
+    --secondary: #1a0033;
+    --hover: #330066;
 }
 
 @keyframes rotate {

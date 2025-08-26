@@ -1,44 +1,79 @@
 const themes = [
+    { class: 'theme-ton3s', name: 'TON3S', full: 'TON3S' },
     { class: 'theme-catppuccin-mocha', name: 'Catppuccin', full: 'Catppuccin Mocha' },
     { class: 'theme-catppuccin-macchiato', name: 'Macchiato', full: 'Catppuccin Macchiato' },
     { class: 'theme-catppuccin-frappe', name: 'Frappe', full: 'Catppuccin Frappe' },
+    { class: 'theme-catppuccin-latte', name: 'Latte', full: 'Catppuccin Latte' },
     { class: 'theme-dracula', name: 'Dracula', full: 'Dracula' },
+    { class: 'theme-dracula-soft', name: 'Dracula Soft', full: 'Dracula Soft' },
     { class: 'theme-gruvbox-dark', name: 'Gruvbox', full: 'Gruvbox Dark' },
     { class: 'theme-gruvbox-light', name: 'Gruvbox Lt', full: 'Gruvbox Light' },
+    { class: 'theme-gruvbox-material', name: 'Gruvbox Mat', full: 'Gruvbox Material' },
     { class: 'theme-tokyo-night', name: 'Tokyo', full: 'Tokyo Night' },
     { class: 'theme-tokyo-night-storm', name: 'Tokyo Storm', full: 'Tokyo Night Storm' },
+    { class: 'theme-tokyo-night-light', name: 'Tokyo Light', full: 'Tokyo Night Light' },
     { class: 'theme-nord', name: 'Nord', full: 'Nord' },
+    { class: 'theme-nord-aurora', name: 'Nord Aurora', full: 'Nord Aurora' },
     { class: 'theme-solarized-dark', name: 'Solarized', full: 'Solarized Dark' },
     { class: 'theme-solarized-light', name: 'Solar Lt', full: 'Solarized Light' },
     { class: 'theme-monokai', name: 'Monokai', full: 'Monokai' },
     { class: 'theme-monokai-pro', name: 'Monokai Pro', full: 'Monokai Pro' },
+    { class: 'theme-monokai-ristretto', name: 'Monokai Rist', full: 'Monokai Ristretto' },
     { class: 'theme-one-dark', name: 'One Dark', full: 'One Dark' },
     { class: 'theme-one-light', name: 'One Light', full: 'One Light' },
+    { class: 'theme-one-dark-pro', name: 'One Dark Pro', full: 'One Dark Pro' },
     { class: 'theme-ayu-dark', name: 'Ayu', full: 'Ayu Dark' },
     { class: 'theme-ayu-mirage', name: 'Ayu Mirage', full: 'Ayu Mirage' },
     { class: 'theme-ayu-light', name: 'Ayu Light', full: 'Ayu Light' },
     { class: 'theme-material-darker', name: 'Material', full: 'Material Darker' },
     { class: 'theme-material-ocean', name: 'Ocean', full: 'Material Ocean' },
     { class: 'theme-material-palenight', name: 'Palenight', full: 'Material Palenight' },
+    { class: 'theme-material-lighter', name: 'Material Lt', full: 'Material Lighter' },
     { class: 'theme-tomorrow-night', name: 'Tomorrow', full: 'Tomorrow Night' },
     { class: 'theme-tomorrow-night-bright', name: 'Tomorrow+', full: 'Tomorrow Night Bright' },
+    { class: 'theme-tomorrow-night-blue', name: 'Tomorrow Blue', full: 'Tomorrow Night Blue' },
     { class: 'theme-base16-ocean', name: 'Base16 Ocean', full: 'Base16 Ocean' },
     { class: 'theme-base16-tomorrow', name: 'Base16', full: 'Base16 Tomorrow' },
+    { class: 'theme-base16-onedark', name: 'Base16 One', full: 'Base16 OneDark' },
+    { class: 'theme-base16-atelier', name: 'Base16 Atel', full: 'Base16 Atelier' },
     { class: 'theme-zenburn', name: 'Zenburn', full: 'Zenburn' },
     { class: 'theme-apprentice', name: 'Apprentice', full: 'Apprentice' },
     { class: 'theme-horizon-dark', name: 'Horizon', full: 'Horizon Dark' },
+    { class: 'theme-horizon-bright', name: 'Horizon Br', full: 'Horizon Bright' },
     { class: 'theme-synthwave-84', name: 'Synthwave', full: 'Synthwave 84' },
+    { class: 'theme-cyberpunk', name: 'Cyberpunk', full: 'Cyberpunk' },
     { class: 'theme-night-owl', name: 'Night Owl', full: 'Night Owl' },
+    { class: 'theme-light-owl', name: 'Light Owl', full: 'Light Owl' },
     { class: 'theme-cobalt2', name: 'Cobalt2', full: 'Cobalt2' },
     { class: 'theme-palenight', name: 'Palenight', full: 'Palenight' },
     { class: 'theme-everforest-dark', name: 'Everforest', full: 'Everforest Dark' },
     { class: 'theme-everforest-light', name: 'Forest Lt', full: 'Everforest Light' },
     { class: 'theme-rose-pine', name: 'Rosé Pine', full: 'Rosé Pine' },
     { class: 'theme-rose-pine-moon', name: 'Pine Moon', full: 'Rosé Pine Moon' },
-    { class: 'theme-rose-pine-dawn', name: 'Pine Dawn', full: 'Rosé Pine Dawn' }
+    { class: 'theme-rose-pine-dawn', name: 'Pine Dawn', full: 'Rosé Pine Dawn' },
+    { class: 'theme-kanagawa', name: 'Kanagawa', full: 'Kanagawa' },
+    { class: 'theme-kanagawa-wave', name: 'Kanagawa Wave', full: 'Kanagawa Wave' },
+    { class: 'theme-kanagawa-lotus', name: 'Kanagawa Lotus', full: 'Kanagawa Lotus' },
+    { class: 'theme-github-dark', name: 'GitHub Dark', full: 'GitHub Dark' },
+    { class: 'theme-github-light', name: 'GitHub Light', full: 'GitHub Light' },
+    { class: 'theme-vscode-dark', name: 'VS Dark', full: 'VS Code Dark' },
+    { class: 'theme-vscode-light', name: 'VS Light', full: 'VS Code Light' },
+    { class: 'theme-atom-one-dark', name: 'Atom One', full: 'Atom One Dark' },
+    { class: 'theme-atom-one-light', name: 'Atom Light', full: 'Atom One Light' },
+    { class: 'theme-high-contrast-dark', name: 'HC Dark', full: 'High Contrast Dark' },
+    { class: 'theme-high-contrast-light', name: 'HC Light', full: 'High Contrast Light' },
+    { class: 'theme-paper', name: 'Paper', full: 'Paper' },
+    { class: 'theme-sepia', name: 'Sepia', full: 'Sepia' },
+    { class: 'theme-midnight', name: 'Midnight', full: 'Midnight' },
+    { class: 'theme-forest', name: 'Forest', full: 'Forest' },
+    { class: 'theme-ocean-deep', name: 'Ocean Deep', full: 'Ocean Deep' },
+    { class: 'theme-sunset', name: 'Sunset', full: 'Sunset' },
+    { class: 'theme-aurora', name: 'Aurora', full: 'Aurora' },
+    { class: 'theme-neon', name: 'Neon', full: 'Neon' }
 ];
 
 const fonts = [
+    { class: 'font-times', name: 'Times', full: 'Times New Roman' },
     { class: 'font-jetbrains', name: 'JetBrains', full: 'JetBrains Mono' },
     { class: 'font-fira', name: 'Fira Code', full: 'Fira Code' },
     { class: 'font-source', name: 'Source Code', full: 'Source Code Pro' },
@@ -48,16 +83,29 @@ const fonts = [
     { class: 'font-ubuntu', name: 'Ubuntu', full: 'Ubuntu Mono' },
     { class: 'font-inconsolata', name: 'Inconsolata', full: 'Inconsolata' },
     { class: 'font-cousine', name: 'Cousine', full: 'Cousine' },
-    { class: 'font-anonymous', name: 'Anonymous', full: 'Anonymous Pro' },
     { class: 'font-overpass', name: 'Overpass', full: 'Overpass Mono' },
     { class: 'font-redhat', name: 'Red Hat', full: 'Red Hat Mono' },
     { class: 'font-monaco', name: 'Monaco', full: 'Monaco' },
     { class: 'font-menlo', name: 'Menlo', full: 'Menlo' },
-    { class: 'font-consolas', name: 'Consolas', full: 'Consolas' }
+    { class: 'font-consolas', name: 'Consolas', full: 'Consolas' },
+    { class: 'font-cascadia', name: 'Cascadia', full: 'Cascadia Code' },
+    { class: 'font-sf-mono', name: 'SF Mono', full: 'SF Mono' },
+    { class: 'font-dejavu', name: 'DejaVu', full: 'DejaVu Sans Mono' },
+    { class: 'font-liberation', name: 'Liberation', full: 'Liberation Mono' },
+    { class: 'font-pt-mono', name: 'PT Mono', full: 'PT Mono' },
+    { class: 'font-oxygen', name: 'Oxygen', full: 'Oxygen Mono' },
+    { class: 'font-noto', name: 'Noto', full: 'Noto Sans Mono' },
+    { class: 'font-recursive', name: 'Recursive', full: 'Recursive' },
+    { class: 'font-cutive', name: 'Cutive', full: 'Cutive Mono' },
+    { class: 'font-nova', name: 'Nova', full: 'Nova Mono' },
+    { class: 'font-martian', name: 'Martian', full: 'Martian Mono' },
+    { class: 'font-b612', name: 'B612', full: 'B612 Mono' }
 ];
 
 let currentThemeIndex = 0;
 let currentFontIndex = 0;
+let unusedThemeIndices = [...Array(themes.length).keys()];
+let unusedFontIndices = [...Array(fonts.length).keys()];
 const editor = document.querySelector('.editor');
 const charCount = document.getElementById('char-count');
 const wordCount = document.getElementById('word-count');
@@ -230,7 +278,7 @@ function updateCounts() {
     wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
 }
 
-// Rotate through themes with random selection
+// Rotate through themes with random selection from unused options
 function rotateTheme() {
     if (!themeBtn) return;
     
@@ -239,15 +287,22 @@ function rotateTheme() {
         icon.classList.add('rotating');
     }
     
-    // Random rotation instead of sequential
-    let newIndex;
-    do {
-        newIndex = Math.floor(Math.random() * themes.length);
-    } while (newIndex === currentThemeIndex && themes.length > 1);
+    // Remove current theme from unused list if it exists
+    const currentIndexPos = unusedThemeIndices.indexOf(currentThemeIndex);
+    if (currentIndexPos > -1) {
+        unusedThemeIndices.splice(currentIndexPos, 1);
+    }
     
-    currentThemeIndex = newIndex;
+    // If no unused themes left, reset the list (excluding current theme)
+    if (unusedThemeIndices.length === 0) {
+        unusedThemeIndices = [...Array(themes.length).keys()].filter(i => i !== currentThemeIndex);
+    }
+    
+    // Randomly select from unused themes
+    const randomPos = Math.floor(Math.random() * unusedThemeIndices.length);
+    currentThemeIndex = unusedThemeIndices[randomPos];
+    
     applyTheme();
-    
     throttledSave('savedThemeIndex', currentThemeIndex);
     
     if (icon) {
@@ -257,7 +312,7 @@ function rotateTheme() {
     }
 }
 
-// Rotate through fonts with random selection
+// Rotate through fonts with random selection from unused options
 function rotateFont() {
     if (!fontBtn) return;
     
@@ -266,15 +321,22 @@ function rotateFont() {
         icon.classList.add('pulsing');
     }
     
-    // Random rotation instead of sequential
-    let newIndex;
-    do {
-        newIndex = Math.floor(Math.random() * fonts.length);
-    } while (newIndex === currentFontIndex && fonts.length > 1);
+    // Remove current font from unused list if it exists
+    const currentIndexPos = unusedFontIndices.indexOf(currentFontIndex);
+    if (currentIndexPos > -1) {
+        unusedFontIndices.splice(currentIndexPos, 1);
+    }
     
-    currentFontIndex = newIndex;
+    // If no unused fonts left, reset the list (excluding current font)
+    if (unusedFontIndices.length === 0) {
+        unusedFontIndices = [...Array(fonts.length).keys()].filter(i => i !== currentFontIndex);
+    }
+    
+    // Randomly select from unused fonts
+    const randomPos = Math.floor(Math.random() * unusedFontIndices.length);
+    currentFontIndex = unusedFontIndices[randomPos];
+    
     applyFont();
-    
     throttledSave('savedFontIndex', currentFontIndex);
     
     if (icon) {
