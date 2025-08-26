@@ -91,6 +91,7 @@ function validateIndex(index, arrayLength) {
 // Security: Rate limiting for storage operations
 let lastSaveTime = 0;
 const SAVE_THROTTLE_MS = 100;
+const MAX_CONTENT_SIZE = 1000000;
 
 function throttledSave(key, value) {
     const now = Date.now();
@@ -100,7 +101,7 @@ function throttledSave(key, value) {
     lastSaveTime = now;
     
     try {
-        if (typeof value === 'string' && value.length > 1000000) {
+        if (typeof value === 'string' && value.length > MAX_CONTENT_SIZE) {
             console.warn('Content too large, not saving');
             return;
         }
@@ -121,7 +122,7 @@ window.addEventListener('load', () => {
     
     if (savedContent && typeof savedContent === 'string') {
         // For contenteditable, we save/load HTML
-        editor.innerHTML = savedContent.slice(0, 1000000); // Limit content size
+        editor.innerHTML = savedContent.slice(0, MAX_CONTENT_SIZE); // Limit content size
         updateCounts();
     }
     
@@ -192,7 +193,8 @@ function setupEventListeners() {
             e.preventDefault();
             
             // Get plain text from clipboard
-            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const text = clipboardData ? clipboardData.getData('text/plain') : '';
             
             // Insert as plain text
             const selection = window.getSelection();
@@ -206,6 +208,9 @@ function setupEventListeners() {
                 
                 // Trigger input event for auto-save
                 editor.dispatchEvent(new Event('input'));
+                
+                // Auto-scroll after paste
+                setTimeout(() => autoScrollOnTyping(), 10);
             }
         });
     }
@@ -525,6 +530,44 @@ function setupPrivacyPopup() {
     });
 }
 
+// Auto-scroll functionality when typing past bottom
+function autoScrollOnTyping() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount || !editor) return;
+    
+    // Get the current cursor position
+    const range = selection.getRangeAt(0);
+    let cursorNode = range.startContainer;
+    
+    // If cursor is in text node, get its parent element
+    if (cursorNode.nodeType === Node.TEXT_NODE) {
+        cursorNode = cursorNode.parentElement;
+    }
+    
+    // Find the closest block element containing the cursor
+    let blockElement = cursorNode;
+    while (blockElement && blockElement !== editor && !['H1', 'H2', 'P', 'DIV'].includes(blockElement.tagName)) {
+        blockElement = blockElement.parentElement;
+    }
+    
+    if (!blockElement || blockElement === editor) return;
+    
+    // Get the position of the cursor block relative to the editor
+    const editorRect = editor.getBoundingClientRect();
+    const blockRect = blockElement.getBoundingClientRect();
+    
+    // Calculate if cursor is near or past the bottom of the visible area
+    const cursorBottom = blockRect.bottom;
+    const editorBottom = editorRect.bottom;
+    const bufferSpace = 60; // Space to maintain at bottom for comfortable typing
+    
+    // If cursor is too close to or past the bottom, scroll to keep it visible
+    if (cursorBottom > (editorBottom - bufferSpace)) {
+        const scrollAmount = cursorBottom - (editorBottom - bufferSpace);
+        editor.scrollTop += scrollAmount;
+    }
+}
+
 // Visual text style functionality for contenteditable
 function setupTextStyles() {
     const textStyleBtns = document.querySelectorAll('.text-style-btn');
@@ -650,7 +693,6 @@ function setupTextStyles() {
             // Insert after current position
             const selection = window.getSelection();
             if (selection.rangeCount) {
-                const range = selection.getRangeAt(0);
                 const currentBlock = getCurrentBlock();
                 
                 if (currentBlock) {
@@ -670,11 +712,14 @@ function setupTextStyles() {
             // Reset to body style for new line
             currentTypingStyle = 'body';
             updateButtonStates();
+            
+            // Auto-scroll after creating new line
+            setTimeout(() => autoScrollOnTyping(), 10);
         }
     });
     
     // Handle input events for persistence and auto-save
-    editor.addEventListener('input', (e) => {
+    editor.addEventListener('input', () => {
         // Ensure we always have proper block elements
         if (editor.childNodes.length === 0) {
             const p = document.createElement('p');
@@ -683,15 +728,13 @@ function setupTextStyles() {
         }
         
         // Auto-save content
-        try {
-            const content = editor.innerHTML;
-            localStorage.setItem('savedContent', content);
-        } catch (e) {
-            window.savedContent = editor.innerHTML;
-        }
+        throttledSave('savedContent', editor.innerHTML);
         
         // Update word/char counts
         updateCounts();
+        
+        // Auto-scroll when typing past bottom
+        autoScrollOnTyping();
     });
     
     // Initialize with default paragraph if empty
@@ -902,17 +945,6 @@ function getThemeColors() {
     };
 }
 
-// Get current font family
-function getCurrentFont() {
-    const body = document.body;
-    const computedStyle = getComputedStyle(body);
-    const fontFamily = computedStyle.getPropertyValue('--font').trim();
-    
-    // Extract the first font name for PDF (jsPDF has limited font support)
-    const fontMatch = fontFamily.match(/'([^']+)'/);
-    return fontMatch ? fontMatch[1] : 'Arial'; // Fallback to Arial
-}
-
 // Generate PDF using jsPDF
 function generatePDF(contentBlocks) {
     // Check if jsPDF is available
@@ -925,9 +957,8 @@ function generatePDF(contentBlocks) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Get theme colors and font
+    // Get theme colors
     const colors = getThemeColors();
-    const currentFont = getCurrentFont();
     
     // Set default text color
     doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
@@ -1000,8 +1031,6 @@ function generatePDF(contentBlocks) {
 
 // Save document in specified format
 function saveDocument(format) {
-    console.log('Save document called with format:', format);
-    
     if (!editor) {
         console.error('Editor not found');
         return;
@@ -1010,8 +1039,6 @@ function saveDocument(format) {
     const content = editor.innerHTML;
     const textContent = editor.textContent.trim();
     
-    console.log('Content length:', textContent.length);
-    
     if (!textContent) {
         alert('Document is empty. Nothing to save.');
         return;
@@ -1019,7 +1046,6 @@ function saveDocument(format) {
     
     // Prompt user for filename
     const defaultExtension = format === 'markdown' ? 'md' : 'pdf';
-    const defaultFilename = `document.${defaultExtension}`;
     let filename = prompt(`Enter filename (without extension):`, 'document');
     
     // Handle user cancellation
