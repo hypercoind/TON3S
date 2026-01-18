@@ -4,6 +4,5 @@
  */
 
 export { storageService } from './StorageService.js';
-export { exportService } from './ExportService.js';
 export { nostrAuthService } from './NostrAuthService.js';
 export { nostrService } from './NostrService.js';

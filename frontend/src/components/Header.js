@@ -23,11 +23,6 @@ export class Header extends BaseComponent {
             <div class="header">
                 <div class="logo">TON3S</div>
                 <div class="controls">
-                    <button class="btn sidebar-toggle" aria-label="Toggle sidebar">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                        </svg>
-                    </button>
                     <div class="btn-wrapper">
                         <button class="btn font-btn" id="font-btn" aria-label="Change font">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
@@ -70,11 +65,6 @@ export class Header extends BaseComponent {
     }
 
     bindEvents() {
-        // Sidebar toggle
-        this.$('.sidebar-toggle')?.addEventListener('click', () => {
-            appState.toggleSidebar();
-        });
-
         // Theme rotation button
         this.$('#theme-btn')?.addEventListener('click', () => {
             this.rotateTheme();

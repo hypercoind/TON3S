@@ -94,14 +94,6 @@ class KeyboardManager {
      * Setup default application shortcuts
      */
     setupDefaults(callbacks = {}) {
-        // Save document
-        this.register('save', {
-            key: 's',
-            cmdOrCtrl: true,
-            handler: callbacks.onSave || (() => {}),
-            description: 'Open save menu'
-        });
-
         // Rotate theme
         this.register('theme', {
             key: 't',

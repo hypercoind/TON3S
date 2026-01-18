@@ -126,19 +126,6 @@
     outline-offset: -2px;
 }
 
-/* Save button */
-.save-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 80px;
-}
-
-.save-btn svg {
-    width: 16px;
-    height: 16px;
-}
-
 /* Privacy button */
 .privacy-btn {
     background: transparent;
@@ -467,4 +454,66 @@
 
 .confirm-ok.danger {
     background: #ef4444;
+}
+
+/* Sidebar toggle controls */
+.sidebar-collapse-btn {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-collapse-btn:hover {
+    background: var(--secondary);
+    color: var(--fg);
+}
+
+.sidebar-collapse-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-expand-tab {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(-100%);
+    background: var(--secondary);
+    border: 1px solid var(--hover);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.75rem 0.25rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sidebar-expand-tab.visible {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.sidebar-expand-tab:hover {
+    background: var(--hover);
+    color: var(--fg);
+    padding-right: 0.5rem;
+}
+
+.sidebar-expand-tab svg {
+    width: 20px;
+    height: 20px;
 }

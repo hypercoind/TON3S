@@ -14,7 +14,6 @@ import { fonts } from './data/fonts.js';
 import { Header } from './components/Header.js';
 import { Sidebar } from './components/Sidebar.js';
 import { Editor } from './components/Editor.js';
-import { SaveControls } from './components/SaveControls.js';
 import { StatusBar } from './components/StatusBar.js';
 import { NostrPanel } from './components/NostrPanel.js';
 
@@ -74,13 +73,6 @@ class TON3SApp {
         if (editorContainer) {
             this.components.editor = new Editor(editorContainer);
             this.components.editor.init();
-        }
-
-        // Save Controls
-        const saveContainer = document.getElementById('save-container');
-        if (saveContainer) {
-            this.components.saveControls = new SaveControls(saveContainer);
-            this.components.saveControls.init();
         }
 
         // Status Bar
@@ -147,9 +139,6 @@ class TON3SApp {
     setupKeyboardShortcuts() {
         keyboardManager.init();
         keyboardManager.setupDefaults({
-            onSave: () => {
-                this.components.saveControls?.openDropdown();
-            },
             onNewDocument: async () => {
                 const doc = await storageService.createDocument({
                     title: 'Untitled Document',

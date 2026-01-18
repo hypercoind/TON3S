@@ -3,17 +3,6 @@
  * Maximum distraction-free writing
  */
 
-body.zen-mode .save-controls {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-body.zen-mode .main-content:hover .save-controls {
-    opacity: 1;
-    pointer-events: auto;
-}
-
 body.zen-mode .header {
     opacity: 0;
     transform: translateY(-100%);

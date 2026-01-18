@@ -15,10 +15,17 @@ export class Sidebar extends BaseComponent {
     }
 
     render() {
+        const isOpen = appState.settings.sidebarOpen;
+
         this.container.innerHTML = `
-            <div class="sidebar ${appState.settings.sidebarOpen ? 'open' : ''}">
+            <div class="sidebar ${isOpen ? 'open' : ''}">
                 <div class="sidebar-header">
                     <span class="sidebar-title">Documents</span>
+                    <button class="sidebar-collapse-btn" aria-label="Collapse sidebar">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="search-container">
                     <input
@@ -38,6 +45,11 @@ export class Sidebar extends BaseComponent {
                     </button>
                 </div>
             </div>
+            <button class="sidebar-expand-tab ${isOpen ? '' : 'visible'}" aria-label="Expand sidebar">
+                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
         `;
 
         this.searchInput = this.$('.search-input');
@@ -45,6 +57,16 @@ export class Sidebar extends BaseComponent {
     }
 
     bindEvents() {
+        // Sidebar collapse button
+        this.$('.sidebar-collapse-btn')?.addEventListener('click', () => {
+            appState.toggleSidebar();
+        });
+
+        // Sidebar expand tab
+        this.$('.sidebar-expand-tab')?.addEventListener('click', () => {
+            appState.toggleSidebar();
+        });
+
         // New document button
         this.$('.new-document-btn')?.addEventListener('click', () => {
             this.createNewDocument();
@@ -114,13 +136,20 @@ export class Sidebar extends BaseComponent {
                             ${tags.map(tag => `<span class="tag">${sanitizeInput(tag)}</span>`).join('')}
                         </div>
                     ` : ''}
+                    <button class="document-delete-btn" data-delete-id="${doc.id}" aria-label="Delete document">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
                 </div>
             `;
         }).join('');
 
         // Add click handlers
         listEl.querySelectorAll('.document-item').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                // Don't select document if clicking delete button
+                if (e.target.closest('.document-delete-btn')) return;
                 const id = parseInt(item.dataset.id);
                 appState.selectDocument(id);
             });
@@ -129,6 +158,15 @@ export class Sidebar extends BaseComponent {
             item.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 this.showContextMenu(e, parseInt(item.dataset.id));
+            });
+        });
+
+        // Add delete button handlers
+        listEl.querySelectorAll('.document-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const docId = parseInt(btn.dataset.deleteId);
+                this.confirmDelete(docId);
             });
         });
     }
@@ -158,6 +196,15 @@ export class Sidebar extends BaseComponent {
         });
 
         appState.selectDocument(doc.id);
+    }
+
+    /**
+     * Show confirmation dialog and delete document
+     */
+    confirmDelete(docId) {
+        if (confirm('Delete this document? This cannot be undone.')) {
+            storageService.deleteDocument(docId);
+        }
     }
 
     /**
@@ -200,8 +247,13 @@ export class Sidebar extends BaseComponent {
      */
     toggleSidebar(isOpen) {
         const sidebar = this.$('.sidebar');
+        const expandTab = this.$('.sidebar-expand-tab');
+
         if (sidebar) {
             sidebar.classList.toggle('open', isOpen);
+        }
+        if (expandTab) {
+            expandTab.classList.toggle('visible', !isOpen);
         }
     }
 

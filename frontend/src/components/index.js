@@ -7,6 +7,5 @@ export { BaseComponent } from './BaseComponent.js';
 export { Header } from './Header.js';
 export { Sidebar } from './Sidebar.js';
 export { Editor } from './Editor.js';
-export { SaveControls } from './SaveControls.js';
 export { StatusBar } from './StatusBar.js';
 export { NostrPanel } from './NostrPanel.js';
