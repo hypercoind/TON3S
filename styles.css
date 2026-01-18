@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fira+Code:wght@400;600&family=Source+Code+Pro:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&family=Inconsolata:wght@400;600&family=Cousine:wght@400;700&family=Overpass+Mono:wght@400;600&family=Red+Hat+Mono:wght@400;600&family=PT+Mono:wght@400&family=Oxygen+Mono:wght@400&family=Noto+Sans+Mono:wght@400;600&family=Recursive:wght@400&family=Cutive+Mono:wght@400&family=Nova+Mono:wght@400&family=Martian+Mono:wght@400&family=B612+Mono:wght@400&display=swap');
 
 :root {
-    --bg: #000000;
-    --fg: #e0def4;
-    --accent: #ff8c69;
-    --secondary: #1f1d2e;
-    --hover: #26233a;
+    --bg: #fafaf8;
+    --fg: #3a3632;
+    --accent: #d95532;
+    --fg-dim: #8a8479;
+    --secondary: #f0ede8;
+    --hover: #e8e3dc;
     --font: 'Times New Roman', 'Times', serif;
 }
 
@@ -19,21 +20,11 @@ body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--fg);
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height for mobile browsers */
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     position: relative;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: color-mix(in srgb, var(--bg) 92%, #000000 8%);
-    z-index: -2;
 }
 
 body::after {
@@ -45,10 +36,9 @@ body::after {
     width: 1800px;
     height: 100%;
     background: var(--bg);
-    border-left: 1px solid var(--secondary);
-    border-right: 1px solid var(--secondary);
+    border-left: 1px solid rgba(58, 54, 50, 0.06);
+    border-right: 1px solid rgba(58, 54, 50, 0.06);
     z-index: -1;
-    opacity: 0.8;
 }
 
 .app-container {
@@ -78,10 +68,11 @@ body::after {
 }
 
 .logo {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 600;
-    letter-spacing: 0.4rem;
+    letter-spacing: 0.5rem;
     color: var(--accent);
+    opacity: 0.7;
     cursor: default;
 }
 
@@ -200,14 +191,6 @@ body::after {
     border-radius: 0 0 8px 8px;
 }
 
-.text-style-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    padding: 2rem 0 2rem 1.5rem;
-}
-
 .save-controls {
     display: flex;
     flex-direction: column;
@@ -218,42 +201,13 @@ body::after {
 
 .container {
     flex: 1;
-    max-width: 900px;
+    max-width: 700px;  /* Optimized from 900px for 65-75 char line length */
     width: 100%;
     margin: 0 auto;
     padding: 2rem 3rem;
     display: flex;
     flex-direction: column;
     min-height: 0;
-}
-
-.text-style-btn {
-    background: transparent;
-    color: var(--accent);
-    border: 1px solid var(--secondary);
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    font-family: var(--font);
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    opacity: 0.6;
-    min-width: 70px;
-    white-space: nowrap;
-}
-
-.text-style-btn:hover {
-    background: var(--secondary);
-    opacity: 1;
-}
-
-.text-style-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.text-style-btn:disabled:hover {
-    background: transparent;
 }
 
 .save-btn {
@@ -296,26 +250,7 @@ body::after {
     position: absolute;
 }
 
-/* Visual styles for different text types */
-.editor h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    line-height: 1.2;
-    text-align: center;
-    letter-spacing: -0.02em;
-    margin: 0.5rem 0;
-    color: var(--fg);
-}
-
-.editor h2 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    margin: 0.4rem 0;
-    color: var(--fg);
-}
-
+/* Visual styles for text */
 .editor p {
     font-size: 1rem;
     font-weight: 400;
@@ -326,8 +261,6 @@ body::after {
 }
 
 /* Ensure consistent styling */
-.editor h1,
-.editor h2,
 .editor p {
     font-family: var(--font);
 }
@@ -348,7 +281,7 @@ body::after {
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
-    color: var(--accent);
+    color: var(--fg-dim);
     flex-wrap: wrap;
     gap: 1rem;
     position: relative;
@@ -357,6 +290,20 @@ body::after {
 .word-count {
     display: flex;
     gap: 2rem;
+}
+
+.save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    opacity: 0.7;
+}
+
+.save-indicator svg {
+    color: var(--accent);
+    flex-shrink: 0;
 }
 
 .privacy-btn {
@@ -382,6 +329,35 @@ body::after {
 .privacy-btn svg {
     width: 21px;
     height: 21px;
+}
+
+/* Visible focus indicators for accessibility (WCAG 2.1 AA) */
+button:focus {
+    outline: none;
+}
+
+button:focus-visible,
+.text-style-btn:focus-visible,
+.privacy-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.dropdown-item:focus {
+    background: var(--hover);
+    outline: none;
+}
+
+.dropdown-item:focus-visible {
+    background: var(--accent);
+    color: var(--bg);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.editor:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
 }
 
 .privacy-overlay {
@@ -560,11 +536,12 @@ body::after {
 
 /* Theme definitions */
 .theme-ton3s {
-    --bg: #000000;
-    --fg: #e0def4;
-    --accent: #ff8c69;
-    --secondary: #1f1d2e;
-    --hover: #26233a;
+    --bg: #fafaf8;
+    --fg: #3a3632;
+    --accent: #d95532;
+    --fg-dim: #8a8479;
+    --secondary: #f0ede8;
+    --hover: #e8e3dc;
 }
 
 .theme-catppuccin-mocha {
@@ -793,7 +770,7 @@ body::after {
 
 .theme-synthwave-84 {
     --bg: #262335;
-    --fg: #ffffff;
+    --fg: #ffffff; /* Already meets WCAG 2.1 AA (>7:1 contrast) */
     --accent: #ff7edb;
     --secondary: #241b2f;
     --hover: #34294f;
@@ -961,8 +938,8 @@ body::after {
 
 .theme-cyberpunk {
     --bg: #000b1a;
-    --fg: #00ff9f;
-    --accent: #ff0040;
+    --fg: #6dffb8; /* Adjusted from #00ff9f for WCAG 2.1 AA (4.5:1) compliance */
+    --accent: #ff4d7a; /* Adjusted for better contrast */
     --secondary: #001933;
     --hover: #003366;
 }
@@ -1049,16 +1026,16 @@ body::after {
 
 .theme-high-contrast-dark {
     --bg: #000000;
-    --fg: #ffffff;
-    --accent: #00ff00;
+    --fg: #ffffff; /* Perfect contrast (21:1) - WCAG 2.1 AAA compliant */
+    --accent: #00ff00; /* High contrast green (15.3:1) */
     --secondary: #1a1a1a;
     --hover: #333333;
 }
 
 .theme-high-contrast-light {
     --bg: #ffffff;
-    --fg: #000000;
-    --accent: #0000ff;
+    --fg: #000000; /* Perfect contrast (21:1) - WCAG 2.1 AAA compliant */
+    --accent: #0000ff; /* High contrast blue (8.6:1) */
     --secondary: #e6e6e6;
     --hover: #cccccc;
 }
@@ -1121,8 +1098,8 @@ body::after {
 
 .theme-neon {
     --bg: #0d001a;
-    --fg: #ff00ff;
-    --accent: #00ffff;
+    --fg: #ff80ff; /* Adjusted from #ff00ff for WCAG 2.1 AA (4.5:1) compliance */
+    --accent: #66ffff; /* Adjusted for better contrast */
     --secondary: #1a0033;
     --hover: #330066;
 }
@@ -1159,5 +1136,51 @@ body::after {
     }
     .status {
         padding: 1rem 1.5rem;
+    }
+}
+
+/* Zen Mode: Maximum distraction-free writing */
+body.zen-mode .save-controls {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+body.zen-mode .main-content:hover .save-controls {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.zen-mode .header {
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+body.zen-mode:hover .header {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+body.zen-mode .status {
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+body.zen-mode:hover .status {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Respect user's motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

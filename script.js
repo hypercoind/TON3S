@@ -147,18 +147,46 @@ function throttledSave(key, value) {
         return;
     }
     lastSaveTime = now;
-    
+
     try {
         if (typeof value === 'string' && value.length > MAX_CONTENT_SIZE) {
             console.warn('Content too large, not saving');
             return;
         }
         localStorage.setItem(key, value);
+
+        // Update save indicator
+        updateSaveIndicator();
     } catch (e) {
         console.error('Storage error:', e);
         // Fallback to in-memory storage if localStorage fails
         window[key] = value;
     }
+}
+
+// Update save indicator with human-readable timestamp
+function updateSaveIndicator() {
+    const indicator = document.getElementById('save-status');
+    if (!indicator) return;
+
+    const now = Date.now();
+    const elapsed = now - lastSaveTime;
+
+    if (elapsed < 1000) {
+        indicator.textContent = 'Saved just now';
+    } else if (elapsed < 60000) {
+        const seconds = Math.floor(elapsed / 1000);
+        indicator.textContent = `Saved ${seconds}s ago`;
+    } else if (elapsed < 3600000) {
+        const minutes = Math.floor(elapsed / 60000);
+        indicator.textContent = `Saved ${minutes}m ago`;
+    } else {
+        indicator.textContent = 'Saved';
+    }
+
+    // Update every 10 seconds
+    clearTimeout(window.saveIndicatorTimeout);
+    window.saveIndicatorTimeout = setTimeout(updateSaveIndicator, 10000);
 }
 
 // Load saved content, theme, and font
@@ -429,12 +457,12 @@ function initializeSecurity() {
 function populateDropdowns() {
     const themeDropdown = document.getElementById('theme-dropdown-menu');
     const fontDropdown = document.getElementById('font-dropdown-menu');
-    
+
     if (themeDropdown) {
-        themeDropdown.innerHTML = themes.map((theme, index) => 
-            `<div class="dropdown-item" data-index="${index}">${sanitizeInput(theme.full)}</div>`
+        themeDropdown.innerHTML = themes.map((theme, index) =>
+            `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(theme.full)}</div>`
         ).join('');
-        
+
         themeDropdown.addEventListener('click', (e) => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
@@ -447,12 +475,12 @@ function populateDropdowns() {
             }
         });
     }
-    
+
     if (fontDropdown) {
-        fontDropdown.innerHTML = fonts.map((font, index) => 
-            `<div class="dropdown-item" data-index="${index}">${sanitizeInput(font.full)}</div>`
+        fontDropdown.innerHTML = fonts.map((font, index) =>
+            `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(font.full)}</div>`
         ).join('');
-        
+
         fontDropdown.addEventListener('click', (e) => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
@@ -497,6 +525,123 @@ document.addEventListener('click', (e) => {
         });
     }
 });
+
+// Keyboard navigation for dropdowns (WCAG 2.1 AA compliance)
+function setupDropdownKeyboardNav() {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.addEventListener('keydown', (e) => {
+            const items = Array.from(menu.querySelectorAll('.dropdown-item'));
+            const currentIndex = items.indexOf(document.activeElement);
+
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % items.length;
+                    items[nextIndex].focus();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    const prevIndex = currentIndex === 0 ? items.length - 1 : currentIndex - 1;
+                    items[prevIndex].focus();
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    document.activeElement.click();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    closeAllDropdowns();
+                    // Return focus to trigger button
+                    const triggerBtn = document.getElementById(menu.id.replace('-menu', ''));
+                    if (triggerBtn) triggerBtn.focus();
+                    break;
+            }
+        });
+    });
+}
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+    });
+}
+
+// Zen Mode state
+let zenModeEnabled = localStorage.getItem('zenMode') === 'true';
+
+// Toggle Zen Mode
+function toggleZenMode() {
+    zenModeEnabled = !zenModeEnabled;
+    if (zenModeEnabled) {
+        document.body.classList.add('zen-mode');
+    } else {
+        document.body.classList.remove('zen-mode');
+    }
+    localStorage.setItem('zenMode', zenModeEnabled);
+}
+
+// Initialize Zen Mode state on load
+if (zenModeEnabled) {
+    document.body.classList.add('zen-mode');
+}
+
+// Comprehensive keyboard shortcuts system
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+        // Escape to exit Zen mode
+        if (e.key === 'Escape' && zenModeEnabled) {
+            e.preventDefault();
+            toggleZenMode();
+            return;
+        }
+
+        // Keyboard shortcuts
+        if (cmdOrCtrl && !e.shiftKey && !e.altKey) {
+            switch(e.key) {
+                case 's':
+                    e.preventDefault();
+                    toggleDropdown('save-dropdown-menu');
+                    break;
+                case 't':
+                    e.preventDefault();
+                    rotateTheme();
+                    break;
+                case 'f':
+                    // Only intercept if not in editor to allow browser find
+                    if (document.activeElement !== editor) {
+                        e.preventDefault();
+                        rotateFont();
+                    }
+                    break;
+                case '\\':
+                    e.preventDefault();
+                    toggleZenMode();
+                    break;
+            }
+        }
+
+        // F11 for full screen
+        if (e.key === 'F11') {
+            e.preventDefault();
+            toggleFullScreen();
+        }
+    });
+}
+
+// Toggle full screen mode
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log('Fullscreen request failed:', err);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
 
 // Privacy popup functionality
 function setupPrivacyPopup() {
@@ -557,23 +702,7 @@ function setupPrivacyPopup() {
                 
                 currentFontIndex = 0;
                 applyFont();
-                
-                // Reset text style buttons to body style
-                const textStyleBtns = document.querySelectorAll('.text-style-btn');
-                if (textStyleBtns.length) {
-                    textStyleBtns.forEach(btn => {
-                        if (btn.dataset.style === 'body') {
-                            btn.style.background = 'var(--accent)';
-                            btn.style.color = 'var(--bg)';
-                            btn.style.opacity = '1';
-                        } else {
-                            btn.style.background = 'transparent';
-                            btn.style.color = 'var(--accent)';
-                            btn.style.opacity = '0.6';
-                        }
-                    });
-                }
-                
+
                 // Close popup
                 if (privacyOverlay) {
                     privacyOverlay.classList.remove('show');
@@ -608,7 +737,7 @@ function autoScrollOnTyping() {
     
     // Find the closest block element containing the cursor
     let blockElement = cursorNode;
-    while (blockElement && blockElement !== editor && !['H1', 'H2', 'P', 'DIV'].includes(blockElement.tagName)) {
+    while (blockElement && blockElement !== editor && !['P', 'DIV'].includes(blockElement.tagName)) {
         blockElement = blockElement.parentElement;
     }
     
@@ -632,246 +761,97 @@ function autoScrollOnTyping() {
 
 // Visual text style functionality for contenteditable
 function setupTextStyles() {
-    const textStyleBtns = document.querySelectorAll('.text-style-btn');
     const editor = document.querySelector('.editor');
-    
-    if (!editor || !textStyleBtns.length) return;
-    
-    // Track current typing style
-    let currentTypingStyle = 'body';
-    
-    // Update button active states based on current typing style
-    function updateButtonStates() {
-        textStyleBtns.forEach(btn => {
-            if (btn.dataset.style === currentTypingStyle) {
-                btn.style.background = 'var(--accent)';
-                btn.style.color = 'var(--bg)';
-                btn.style.opacity = '1';
-            } else {
-                btn.style.background = 'transparent';
-                btn.style.color = 'var(--accent)';
-                btn.style.opacity = '0.6';
-            }
+
+    if (!editor) return;
+
+    // MIGRATION: Convert any existing h1/h2 elements to p elements
+    function migrateHeadingsToParagraphs() {
+        const headings = editor.querySelectorAll('h1, h2');
+        headings.forEach(heading => {
+            const p = document.createElement('p');
+            p.textContent = heading.textContent;
+            heading.parentNode.replaceChild(p, heading);
         });
     }
-    
-    // Get current block element or create one
-    function getCurrentBlock() {
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return null;
-        
-        let node = selection.anchorNode;
-        
-        // If we're in a text node, get its parent
-        if (node.nodeType === Node.TEXT_NODE) {
-            node = node.parentElement;
-        }
-        
-        // If we're directly in the editor, we need to find/create a block
-        if (node === editor) {
-            // Create a new paragraph if we're at the root
-            const p = document.createElement('p');
-            p.innerHTML = '<br>';
-            editor.appendChild(p);
-            
-            // Move cursor to the new paragraph
-            const range = document.createRange();
-            range.setStart(p, 0);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            
-            return p;
-        }
-        
-        // Find the closest block-level element
-        while (node && node !== editor && !['H1', 'H2', 'P'].includes(node.tagName)) {
-            node = node.parentElement;
-        }
-        
-        return node === editor ? null : node;
-    }
-    
-    // Convert element to specified style
-    function convertElementStyle(element, style) {
-        if (!element || element === editor) return;
-        
-        const content = element.textContent || '';
-        let newElement;
-        
-        switch (style) {
-            case 'title':
-                newElement = document.createElement('h1');
-                break;
-            case 'heading':
-                newElement = document.createElement('h2');
-                break;
-            case 'body':
-            default:
-                newElement = document.createElement('p');
-                break;
-        }
-        
-        // Preserve content or add line break if empty
-        if (content.trim()) {
-            newElement.textContent = content;
-        } else {
-            newElement.innerHTML = '<br>';
-        }
-        
-        // Replace the old element
-        element.parentNode.replaceChild(newElement, element);
-        
-        // Restore cursor position in the new element
-        const selection = window.getSelection();
-        const range = document.createRange();
-        
-        if (newElement.firstChild) {
-            if (newElement.firstChild.nodeType === Node.TEXT_NODE) {
-                range.setStart(newElement.firstChild, Math.min(newElement.firstChild.length, newElement.textContent.length));
-            } else {
-                range.setStart(newElement, 0);
-            }
-        } else {
-            range.setStart(newElement, 0);
-        }
-        
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        return newElement;
-    }
-    
-    // Handle Enter key to reset style and create new paragraph
+
+    // Run migration on load
+    migrateHeadingsToParagraphs();
+
+    // Handle Enter key to create new paragraphs
     editor.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            
-            // Create new paragraph
-            const p = document.createElement('p');
-            p.innerHTML = '<br>';
-            
-            // Insert after current position
-            const selection = window.getSelection();
-            if (selection.rangeCount) {
-                const currentBlock = getCurrentBlock();
-                
-                if (currentBlock) {
-                    currentBlock.parentNode.insertBefore(p, currentBlock.nextSibling);
-                } else {
-                    editor.appendChild(p);
-                }
-                
-                // Move cursor to new paragraph
-                const newRange = document.createRange();
-                newRange.setStart(p, 0);
-                newRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
+
+            // Shift+Enter: Create line break within current block
+            if (e.shiftKey) {
+                document.execCommand('insertLineBreak');
+                setTimeout(() => autoScrollOnTyping(), 10);
+                return;
             }
-            
-            // Reset to body style for new line
-            currentTypingStyle = 'body';
-            updateButtonStates();
-            
+
+            // Regular Enter: Create new paragraph
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const newP = document.createElement('p');
+            newP.innerHTML = '<br>';
+
+            const range = selection.getRangeAt(0);
+            let currentBlock = range.startContainer;
+
+            // Find current paragraph
+            if (currentBlock.nodeType === Node.TEXT_NODE) {
+                currentBlock = currentBlock.parentElement;
+            }
+
+            while (currentBlock && currentBlock !== editor && currentBlock.tagName !== 'P') {
+                currentBlock = currentBlock.parentElement;
+            }
+
+            if (currentBlock && currentBlock !== editor) {
+                currentBlock.parentNode.insertBefore(newP, currentBlock.nextSibling);
+            } else {
+                editor.appendChild(newP);
+            }
+
+            // Move cursor to new paragraph
+            const newRange = document.createRange();
+            newRange.setStart(newP, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+
             // Auto-scroll after creating new line
             setTimeout(() => autoScrollOnTyping(), 10);
         }
     });
-    
+
     // Handle input events for persistence and auto-save
     editor.addEventListener('input', () => {
-        // Ensure we always have proper block elements
+        // Ensure we always have proper paragraph elements
         if (editor.childNodes.length === 0) {
             const p = document.createElement('p');
             p.innerHTML = '<br>';
             editor.appendChild(p);
         }
-        
+
         // Auto-save content
         throttledSave('savedContent', editor.innerHTML);
-        
+
         // Update word/char counts
         updateCounts();
-        
+
         // Auto-scroll when typing past bottom
         autoScrollOnTyping();
     });
-    
+
     // Initialize with default paragraph if empty
     if (editor.innerHTML.trim() === '') {
         const p = document.createElement('p');
         p.innerHTML = '<br>';
         editor.appendChild(p);
     }
-    
-    // Initial state
-    updateButtonStates();
-    
-    textStyleBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const style = btn.dataset.style;
-            if (!style) return;
-            
-            // Update current typing style
-            currentTypingStyle = style;
-            updateButtonStates();
-            
-            const selection = window.getSelection();
-            
-            if (selection.rangeCount === 0) {
-                editor.focus();
-                return;
-            }
-            
-            // Check if we have selected text across elements or just cursor position
-            const range = selection.getRangeAt(0);
-            
-            if (range.collapsed) {
-                // No selection - apply to current block
-                const currentBlock = getCurrentBlock();
-                if (currentBlock) {
-                    convertElementStyle(currentBlock, style);
-                }
-            } else {
-                // Has selection - apply to all blocks that intersect the selection
-                const startContainer = range.startContainer;
-                const endContainer = range.endContainer;
-                
-                // Find all block elements that intersect the selection
-                const blocksToConvert = new Set();
-                
-                // Add block containing start of selection
-                let startBlock = startContainer.nodeType === Node.TEXT_NODE ? 
-                                 startContainer.parentElement : startContainer;
-                while (startBlock && startBlock !== editor && !['H1', 'H2', 'P'].includes(startBlock.tagName)) {
-                    startBlock = startBlock.parentElement;
-                }
-                if (startBlock && startBlock !== editor) {
-                    blocksToConvert.add(startBlock);
-                }
-                
-                // Add block containing end of selection (if different)
-                let endBlock = endContainer.nodeType === Node.TEXT_NODE ? 
-                               endContainer.parentElement : endContainer;
-                while (endBlock && endBlock !== editor && !['H1', 'H2', 'P'].includes(endBlock.tagName)) {
-                    endBlock = endBlock.parentElement;
-                }
-                if (endBlock && endBlock !== editor && endBlock !== startBlock) {
-                    blocksToConvert.add(endBlock);
-                }
-                
-                // Convert all blocks in the set
-                blocksToConvert.forEach(block => {
-                    convertElementStyle(block, style);
-                });
-            }
-            
-            // Focus back to editor
-            editor.focus();
-        });
-    });
 }
 
 // Save functionality
@@ -909,29 +889,18 @@ function setupSaveControls() {
 function htmlToMarkdown(html) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
-    
+
     let markdown = '';
-    
-    // Process each block element
-    const blocks = tempDiv.querySelectorAll('h1, h2, p');
+
+    // Process each paragraph element
+    const blocks = tempDiv.querySelectorAll('p');
     blocks.forEach(block => {
         const text = block.textContent.trim();
         if (!text) return;
-        
-        switch (block.tagName.toLowerCase()) {
-            case 'h1':
-                markdown += '# ' + text + '\n\n';
-                break;
-            case 'h2':
-                markdown += '## ' + text + '\n\n';
-                break;
-            case 'p':
-            default:
-                markdown += text + '\n\n';
-                break;
-        }
+
+        markdown += text + '\n\n';
     });
-    
+
     return markdown.trim();
 }
 
@@ -939,44 +908,23 @@ function htmlToMarkdown(html) {
 function parseContentForPDF(html) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
-    
+
     const contentBlocks = [];
-    
-    // Process each block element
-    const blocks = tempDiv.querySelectorAll('h1, h2, p');
+
+    // Process each paragraph element
+    const blocks = tempDiv.querySelectorAll('p');
     blocks.forEach(block => {
         const text = block.textContent.trim();
         if (!text) return;
-        
-        let blockType, fontSize, fontStyle;
-        
-        switch (block.tagName.toLowerCase()) {
-            case 'h1':
-                blockType = 'title';
-                fontSize = 20;
-                fontStyle = 'bold';
-                break;
-            case 'h2':
-                blockType = 'heading';
-                fontSize = 16;
-                fontStyle = 'bold';
-                break;
-            case 'p':
-            default:
-                blockType = 'body';
-                fontSize = 12;
-                fontStyle = 'normal';
-                break;
-        }
-        
+
         contentBlocks.push({
-            type: blockType,
+            type: 'body',
             text: text,
-            fontSize: fontSize,
-            fontStyle: fontStyle
+            fontSize: 12,
+            fontStyle: 'normal'
         });
     });
-    
+
     return contentBlocks;
 }
 
@@ -1039,38 +987,22 @@ function generatePDF(contentBlocks) {
             doc.addPage();
             currentY = 30;
         }
-        
-        // Set font style and color based on block type
-        if (block.type === 'title') {
-            doc.setTextColor(colors.accent.r, colors.accent.g, colors.accent.b);
-            doc.setFont(undefined, 'bold');
-        } else if (block.type === 'heading') {
-            doc.setTextColor(colors.accent.r, colors.accent.g, colors.accent.b);
-            doc.setFont(undefined, 'bold');
-        } else {
-            doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
-            doc.setFont(undefined, 'normal');
-        }
-        
-        // Set font size
-        doc.setFontSize(block.fontSize);
-        
+
+        // All text uses body style
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(12);
+
         // Add text with word wrapping
         const splitText = doc.splitTextToSize(block.text, doc.internal.pageSize.width - 2 * margin);
         doc.text(splitText, margin, currentY);
-        
+
         // Calculate space used
         const linesUsed = Array.isArray(splitText) ? splitText.length : 1;
-        currentY += (linesUsed * lineHeight) + (block.fontSize / 2);
-        
-        // Add extra space after titles and headings
-        if (block.type === 'title') {
-            currentY += 8;
-        } else if (block.type === 'heading') {
-            currentY += 5;
-        } else {
-            currentY += 3;
-        }
+        currentY += (linesUsed * lineHeight) + 6;
+
+        // Standard paragraph spacing
+        currentY += 3;
     });
     
     // Add footer on each page
@@ -1162,6 +1094,8 @@ function saveDocument(format) {
 initializeSecurity();
 updateCounts();
 populateDropdowns();
+setupDropdownKeyboardNav(); // Enable keyboard navigation for accessibility
+setupKeyboardShortcuts(); // Enable global keyboard shortcuts
 setupPrivacyPopup();
 setupTextStyles();
 setupSaveControls();
