@@ -4,231 +4,469 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TON3S is a minimalist, privacy-focused writing application that runs entirely in the browser. It's a single-page application built with pure HTML/CSS/JavaScript (no frameworks) with local-only data storage.
+TON3S is a minimalist, privacy-focused writing application with a modular frontend/backend architecture. Version 2.0 introduces multi-document support, Nostr integration for decentralized publishing, and Docker deployment.
 
-**Core Philosophy**: Privacy-first, distraction-free writing with extensive theme/font customization.
+**Core Philosophy**: Privacy-first, distraction-free writing with extensive customization and optional decentralized publishing.
 
 ## Project Structure
 
 ```
 TON3S/
-├── index.html      # Main HTML structure with CSP headers
-├── script.js       # All application logic (~1200 lines)
-├── styles.css      # All styling including 70+ theme definitions
-├── .htaccess       # Apache configuration for security headers
-└── README.md       # User-facing documentation
+├── frontend/                    # Vite-based frontend application
+│   ├── src/
+│   │   ├── main.js              # Application bootstrap
+│   │   ├── components/          # UI components (BaseComponent pattern)
+│   │   │   ├── BaseComponent.js # Base class with lifecycle methods
+│   │   │   ├── Editor.js        # ContentEditable editor
+│   │   │   ├── Header.js        # Top toolbar
+│   │   │   ├── Sidebar.js       # Document list and search
+│   │   │   ├── SaveControls.js  # Export dropdown
+│   │   │   ├── StatusBar.js     # Word/character count
+│   │   │   ├── NostrPanel.js    # Nostr publishing UI
+│   │   │   └── index.js         # Component exports
+│   │   ├── services/            # Business logic layer
+│   │   │   ├── StorageService.js    # IndexedDB (Dexie) management
+│   │   │   ├── NostrService.js      # Relay proxy communication
+│   │   │   ├── NostrAuthService.js  # NIP-07 authentication
+│   │   │   ├── ExportService.js     # Markdown/PDF export
+│   │   │   └── index.js             # Service exports
+│   │   ├── state/               # State management
+│   │   │   ├── AppState.js      # Reactive singleton state
+│   │   │   └── StateEmitter.js  # Event emitter base class
+│   │   ├── data/                # Static data
+│   │   │   ├── themes.js        # 72 theme definitions
+│   │   │   └── fonts.js         # 27 font definitions
+│   │   ├── utils/               # Utility functions
+│   │   │   ├── keyboard.js      # Keyboard shortcuts
+│   │   │   ├── markdown.js      # HTML↔Markdown conversion
+│   │   │   └── sanitizer.js     # Input sanitization
+│   │   └── styles/              # Modular CSS
+│   │       ├── main.css         # Entry point
+│   │       ├── base.css         # Reset and typography
+│   │       ├── layout.css       # Grid/flexbox layout
+│   │       ├── components.css   # UI component styles
+│   │       ├── editor.css       # Editor-specific styles
+│   │       ├── themes.css       # All theme definitions
+│   │       ├── fonts.css        # Font imports/application
+│   │       ├── animations.css   # Transitions/animations
+│   │       ├── zen-mode.css     # Zen mode styling
+│   │       └── responsive.css   # Mobile/tablet styles
+│   ├── public/                  # Static assets
+│   │   ├── favicon.svg
+│   │   └── manifest.json        # PWA manifest
+│   ├── index.html               # Main entry point
+│   ├── vite.config.js           # Vite configuration with PWA plugin
+│   ├── Dockerfile               # Multi-stage build (Node → nginx)
+│   └── nginx.conf               # Security headers, gzip, routing
+│
+├── backend/                     # Fastify backend server
+│   ├── src/
+│   │   ├── index.js             # Fastify server entry point
+│   │   └── websocket/
+│   │       └── NostrProxy.js    # Nostr relay proxy
+│   ├── Dockerfile               # Node 22 Alpine with health check
+│   └── package.json             # v2.0.0, Fastify + WebSocket
+│
+├── docs/                        # Documentation
+│   ├── getting-started.md
+│   ├── user-guide.md
+│   ├── nostr-guide.md
+│   ├── architecture.md
+│   ├── development.md
+│   ├── deployment.md
+│   └── contributing.md
+│
+├── docker-compose.yml           # Multi-container orchestration
+├── README.md                    # User-facing documentation
+├── CLAUDE.md                    # This file
+│
+└── [Legacy v1 files]            # Standalone single-file version
+    ├── index.html
+    ├── script.js
+    ├── styles.css
+    └── .htaccess
 ```
 
 ## Architecture
 
-### Single-Page Application Design
-- **No build process**: Open `index.html` directly in browser
-- **No dependencies** except jsPDF (loaded from CDN for PDF export)
-- All state managed in vanilla JavaScript using localStorage
+### Component Pattern
 
-### Core Components
+All UI components extend `BaseComponent`:
 
-#### 1. Editor System (ContentEditable)
-- Uses `contenteditable` div, not textarea
-- Supports three text styles: Title (h1), Heading (h2), Body (p)
-- HTML structure is stored, then converted to Markdown/PDF on export
-- Auto-save on every input event (throttled to 100ms)
-- Custom paste handler prevents XSS by stripping HTML
+```javascript
+class MyComponent extends BaseComponent {
+  constructor() {
+    super();
+    this.container = this.$('#my-container');
+  }
 
-#### 2. Theme System
-- 70+ themes defined as CSS classes in `styles.css`
-- Each theme uses CSS custom properties: `--bg`, `--fg`, `--accent`, `--fg-dim`
-- Theme classes applied to `<body>` element
-- Random rotation through unused themes to avoid repetition
-- Theme state tracked with `unusedThemeIndices` array
+  init() {
+    // Subscribe to state changes
+    this.subscribe(appState, 'stateChange', (state) => {
+      this.render(state);
+    });
+  }
 
-#### 3. Font System
-- 27+ monospace/writing fonts defined as CSS classes
-- Font classes applied to `<body>` element
-- Similar random rotation system as themes
-- Fonts loaded from Google Fonts (specified in CSS)
+  render(state) {
+    // Update DOM based on state
+  }
 
-#### 4. Storage & Privacy
-- **All data stored in localStorage**: `savedContent`, `savedThemeIndex`, `savedFontIndex`
-- Fallback to in-memory storage if localStorage fails/disabled
-- Size limit: 1MB max content (`MAX_CONTENT_SIZE`)
-- Clear data button with confirmation
-- No external analytics or tracking
+  bindEvents() {
+    // Attach event listeners
+    this.container.addEventListener('click', this.handleClick.bind(this));
+  }
 
-#### 5. Export System
-- **Markdown**: Converts h1/h2/p to markdown syntax (`#`, `##`, plain text)
-- **PDF**: Uses jsPDF library, applies current theme colors to PDF
-- Filename prompt with automatic extension handling
+  destroy() {
+    // Cleanup (subscriptions auto-cleaned by super.destroy())
+  }
+}
+```
 
-### Security Features
+**Lifecycle**: `constructor` → `init()` → `bindEvents()` → `render()` → `destroy()`
 
-#### Input Sanitization
-- `sanitizeInput()` function escapes HTML entities
-- Paste events stripped to plain text only
-- Custom properties validated before storage
+**Helper Methods**:
+- `this.$()` - querySelector shorthand
+- `this.$$()` - querySelectorAll shorthand
+- `this.createElement()` - Create element with attributes and events
+- `this.subscribe()` - Subscribe to events with auto-cleanup
 
-#### Content Security Policy
-Strict CSP headers in HTML:
-- Scripts only from self + jsPDF CDN
-- Fonts only from Google Fonts
-- No inline scripts/styles
-- Frame-ancestors none
+### State Management
 
-#### Rate Limiting
-- Storage operations throttled to prevent abuse
-- 100ms minimum between saves
+Centralized reactive state via `AppState` singleton:
+
+```javascript
+import { appState } from './state/AppState.js';
+
+// Get current state
+const { documents, currentDocumentId, settings } = appState.getState();
+
+// Update state (emits 'stateChange' event)
+appState.setState({ currentDocumentId: 123 });
+
+// Subscribe to changes
+appState.on('stateChange', (newState) => { ... });
+```
+
+**State Structure**:
+```javascript
+{
+  documents: [],              // Array of document objects
+  currentDocumentId: null,    // Active document ID
+  settings: {
+    themeIndex: 0,
+    fontIndex: 0,
+    zenMode: false,
+    sidebarVisible: true
+  },
+  nostr: {
+    connected: false,
+    pubkey: null,
+    extensionType: null
+  },
+  ui: {
+    searchQuery: '',
+    saveStatus: 'saved',
+    loading: false
+  }
+}
+```
+
+### Service Layer
+
+Services encapsulate business logic separate from UI:
+
+| Service | Purpose |
+|---------|---------|
+| `StorageService` | IndexedDB operations via Dexie.js |
+| `NostrService` | WebSocket communication with relay proxy |
+| `NostrAuthService` | NIP-07 extension detection and authentication |
+| `ExportService` | Markdown/PDF generation |
+
+```javascript
+import { storageService, exportService } from './services/index.js';
+
+// All services are singleton instances
+await storageService.saveDocument(doc);
+const markdown = exportService.toMarkdown(html);
+```
+
+### Storage Schema (IndexedDB)
+
+```javascript
+// Document schema
+{
+  id: number,                  // Auto-generated primary key
+  title: string,               // Document title
+  content: string,             // HTML content (h1, h2, p tags)
+  plainText: string,           // Extracted text for search
+  tags: string[],              // Document tags
+  createdAt: number,           // Unix timestamp
+  updatedAt: number,           // Unix timestamp
+  nostr: {
+    published: boolean,
+    eventId: string,
+    publishedAt: number
+  }
+}
+```
+
+### Nostr Integration
+
+**Architecture**: Frontend → Backend WebSocket Proxy → Nostr Relays
+
+This provides IP privacy by routing all relay traffic through the backend.
+
+**Protocol Messages**:
+| Message | Direction | Purpose |
+|---------|-----------|---------|
+| `CONNECT` | Client → Server | Connect to a relay |
+| `DISCONNECT` | Client → Server | Disconnect from a relay |
+| `SEND` | Client → Server | Send to specific relay |
+| `BROADCAST` | Client → Server | Send to all relays |
+| `RELAY_STATUS` | Server → Client | Relay connection state |
+| `RELAY_MESSAGE` | Server → Client | Messages from relays |
+| `ERROR` | Server → Client | Error notifications |
+
+**Event Types**:
+- Kind 1: Short-form notes
+- Kind 30023: Long-form articles (NIP-23)
 
 ## Development Commands
 
-Since this is a static site with no build process:
+### Frontend
 
-### Local Development
 ```bash
-# Open in browser directly
-open index.html
+cd frontend
 
-# Or serve with Python (for proper MIME types)
-python3 -m http.server 8000
-
-# Or serve with PHP
-php -S localhost:8000
+npm install          # Install dependencies
+npm run dev          # Start Vite dev server (http://localhost:3000)
+npm run build        # Build for production (dist/)
+npm run preview      # Preview production build
 ```
 
-### Testing
-No formal test suite. Manual testing workflow:
-1. Test all text style buttons (Title, Heading, Body)
-2. Test theme rotation (click theme button multiple times)
-3. Test font rotation (click font button multiple times)
-4. Test save as Markdown and PDF
-5. Test privacy controls (view popup, clear data)
-6. Test auto-save (refresh page, content should persist)
-7. Test in private/incognito mode (should work without persistence)
+### Backend
+
+```bash
+cd backend
+
+npm install          # Install dependencies
+npm start            # Run production server (port 3001)
+npm run dev          # Run with --watch for hot reload
+```
+
+### Docker
+
+```bash
+# Start all services
+docker compose up -d
+
+# Rebuild and start
+docker compose up --build -d
+
+# Stop all services
+docker compose down
+
+# View logs
+docker compose logs -f
+```
+
+**Ports**:
+- Frontend: 3002 (mapped to nginx on 3000)
+- Backend: 3001
+- Vite Dev: 3000 (with proxy to backend)
 
 ## Key Implementation Details
 
-### Text Style Application
-- Text styles apply to current block element (paragraph)
-- Enter key always creates new `<p>` tag and resets to body style
-- Style buttons convert existing elements in-place (h1 ↔ h2 ↔ p)
-- Selection spanning multiple blocks applies style to all blocks
+### Text Styling
 
-### Auto-scroll Behavior
-Custom auto-scroll when cursor approaches bottom of editor:
-- Tracks cursor position in block elements
-- Maintains 60px buffer at bottom
-- Triggers on every input event and after paste
+The editor uses `contenteditable` with three text styles:
+- **Title** (h1): Main document title
+- **Heading** (h2): Section headings
+- **Body** (p): Regular paragraphs
 
-### Dropdown Menus
-- Theme/font/save controls use custom dropdown system
-- Populated dynamically from `themes` and `fonts` arrays
-- Click outside to close
-- Instant application on selection
-
-### Random Theme/Font Rotation
-Algorithm prevents immediate repetition:
 ```javascript
-// Maintains array of unused indices
-// When clicked: pick random from unused, remove from array
-// When array empty: refill with all except current
+// Apply style to current block
+editor.execCommand('formatBlock', false, 'h1');
 ```
+
+Enter key creates new `<p>` tag and resets to body style.
+
+### Theme/Font System
+
+Themes and fonts use CSS custom properties:
+
+```css
+.theme-catppuccin-mocha {
+  --bg: #1e1e2e;
+  --fg: #cdd6f4;
+  --accent: #89b4fa;
+  --fg-dim: #6c7086;
+}
+```
+
+Classes applied to `<body>` element. Random rotation prevents immediate repetition using an `unusedIndices` array pattern.
+
+### Auto-save
+
+- Triggered on every input event
+- Throttled to 100ms minimum between saves
+- Updates `updatedAt` timestamp
+- Extracts and stores `plainText` for search
+
+### Security Features
+
+- **Input sanitization**: Escapes HTML entities
+- **Paste handling**: Strips to plain text only
+- **CSP headers**: Strict content security policy
+- **Eval disabled**: Runtime override of `eval()`
+- **HTTPS warning**: Console warning if not HTTPS
 
 ## Code Conventions
 
 ### Naming
-- Theme classes: `theme-{name}` (e.g., `theme-catppuccin-mocha`)
-- Font classes: `font-{name}` (e.g., `font-jetbrains`)
-- Data attributes for buttons: `data-style`, `data-format`, `data-index`
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Theme classes | `theme-{name}` | `theme-catppuccin-mocha` |
+| Font classes | `font-{name}` | `font-jetbrains` |
+| Components | PascalCase | `SaveControls` |
+| Services | camelCase + Service | `storageService` |
+| State events | camelCase | `stateChange` |
 
 ### CSS Custom Properties
+
 Every theme must define:
 ```css
 --bg: background color
 --fg: foreground/text color
---accent: accent color for buttons/highlights
+--accent: accent color for highlights
 --fg-dim: dimmed text color
 ```
 
 ### Event Handling
-- All event listeners added in `setupEventListeners()`
-- Delegated events used for dropdown items
-- Prevent default on paste/drop/drag for security
+
+- Components bind events in `bindEvents()` method
+- Use event delegation for dynamic elements
+- Clean up in `destroy()` method (subscriptions auto-cleaned)
 
 ## Adding New Features
 
-### Adding a New Theme
-1. Add entry to `themes` array in `script.js`:
+### Adding a Theme
+
+1. Add to `frontend/src/data/themes.js`:
    ```javascript
    { class: 'theme-name', name: 'Short', full: 'Full Name' }
    ```
-2. Define CSS class in `styles.css`:
+
+2. Add CSS in `frontend/src/styles/themes.css`:
    ```css
    .theme-name {
-       --bg: #hexcolor;
-       --fg: #hexcolor;
-       --accent: #hexcolor;
-       --fg-dim: #hexcolor;
+     --bg: #hexcolor;
+     --fg: #hexcolor;
+     --accent: #hexcolor;
+     --fg-dim: #hexcolor;
    }
    ```
 
-### Adding a New Font
-1. Add entry to `fonts` array in `script.js`:
+### Adding a Font
+
+1. Add to `frontend/src/data/fonts.js`:
    ```javascript
    { class: 'font-name', name: 'Short', full: 'Full Name' }
    ```
-2. Define CSS class in `styles.css`:
-   ```css
-   .font-name .editor {
-       font-family: 'Font Name', monospace;
-       font-size: 18px;
-       line-height: 1.8;
-   }
-   ```
-3. Import font in CSS if needed:
+
+2. Add CSS in `frontend/src/styles/fonts.css`:
    ```css
    @import url('https://fonts.googleapis.com/css2?family=Font+Name&display=swap');
+
+   .font-name .editor {
+     font-family: 'Font Name', monospace;
+   }
    ```
 
-### Adding a New Export Format
-1. Add dropdown item in `index.html`:
-   ```html
-   <div class="dropdown-item" data-format="newformat">Format Name</div>
+### Adding a Component
+
+1. Create `frontend/src/components/MyComponent.js`:
+   ```javascript
+   import BaseComponent from './BaseComponent.js';
+   import { appState } from '../state/AppState.js';
+
+   class MyComponent extends BaseComponent {
+     constructor() {
+       super();
+       this.container = this.$('#my-container');
+     }
+
+     init() {
+       this.subscribe(appState, 'stateChange', this.render.bind(this));
+     }
+
+     render(state) {
+       // Update DOM
+     }
+
+     bindEvents() {
+       // Attach listeners
+     }
+   }
+
+   export default new MyComponent();
    ```
-2. Add case in `saveDocument()` function in `script.js`
-3. Implement conversion function (see `htmlToMarkdown()` as example)
 
-## Deployment
+2. Export from `frontend/src/components/index.js`
 
-### Static Hosting
-Deploy to any static host (GitHub Pages, Netlify, Vercel, etc.):
-```bash
-# No build required - deploy files as-is
-git push origin main
-```
+3. Initialize in `frontend/src/main.js`
 
-### Security Headers
-`.htaccess` provides Apache security headers. For other servers:
-- **Nginx**: Convert headers to nginx config
-- **Netlify**: Use `_headers` file
-- **Vercel**: Use `vercel.json`
+### Adding a Service
+
+1. Create `frontend/src/services/MyService.js`:
+   ```javascript
+   class MyService {
+     async doSomething() {
+       // Business logic
+     }
+   }
+
+   export const myService = new MyService();
+   ```
+
+2. Export from `frontend/src/services/index.js`
 
 ## Troubleshooting
 
-### localStorage Not Working
-- Check browser privacy settings
-- Try incognito mode (localStorage may be disabled)
-- Fallback to in-memory storage is automatic
+### Storage Issues
 
-### PDF Export Failing
-- Verify jsPDF CDN is accessible
-- Check browser console for CSP violations
-- Ensure content has at least one non-empty block
+- **IndexedDB blocked**: Check browser privacy settings
+- **Quota exceeded**: Large documents may hit limits
+- **Private mode**: IndexedDB may be restricted; fallback is available
 
-### Themes Not Applying
-- Verify theme class exists in `styles.css`
-- Check that CSS custom properties are defined
-- Clear browser cache if styles seem stale
+### Nostr Connection
 
-### Auto-save Not Working
-- Check localStorage quota (may be full)
-- Verify throttle timing (100ms minimum between saves)
-- Check browser console for storage errors
+- **Extension not detected**: Install nos2x, Alby, or compatible NIP-07 extension
+- **Connection failed**: Check backend is running and WebSocket proxy active
+- **Relay errors**: Individual relays may be down; check relay status
+
+### Build/Dev Issues
+
+- **Port conflict**: Change port in vite.config.js or docker-compose.yml
+- **Hot reload not working**: Ensure Vite dev server is running, not production build
+- **CSS not updating**: Clear browser cache or hard refresh
+
+### Docker Issues
+
+- **Container won't start**: Check logs with `docker compose logs`
+- **Backend unhealthy**: Verify health endpoint at `/health`
+- **Network issues**: Ensure `ton3s` network exists
+
+## Testing
+
+No formal test suite. Manual testing workflow:
+
+1. **Editor**: Test Title/Heading/Body styles, paste handling
+2. **Documents**: Create, switch, delete, search
+3. **Themes/Fonts**: Cycle through multiple themes/fonts
+4. **Export**: Save as Markdown and PDF
+5. **Nostr**: Connect extension, publish note and article
+6. **Zen mode**: Toggle on/off, verify UI changes
+7. **Persistence**: Refresh page, verify data persists
+8. **Docker**: Full docker compose up/down cycle

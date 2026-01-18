@@ -2,104 +2,111 @@
 
 **Write to Inspire**
 
-TON3S is a minimalist, privacy-focused writing application that runs entirely in your browser. Whether you're crafting articles, writing books, composing tweets, or jotting down ideas, TON3S provides a distraction-free environment to help you focus on what matters most—your words.
+TON3S is a minimalist, privacy-focused writing application. Whether you're crafting articles, writing books, composing social posts, or jotting down ideas, TON3S provides a distraction-free environment to help you focus on what matters most—your words.
 
-## ✨ Features
+## Features
 
-### 📝 Writing Experience
 - **Distraction-free editor** with clean, minimal interface
-- **Real-time text styling** with Title, Heading, and Body styles
-- **Live word and character count** to track your progress
-- **Auto-save functionality** that preserves your work as you type
-
-### 🎨 Customization
-- **50+ beautiful themes** including Catppuccin, Dracula, Gruvbox, Tokyo Night, Nord, and many more
-- **Multiple font options** optimized for writing and reading
-- **Instant theme switching** to match your mood or environment
-- **Persistent preferences** that remember your choices
-
-### 💾 Export & Sharing
-- **Save as Markdown** (.md) for universal compatibility
-- **Export to PDF** for professional documents and sharing
-- **Post directly to X.com** (Twitter) for social sharing
-- **Publish to Nostr** for decentralized social networks
-
-### 🔒 Privacy First
+- **72 beautiful themes** including Catppuccin, Dracula, Gruvbox, Tokyo Night, Nord, and more
+- **27 fonts** optimized for writing and reading
+- **Zen mode** for focused writing sessions
+- **Multi-document support** with sidebar navigation and search
+- **Export to Markdown and PDF**
+- **Publish to Nostr** decentralized network with IP privacy protection
+- **PWA support** for offline use and installation
 - **100% local storage** - your data never leaves your device
-- **No tracking or analytics** - your privacy is respected
-- **No external servers** - works completely offline after initial load
-- **Clear data anytime** - full control over your information
-- **Open source** - transparent and verifiable
 
-## 🚀 Getting Started
+## Quick Start
 
-1. Open `index.html` in your web browser
-2. Start writing in the editor with the placeholder "Write to inspire..."
-3. Customize your experience:
-   - Click the font button to change typography
-   - Click the theme button to switch color schemes
-   - Use text style buttons to format your content
-4. Save your work using the save button (Markdown or PDF)
-5. Access privacy information and data controls via the shield icon
+### Using Docker (Recommended)
 
-## 🎯 Use Cases
+```bash
+docker compose up -d
+```
 
-- **Blogging** - Draft articles and blog posts
-- **Creative Writing** - Write stories, novels, and creative content  
-- **Social Media** - Compose tweets and social media posts
-- **Note Taking** - Capture ideas and thoughts
-- **Documentation** - Create markdown documentation
-- **Academic Writing** - Write papers and research content
+Access the app at `http://localhost:3002`
 
-## 🛡️ Privacy & Security
+### Local Development
 
-TON3S is designed with privacy as a core principle:
+```bash
+# Frontend
+cd frontend && npm install && npm run dev
 
-- **Local-only data storage** using browser localStorage
-- **No external data transmission** except for optional social sharing
-- **Content Security Policy** headers for enhanced security
-- **No cookies or tracking** mechanisms
-- **Shared device warning** to protect your privacy
+# Backend (separate terminal)
+cd backend && npm install && npm run dev
+```
 
-### ⚠️ Shared Computer Warning
-If using a shared computer, other users may be able to see your stored content. Consider using private/incognito mode or manually clearing data when finished.
+Access the app at `http://localhost:3000`
 
-## 🔧 Technical Details
+## Tech Stack
 
-- **Pure HTML/CSS/JavaScript** - no frameworks or dependencies (except jsPDF for PDF export)
-- **Responsive design** - works on desktop, tablet, and mobile
-- **Modern browser support** - uses contemporary web standards
-- **Lightweight** - fast loading and minimal resource usage
+| Layer | Technology |
+|-------|------------|
+| Frontend | Vanilla JS, Vite, Dexie.js (IndexedDB), PWA |
+| Backend | Node.js, Fastify, WebSocket |
+| Deployment | Docker, nginx |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TON3S/
-├── index.html      # Main application file
-├── script.js       # Application logic and functionality  
-├── styles.css      # Styling and themes
-└── README.md       # This file
+├── frontend/           # Vite-based frontend application
+│   ├── src/
+│   │   ├── components/ # UI components (Editor, Sidebar, etc.)
+│   │   ├── services/   # Business logic (Storage, Nostr, Export)
+│   │   ├── state/      # Reactive state management
+│   │   ├── data/       # Theme and font definitions
+│   │   ├── utils/      # Utilities (keyboard, markdown, sanitizer)
+│   │   └── styles/     # Modular CSS
+│   └── public/         # Static assets and PWA manifest
+├── backend/            # Fastify backend server
+│   └── src/
+│       └── websocket/  # Nostr relay proxy
+├── docs/               # Documentation
+└── docker-compose.yml  # Container orchestration
 ```
 
-## 🤝 Contributing
+## Documentation
 
-TON3S is open source! You can:
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | Quick start for users and developers |
+| [User Guide](docs/user-guide.md) | Complete user documentation |
+| [Nostr Guide](docs/nostr-guide.md) | Publishing to Nostr network |
+| [Architecture](docs/architecture.md) | System design and components |
+| [Development](docs/development.md) | Local setup and workflow |
+| [Deployment](docs/deployment.md) | Docker deployment guide |
+| [Contributing](docs/contributing.md) | How to contribute |
+
+## Privacy
+
+TON3S is designed with privacy as a core principle:
+
+- **Local-only storage** using IndexedDB in your browser
+- **No external data transmission** except for optional Nostr publishing
+- **IP privacy** for Nostr via backend proxy
+- **No cookies, tracking, or analytics**
+- **Content Security Policy** headers for enhanced security
+
+> **Shared Computer Warning**: If using a shared computer, other users may be able to see your stored content. Consider using private/incognito mode or clearing data when finished.
+
+## Contributing
+
+Contributions are welcome! See [Contributing Guide](docs/contributing.md) for details.
+
 - Report issues and suggest features
-- Contribute code improvements
+- Submit pull requests
 - Add new themes or fonts
-- Help with documentation
+- Improve documentation
 
-Visit the [GitHub repository](https://github.com/hypercoind/TON3S) to get involved.
+## Links
 
-## 📝 License
+- **Website**: [ton3s.com](https://ton3s.com)
+- **GitHub**: [github.com/hypercoind/TON3S](https://github.com/hypercoind/TON3S)
+
+## License
 
 This project is open source. See the repository for license details.
-
-## 🔗 Links
-
-- **Website**: [TON3S.com](https://ton3s.com)
-- **GitHub**: [github.com/hypercoind/TON3S](https://github.com/hypercoind/TON3S)
-- **Motto**: Write to Inspire
 
 ---
 
