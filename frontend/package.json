@@ -1,0 +1,19 @@
+{
+  "name": "ton3s-frontend",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "TON3S - Privacy-focused writing application with NOSTR integration",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "dexie": "^4.0.10",
+    "jspdf": "^2.5.1"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vite-plugin-pwa": "^0.21.0"
+  }
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TON3S - Write to Inspire</title>
+
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self' ws://localhost:* wss://*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; media-src 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), fullscreen=(self)">
+
+    <!-- SEO and PWA -->
+    <meta name="description" content="TON3S - A privacy-focused, distraction-free writing application with NOSTR integration">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body class="theme-catppuccin-mocha font-jetbrains">
+    <div class="app-container">
+        <!-- Header -->
+        <div id="header-container"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div id="sidebar-container"></div>
+
+            <!-- Editor Area -->
+            <div class="container">
+                <div id="editor-container"></div>
+            </div>
+
+            <!-- Save Controls -->
+            <div id="save-container"></div>
+
+            <!-- NOSTR Panel -->
+            <div id="nostr-container"></div>
+        </div>
+
+        <!-- Status Bar -->
+        <div id="status-container"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

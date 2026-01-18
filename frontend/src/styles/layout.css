@@ -1,0 +1,243 @@
+/**
+ * TON3S Layout Styles
+ * App container, header, main content, sidebar, status bar
+ */
+
+.app-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header */
+.header {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--secondary);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5rem;
+    color: var(--accent);
+    opacity: 0.7;
+    cursor: default;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Main content area */
+.main-content {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+.container {
+    flex: 1;
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 3rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 280px;
+    border-right: 1px solid var(--secondary);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 0;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fg);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.document-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.document-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.document-item:hover {
+    background: var(--secondary);
+}
+
+.document-item.active {
+    background: var(--secondary);
+    border-left-color: var(--accent);
+}
+
+.document-item-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--fg);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.document-item-meta {
+    font-size: 0.75rem;
+    color: var(--fg-dim);
+}
+
+.document-item-tags {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.tag {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    background: var(--hover);
+    border-radius: 4px;
+    color: var(--fg-dim);
+}
+
+/* Save controls */
+.save-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding: 2rem 1.5rem 2rem 0;
+}
+
+/* Status bar */
+.status {
+    padding: 1rem 3rem;
+    border-top: 1px solid var(--secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    flex-wrap: wrap;
+    gap: 1rem;
+    position: relative;
+}
+
+.word-count {
+    display: flex;
+    gap: 2rem;
+}
+
+.save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    opacity: 0.7;
+}
+
+.save-indicator svg {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+/* Search bar */
+.search-container {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--secondary);
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--secondary);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 0.85rem;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.search-input::placeholder {
+    color: var(--fg-dim);
+}
+
+/* Sidebar actions */
+.sidebar-actions {
+    padding: 1rem;
+    border-top: 1px solid var(--secondary);
+}
+
+.new-document-btn {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.new-document-btn:hover {
+    opacity: 0.9;
+}
+
+.new-document-btn svg {
+    width: 16px;
+    height: 16px;
+}

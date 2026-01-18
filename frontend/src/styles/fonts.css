@@ -1,0 +1,32 @@
+/**
+ * TON3S Font Classes
+ * 27 font family definitions
+ */
+
+.font-jetbrains { --font: 'JetBrains Mono', monospace; }
+.font-fira { --font: 'Fira Code', monospace; }
+.font-source { --font: 'Source Code Pro', monospace; }
+.font-ibm { --font: 'IBM Plex Mono', monospace; }
+.font-roboto { --font: 'Roboto Mono', monospace; }
+.font-space { --font: 'Space Mono', monospace; }
+.font-ubuntu { --font: 'Ubuntu Mono', monospace; }
+.font-inconsolata { --font: 'Inconsolata', monospace; }
+.font-cousine { --font: 'Cousine', monospace; }
+.font-overpass { --font: 'Overpass Mono', monospace; }
+.font-redhat { --font: 'Red Hat Mono', monospace; }
+.font-monaco { --font: 'Monaco', 'Courier New', monospace; }
+.font-menlo { --font: 'Menlo', 'Courier New', monospace; }
+.font-consolas { --font: 'Consolas', 'Courier New', monospace; }
+.font-cascadia { --font: 'Cascadia Code', 'Consolas', monospace; }
+.font-sf-mono { --font: 'SF Mono', 'Monaco', monospace; }
+.font-dejavu { --font: 'DejaVu Sans Mono', 'Courier New', monospace; }
+.font-liberation { --font: 'Liberation Mono', 'Courier New', monospace; }
+.font-pt-mono { --font: 'PT Mono', 'Courier New', monospace; }
+.font-oxygen { --font: 'Oxygen Mono', 'Courier New', monospace; }
+.font-noto { --font: 'Noto Sans Mono', 'Courier New', monospace; }
+.font-recursive { --font: 'Recursive', 'Monaco', monospace; }
+.font-cutive { --font: 'Cutive Mono', 'Courier New', monospace; }
+.font-nova { --font: 'Nova Mono', 'Courier New', monospace; }
+.font-martian { --font: 'Martian Mono', 'Monaco', monospace; }
+.font-b612 { --font: 'B612 Mono', 'Monaco', monospace; }
+.font-times { --font: 'Times New Roman', 'Times', serif; }

@@ -1,0 +1,230 @@
+/**
+ * TON3S Header Component
+ * Logo, theme/font controls, and navigation
+ */
+
+import { BaseComponent } from './BaseComponent.js';
+import { appState, StateEvents } from '../state/AppState.js';
+import { storageService } from '../services/StorageService.js';
+import { themes } from '../data/themes.js';
+import { fonts } from '../data/fonts.js';
+import { sanitizeInput } from '../utils/sanitizer.js';
+
+export class Header extends BaseComponent {
+    constructor(container) {
+        super(container);
+    }
+
+    render() {
+        const currentTheme = appState.currentTheme;
+        const currentFont = appState.currentFont;
+
+        this.container.innerHTML = `
+            <div class="header">
+                <div class="logo">TON3S</div>
+                <div class="controls">
+                    <button class="btn sidebar-toggle" aria-label="Toggle sidebar">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                        </svg>
+                    </button>
+                    <div class="btn-wrapper">
+                        <button class="btn font-btn" id="font-btn" aria-label="Change font">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 7V9H7L8.5 16H6.5L6 18H12L11.5 16H9.5L11 9H15V7H3ZM13 7V9H17V11H15V13H17V15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H13V19H15C16.0609 19 17.0783 18.5786 17.8284 17.8284C18.5786 17.0783 19 16.0609 19 15V13C19 12.4696 18.7893 11.9609 18.4142 11.5858C18.0391 11.2107 17.5304 11 17 11C17.5304 11 18.0391 10.7893 18.4142 10.4142C18.7893 10.0391 19 9.53043 19 9V7H13Z"/>
+                            </svg>
+                            <span id="font-name">${sanitizeInput(currentFont.name)}</span>
+                        </button>
+                        <button class="btn-dropdown" id="font-dropdown" aria-label="Show all fonts">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="font-dropdown-menu" role="menu">
+                            ${fonts.map((font, index) =>
+                                `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(font.full)}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <div class="btn-wrapper">
+                        <button class="btn theme-btn" id="theme-btn" aria-label="Change theme">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.591a.75.75 0 101.06 1.06l1.591-1.591zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.591-1.591a.75.75 0 10-1.06 1.06l1.591-1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.591a.75.75 0 001.06 1.06l1.591-1.591zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06L6.166 5.106a.75.75 0 00-1.06 1.06l1.591 1.591z"/>
+                            </svg>
+                            <span id="theme-name">${sanitizeInput(currentTheme.name)}</span>
+                        </button>
+                        <button class="btn-dropdown" id="theme-dropdown" aria-label="Show all themes">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="theme-dropdown-menu" role="menu">
+                            ${themes.map((theme, index) =>
+                                `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(theme.full)}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    bindEvents() {
+        // Sidebar toggle
+        this.$('.sidebar-toggle')?.addEventListener('click', () => {
+            appState.toggleSidebar();
+        });
+
+        // Theme rotation button
+        this.$('#theme-btn')?.addEventListener('click', () => {
+            this.rotateTheme();
+        });
+
+        // Font rotation button
+        this.$('#font-btn')?.addEventListener('click', () => {
+            this.rotateFont();
+        });
+
+        // Theme dropdown toggle
+        this.$('#theme-dropdown')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown('theme-dropdown-menu');
+        });
+
+        // Font dropdown toggle
+        this.$('#font-dropdown')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown('font-dropdown-menu');
+        });
+
+        // Theme dropdown items
+        this.$('#theme-dropdown-menu')?.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const index = parseInt(e.target.dataset.index);
+                this.setTheme(index);
+                this.closeDropdown('theme-dropdown-menu');
+            }
+        });
+
+        // Font dropdown items
+        this.$('#font-dropdown-menu')?.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const index = parseInt(e.target.dataset.index);
+                this.setFont(index);
+                this.closeDropdown('font-dropdown-menu');
+            }
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', () => {
+            this.closeAllDropdowns();
+        });
+
+        // State subscriptions
+        this.subscribe(
+            appState.on(StateEvents.THEME_CHANGED, this.updateThemeDisplay.bind(this))
+        );
+        this.subscribe(
+            appState.on(StateEvents.FONT_CHANGED, this.updateFontDisplay.bind(this))
+        );
+    }
+
+    rotateTheme() {
+        const icon = this.$('#theme-btn svg');
+        icon?.classList.add('rotating');
+
+        appState.rotateTheme();
+        this.applyTheme();
+        storageService.saveThemeState();
+
+        setTimeout(() => icon?.classList.remove('rotating'), 500);
+    }
+
+    rotateFont() {
+        const icon = this.$('#font-btn svg');
+        icon?.classList.add('pulsing');
+
+        appState.rotateFont();
+        this.applyFont();
+        storageService.saveFontState();
+
+        setTimeout(() => icon?.classList.remove('pulsing'), 500);
+    }
+
+    setTheme(index) {
+        appState.setTheme(index);
+        this.applyTheme();
+        storageService.saveThemeState();
+    }
+
+    setFont(index) {
+        appState.setFont(index);
+        this.applyFont();
+        storageService.saveFontState();
+    }
+
+    applyTheme() {
+        const currentTheme = appState.currentTheme;
+
+        // Remove all theme classes
+        themes.forEach(theme => {
+            document.body.classList.remove(theme.class);
+        });
+
+        // Add current theme
+        document.body.classList.add(currentTheme.class);
+    }
+
+    applyFont() {
+        const currentFont = appState.currentFont;
+
+        // Remove all font classes
+        fonts.forEach(font => {
+            document.body.classList.remove(font.class);
+        });
+
+        // Add current font
+        document.body.classList.add(currentFont.class);
+    }
+
+    updateThemeDisplay(theme) {
+        const nameEl = this.$('#theme-name');
+        if (nameEl) {
+            nameEl.textContent = theme.name;
+        }
+    }
+
+    updateFontDisplay(font) {
+        const nameEl = this.$('#font-name');
+        if (nameEl) {
+            nameEl.textContent = font.name;
+        }
+    }
+
+    toggleDropdown(menuId) {
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+
+        // Close other dropdowns
+        this.$$('.dropdown-menu').forEach(dropdown => {
+            if (dropdown.id !== menuId) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        menu.classList.toggle('show');
+    }
+
+    closeDropdown(menuId) {
+        const menu = document.getElementById(menuId);
+        menu?.classList.remove('show');
+    }
+
+    closeAllDropdowns() {
+        this.$$('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+}
+
+export default Header;

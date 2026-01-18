@@ -1,0 +1,161 @@
+/**
+ * TON3S Responsive Styles
+ * Media queries for different screen sizes
+ */
+
+/* Tablet and smaller */
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-toggle {
+        display: flex;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+    }
+
+    .container {
+        padding: 1.5rem;
+    }
+
+    .status {
+        padding: 1rem 1.5rem;
+    }
+
+    .controls {
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .btn span {
+        display: none;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+        letter-spacing: 0.3rem;
+    }
+
+    .word-count {
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .save-controls {
+        padding: 1rem;
+    }
+
+    .privacy-popup {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .privacy-content {
+        padding: 1rem;
+    }
+
+    .confirm-dialog {
+        width: 95%;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .header {
+        padding: 0.75rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .status {
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .word-count {
+        order: 2;
+    }
+
+    .save-indicator {
+        order: 1;
+        width: 100%;
+    }
+
+    .privacy-btn {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .editor {
+        font-size: 0.95rem;
+    }
+
+    .document-title-input {
+        font-size: 1.25rem;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1800px) {
+    .container {
+        max-width: 800px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .header,
+    .status,
+    .sidebar,
+    .save-controls,
+    .privacy-overlay {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    .app-container {
+        max-width: none;
+    }
+
+    .main-content {
+        display: block;
+    }
+
+    .container {
+        max-width: none;
+        padding: 0;
+    }
+
+    .editor {
+        color: black !important;
+    }
+}
