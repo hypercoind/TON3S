@@ -3,6 +3,11 @@
  * App container, header, main content, sidebar, status bar
  */
 
+/* Default sidebar width variable for zen mode centering */
+:root {
+    --sidebar-current-width: 280px;
+}
+
 .app-container {
     max-width: 1800px;
     margin: 0 auto;
@@ -55,6 +60,8 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    /* Smooth centering transition for zen mode */
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Sidebar */
@@ -66,7 +73,8 @@
     display: flex;
     flex-direction: column;
     background: var(--bg);
-    transition: transform 0.3s ease, width 0.3s ease, min-width 0.3s ease;
+    transition: transform 0.3s ease, width 0.3s ease, min-width 0.3s ease,
+                opacity 0.3s ease, filter 0.3s ease, margin-left 0.3s ease;
     transform: translateX(-100%);
     margin-left: -280px;
 }

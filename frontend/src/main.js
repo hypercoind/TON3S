@@ -183,6 +183,7 @@ class TON3SApp {
         });
 
         // Subscribe to zen mode changes
+        // Simplified handler: just toggle CSS class, state remains intact
         this.zenModeHandler = (zenMode) => {
             if (zenMode) {
                 document.body.classList.add('zen-mode');

@@ -19,6 +19,7 @@ export const StateEvents = {
     // Settings events
     THEME_CHANGED: 'settings:theme',
     FONT_CHANGED: 'settings:font',
+    PRE_ZEN_MODE: 'settings:preZenMode',
     ZEN_MODE_TOGGLED: 'settings:zenMode',
     SIDEBAR_TOGGLED: 'settings:sidebar',
 
@@ -237,21 +238,23 @@ class AppState extends StateEmitter {
 
     setZenMode(enabled) {
         if (this._settings.zenMode !== enabled) {
-            this._settings.zenMode = enabled;
-
-            // Auto-minimize side panels when entering zen mode
+            // Emit PRE_ZEN_MODE before any changes so components can close popups
             if (enabled) {
-                if (this._settings.sidebarOpen) {
-                    this._settings.sidebarOpen = false;
-                    this.emit(StateEvents.SIDEBAR_TOGGLED, false);
-                }
-                if (this._ui.nostrPanelVisible) {
-                    this._ui.nostrPanelVisible = false;
-                    this.emit(StateEvents.NOSTR_PANEL_TOGGLED, false);
-                }
+                this.emit(StateEvents.PRE_ZEN_MODE);
             }
 
+            this._settings.zenMode = enabled;
             this.emit(StateEvents.ZEN_MODE_TOGGLED, enabled);
+        }
+    }
+
+    /**
+     * Sync sidebar state (used by main.js after zen transition completes)
+     */
+    setSidebarOpen(open) {
+        if (this._settings.sidebarOpen !== open) {
+            this._settings.sidebarOpen = open;
+            this.emit(StateEvents.SIDEBAR_TOGGLED, open);
         }
     }
 

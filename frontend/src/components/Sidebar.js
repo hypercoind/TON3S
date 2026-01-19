@@ -113,6 +113,10 @@ export class Sidebar extends BaseComponent {
         this.subscribe(
             appState.on(StateEvents.SIDEBAR_TOGGLED, this.toggleSidebar.bind(this))
         );
+        // Close tag popup before zen mode transition starts
+        this.subscribe(
+            appState.on(StateEvents.PRE_ZEN_MODE, this.closeTagEditorPopup.bind(this))
+        );
 
         // Sidebar resize handle
         this.initResizeHandle();
@@ -142,6 +146,8 @@ export class Sidebar extends BaseComponent {
             const newWidth = Math.min(this.maxWidth, Math.max(this.minWidth, e.clientX));
             sidebar.style.width = `${newWidth}px`;
             sidebar.style.minWidth = `${newWidth}px`;
+            // Update CSS variable for zen mode centering
+            document.documentElement.style.setProperty('--sidebar-current-width', `${newWidth}px`);
         };
 
         const stopResize = () => {
@@ -178,6 +184,8 @@ export class Sidebar extends BaseComponent {
                 sidebar.style.width = `${newWidth}px`;
                 sidebar.style.minWidth = `${newWidth}px`;
                 localStorage.setItem('ton3s-sidebar-width', newWidth);
+                // Update CSS variable for zen mode centering
+                document.documentElement.style.setProperty('--sidebar-current-width', `${newWidth}px`);
             }
         });
 
@@ -188,6 +196,8 @@ export class Sidebar extends BaseComponent {
             if (width >= this.minWidth && width <= this.maxWidth) {
                 sidebar.style.width = `${width}px`;
                 sidebar.style.minWidth = `${width}px`;
+                // Update CSS variable for zen mode centering
+                document.documentElement.style.setProperty('--sidebar-current-width', `${width}px`);
             }
         }
     }

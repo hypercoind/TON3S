@@ -167,6 +167,10 @@ export class Header extends BaseComponent {
         this.subscribe(
             appState.on(StateEvents.NOSTR_DISCONNECTED, this.updateNostrStatusDot.bind(this))
         );
+        // Close dropdowns before zen mode transition starts
+        this.subscribe(
+            appState.on(StateEvents.PRE_ZEN_MODE, this.closeAllDropdowns.bind(this))
+        );
 
         // Initial NOSTR status dot update
         this.updateNostrStatusDot();
