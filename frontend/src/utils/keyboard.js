@@ -102,24 +102,15 @@ class KeyboardManager {
             description: 'Change theme'
         });
 
-        // Toggle zen mode
-        this.register('zen', {
-            key: '\\',
-            cmdOrCtrl: true,
-            handler: () => appState.toggleZenMode(),
-            description: 'Toggle zen mode'
-        });
-
-        // New document
+        // New note
         this.register('new', {
             key: 'n',
             cmdOrCtrl: true,
-            handler: callbacks.onNewDocument || (() => {}),
-            description: 'New document'
+            handler: callbacks.onNewNote || (() => {}),
+            description: 'New note'
         });
 
         // Escape is now handled by individual modals/popups
-        // Zen mode is only toggled via Cmd/Ctrl+\
 
         // Toggle sidebar
         this.register('sidebar', {

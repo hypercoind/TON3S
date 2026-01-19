@@ -11,8 +11,8 @@ TON3S has a minimal interface designed for focused writing:
 │  [Sidebar]  [Theme] [Font] [Zen] [Nostr] [Save]        │  ← Header
 ├───────────┬─────────────────────────────────────────────┤
 │           │                                             │
-│ Document  │                                             │
-│   List    │              Editor Area                    │
+│ Note      │                                             │
+│ List      │              Editor Area                    │
 │           │                                             │
 │           │                                             │
 │ [Search]  │                                             │
@@ -24,10 +24,10 @@ TON3S has a minimal interface designed for focused writing:
 
 ## Writing
 
-### Creating Documents
+### Creating Notes
 
-- Click the **+** button in the sidebar to create a new document
-- Or start typing in the editor to create your first document
+- Click the **+** button in the sidebar to create a new note
+- Or start typing in the editor to create your first note
 
 ### Text Styles
 
@@ -35,7 +35,7 @@ TON3S supports three text styles:
 
 | Style | Tag | Usage |
 |-------|-----|-------|
-| **Title** | h1 | Main document title |
+| **Title** | h1 | Main note title |
 | **Heading** | h2 | Section headings |
 | **Body** | p | Regular paragraphs |
 
@@ -57,22 +57,22 @@ The status bar displays live counts:
 - **Words**: Total word count
 - **Characters**: Total character count
 
-## Documents
+## Notes
 
-### Managing Documents
+### Managing Notes
 
 **Creating**: Click the + button in the sidebar
 
-**Switching**: Click any document in the sidebar list
+**Switching**: Click any note in the sidebar list
 
-**Deleting**: Hover over a document and click the delete icon
+**Deleting**: Hover over a note and click the delete icon
 
 **Searching**: Use the search box at the bottom of the sidebar
 
-### Document List
+### Note List
 
-Documents are sorted by last modified date (newest first). Each entry shows:
-- Document title (or "Untitled" if empty)
+Notes are sorted by last modified date (newest first). Each entry shows:
+- Note title (or "Untitled" if empty)
 - Preview of content
 - Last modified date
 
@@ -137,7 +137,7 @@ Zen mode provides maximum focus:
 | `Ctrl/Cmd + 2` | Apply Heading style |
 | `Ctrl/Cmd + 3` | Apply Body style |
 | `Ctrl/Cmd + S` | Open save menu |
-| `Ctrl/Cmd + N` | New document |
+| `Ctrl/Cmd + N` | New note |
 | `Ctrl/Cmd + \` | Toggle sidebar |
 | `Escape` | Exit zen mode |
 
@@ -145,7 +145,7 @@ Zen mode provides maximum focus:
 
 ### Markdown Export
 
-Exports your document as a `.md` file:
+Exports your note as a `.md` file:
 - Titles become `# Heading`
 - Headings become `## Heading`
 - Body text is preserved as-is
@@ -174,7 +174,7 @@ TON3S can publish your writing to the Nostr decentralized network. See [Nostr Gu
 ### Data Storage
 
 All your data is stored locally in your browser:
-- Documents stored in IndexedDB
+- Notes stored in IndexedDB
 - Settings stored in localStorage
 - Nothing is sent to external servers (except optional Nostr publishing)
 
@@ -205,7 +205,7 @@ If using a shared computer:
 
 TON3S works offline after initial load:
 - All features work without internet
-- Documents are stored locally
+- Notes are stored locally
 - Changes sync when back online (Nostr only)
 
 ### Installing as PWA
@@ -226,7 +226,7 @@ TON3S can be installed as a Progressive Web App:
 
 1. Check if storage is full (browser limit)
 2. Try in a regular (non-private) window
-3. Clear old documents to free space
+3. Clear old notes to free space
 
 ### Theme/Font Not Applying
 

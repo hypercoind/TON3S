@@ -25,7 +25,7 @@
 /* Mobile */
 @media (max-width: 768px) {
     /* Always show delete button on touch devices */
-    .document-delete-btn {
+    .note-delete-btn {
         opacity: 0.7;
     }
 
@@ -64,7 +64,7 @@
         min-width: 44px;
     }
 
-    .document-delete-btn {
+    .note-delete-btn {
         min-height: 44px;
         min-width: 44px;
         padding: 0.5rem;
@@ -76,7 +76,7 @@
         min-width: 44px;
     }
 
-    .new-document-btn {
+    .new-note-btn {
         min-height: 44px;
     }
 
@@ -97,7 +97,7 @@
         align-items: center;
     }
 
-    .document-tag .remove-tag {
+    .note-tag .remove-tag {
         min-height: 32px;
         min-width: 32px;
         display: flex;
@@ -169,7 +169,7 @@
         font-size: 0.95rem;
     }
 
-    .document-title-input {
+    .note-title-input {
         font-size: 1.25rem;
     }
 }

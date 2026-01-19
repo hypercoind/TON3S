@@ -30,12 +30,33 @@ docker compose down
 
 ## For Developers
 
-### Prerequisites
+### Option 1: Docker (Recommended)
 
-- Node.js 22 or higher
-- npm
+The easiest way to run the full stack for development and testing:
 
-### Local Development Setup
+```bash
+git clone https://github.com/hypercoind/TON3S.git
+cd TON3S
+docker compose up --build -d
+```
+
+Access the app at `http://localhost:3002`
+
+To rebuild after changes:
+```bash
+docker compose up --build -d
+```
+
+To view logs:
+```bash
+docker compose logs -f
+```
+
+### Option 2: Local Node.js
+
+For faster hot-reload during active development:
+
+**Prerequisites:** Node.js 22+
 
 1. **Clone the repository**
    ```bash
@@ -43,33 +64,19 @@ docker compose down
    cd TON3S
    ```
 
-2. **Install frontend dependencies**
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-3. **Install backend dependencies** (separate terminal)
-   ```bash
-   cd backend
-   npm install
-   ```
-
-4. **Start development servers**
+2. **Start servers**
 
    Frontend (terminal 1):
    ```bash
-   cd frontend
-   npm run dev
+   cd frontend && npm install && npm run dev
    ```
 
    Backend (terminal 2):
    ```bash
-   cd backend
-   npm run dev
+   cd backend && npm install && npm run dev
    ```
 
-5. **Open in browser**
+3. **Open in browser**
 
    Navigate to `http://localhost:3000`
 
@@ -104,7 +111,7 @@ TON3S/
 
 ## First Steps
 
-### Writing Your First Document
+### Writing Your First Note
 
 1. Open TON3S in your browser
 2. Click in the editor area
@@ -132,7 +139,7 @@ Or use keyboard shortcuts:
 
 Click the save button and choose:
 - **Markdown** - `.md` file for universal compatibility
-- **PDF** - Formatted document with theme colors
+- **PDF** - Formatted note with theme colors
 
 ## Next Steps
 

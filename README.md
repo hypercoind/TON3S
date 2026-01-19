@@ -10,7 +10,7 @@ TON3S is a minimalist, privacy-focused writing application. Whether you're craft
 - **72 beautiful themes** including Catppuccin, Dracula, Gruvbox, Tokyo Night, Nord, and more
 - **27 fonts** optimized for writing and reading
 - **Zen mode** for focused writing sessions
-- **Multi-document support** with sidebar navigation and search
+- **Multi-note support** with sidebar navigation and search
 - **Export to Markdown and PDF**
 - **Publish to Nostr** decentralized network with IP privacy protection
 - **PWA support** for offline use and installation

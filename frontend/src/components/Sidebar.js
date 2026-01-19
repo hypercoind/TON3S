@@ -1,6 +1,6 @@
 /**
  * TON3S Sidebar Component
- * Document list, search, and document management
+ * Note list, search, and note management
  */
 
 import { BaseComponent } from './BaseComponent.js';
@@ -25,7 +25,7 @@ export class Sidebar extends BaseComponent {
         this.container.innerHTML = `
             <div class="sidebar ${isOpen ? 'open' : ''}">
                 <div class="sidebar-header">
-                    <span class="sidebar-title">Documents</span>
+                    <span class="sidebar-title">Notes</span>
                     <button class="sidebar-collapse-btn" aria-label="Collapse sidebar">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
@@ -36,17 +36,17 @@ export class Sidebar extends BaseComponent {
                     <input
                         type="text"
                         class="search-input"
-                        placeholder="Search documents..."
-                        aria-label="Search documents"
+                        placeholder="Search notes..."
+                        aria-label="Search notes"
                     />
                 </div>
-                <div class="document-list"></div>
+                <div class="note-list"></div>
                 <div class="sidebar-actions">
-                    <button class="new-document-btn" aria-label="Create new document">
+                    <button class="new-note-btn" aria-label="Create new note">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                         </svg>
-                        New Document
+                        New Note
                     </button>
                 </div>
                 <div class="sidebar-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="0"></div>
@@ -59,7 +59,7 @@ export class Sidebar extends BaseComponent {
         `;
 
         this.searchInput = this.$('.search-input');
-        this.renderDocumentList();
+        this.renderNoteList();
     }
 
     bindEvents() {
@@ -73,9 +73,9 @@ export class Sidebar extends BaseComponent {
             appState.toggleSidebar();
         });
 
-        // New document button
-        this.$('.new-document-btn')?.addEventListener('click', () => {
-            this.createNewDocument();
+        // New note button
+        this.$('.new-note-btn')?.addEventListener('click', () => {
+            this.createNewNote();
         });
 
         // Search input with debounce
@@ -90,25 +90,25 @@ export class Sidebar extends BaseComponent {
             // Debounce search to prevent UI jank
             this.searchDebounceTimer = setTimeout(() => {
                 appState.setSearchQuery(query);
-                this.renderDocumentList();
+                this.renderNoteList();
             }, 200);
         });
 
         // State subscriptions
         this.subscribe(
-            appState.on(StateEvents.DOCUMENTS_LOADED, this.renderDocumentList.bind(this))
+            appState.on(StateEvents.NOTES_LOADED, this.renderNoteList.bind(this))
         );
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_CREATED, this.renderDocumentList.bind(this))
+            appState.on(StateEvents.NOTE_CREATED, this.renderNoteList.bind(this))
         );
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_UPDATED, this.renderDocumentList.bind(this))
+            appState.on(StateEvents.NOTE_UPDATED, this.renderNoteList.bind(this))
         );
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_DELETED, this.renderDocumentList.bind(this))
+            appState.on(StateEvents.NOTE_DELETED, this.renderNoteList.bind(this))
         );
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_SELECTED, this.updateActiveDocument.bind(this))
+            appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this))
         );
         this.subscribe(
             appState.on(StateEvents.SIDEBAR_TOGGLED, this.toggleSidebar.bind(this))
@@ -193,34 +193,34 @@ export class Sidebar extends BaseComponent {
     }
 
     /**
-     * Render the document list
+     * Render the note list
      */
-    renderDocumentList() {
-        const listEl = this.$('.document-list');
+    renderNoteList() {
+        const listEl = this.$('.note-list');
         if (!listEl) return;
 
-        const documents = appState.getFilteredDocuments(appState.ui.searchQuery);
-        const currentId = appState.currentDocumentId;
+        const notes = appState.getFilteredNotes(appState.ui.searchQuery);
+        const currentId = appState.currentNoteId;
 
-        if (documents.length === 0) {
+        if (notes.length === 0) {
             const isSearching = appState.ui.searchQuery?.length > 0;
             const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const shortcut = isMac ? '⌘N' : 'Ctrl+N';
 
             listEl.innerHTML = `
-                <div class="document-item-empty">
+                <div class="note-item-empty">
                     <svg class="empty-state-icon" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
                         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                     </svg>
                     ${isSearching
-                        ? `<p>No documents found</p><span class="empty-state-hint">Try a different search term</span>`
-                        : `<p>No documents yet</p>
+                        ? `<p>No notes found</p><span class="empty-state-hint">Try a different search term</span>`
+                        : `<p>No notes yet</p>
                            <span class="empty-state-hint">Press ${shortcut} or click below</span>
-                           <button class="empty-state-create-btn" aria-label="Create your first document">
+                           <button class="empty-state-create-btn" aria-label="Create your first note">
                                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                                </svg>
-                               Create your first document
+                               Create your first note
                            </button>`
                     }
                 </div>
@@ -229,36 +229,36 @@ export class Sidebar extends BaseComponent {
             // Add click handler for the create button
             const createBtn = listEl.querySelector('.empty-state-create-btn');
             createBtn?.addEventListener('click', () => {
-                this.createNewDocument();
+                this.createNewNote();
             });
             return;
         }
 
-        listEl.innerHTML = documents.map(doc => {
-            const isActive = doc.id === currentId;
-            const updatedAt = this.formatDate(doc.updatedAt);
-            const tags = (doc.tags || []).slice(0, 3);
+        listEl.innerHTML = notes.map(note => {
+            const isActive = note.id === currentId;
+            const updatedAt = this.formatDate(note.updatedAt);
+            const tags = (note.tags || []).slice(0, 3);
 
             return `
-                <div class="document-item ${isActive ? 'active' : ''}"
-                     data-id="${doc.id}"
+                <div class="note-item ${isActive ? 'active' : ''}"
+                     data-id="${note.id}"
                      role="button"
                      tabindex="0"
                      aria-selected="${isActive}">
-                    <div class="document-item-title">${sanitizeInput(doc.title || 'Untitled')}</div>
-                    <div class="document-item-meta">${updatedAt}</div>
+                    <div class="note-item-title">${sanitizeInput(note.title || 'Untitled')}</div>
+                    <div class="note-item-meta">${updatedAt}</div>
                     ${tags.length > 0 ? `
-                        <div class="document-item-tags">
+                        <div class="note-item-tags">
                             ${tags.map(tag => `<span class="tag">${sanitizeInput(tag)}</span>`).join('')}
                         </div>
                     ` : ''}
-                    <div class="document-item-actions">
-                        <button class="document-tag-btn" data-tag-id="${doc.id}" aria-label="Edit tags">
+                    <div class="note-item-actions">
+                        <button class="note-tag-btn" data-tag-id="${note.id}" aria-label="Edit tags">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
                             </svg>
                         </button>
-                        <button class="document-delete-btn" data-delete-id="${doc.id}" aria-label="Delete document">
+                        <button class="note-delete-btn" data-delete-id="${note.id}" aria-label="Delete note">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                             </svg>
@@ -269,12 +269,12 @@ export class Sidebar extends BaseComponent {
         }).join('');
 
         // Add click handlers
-        listEl.querySelectorAll('.document-item').forEach(item => {
+        listEl.querySelectorAll('.note-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // Don't select document if clicking action buttons
-                if (e.target.closest('.document-item-actions')) return;
+                // Don't select note if clicking action buttons
+                if (e.target.closest('.note-item-actions')) return;
                 const id = parseInt(item.dataset.id);
-                appState.selectDocument(id);
+                appState.selectNote(id);
             });
 
             // Context menu for delete
@@ -285,31 +285,31 @@ export class Sidebar extends BaseComponent {
         });
 
         // Add tag button handlers
-        listEl.querySelectorAll('.document-tag-btn').forEach(btn => {
+        listEl.querySelectorAll('.note-tag-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const docId = parseInt(btn.dataset.tagId);
-                this.showTagEditorPopup(btn, docId);
+                const noteId = parseInt(btn.dataset.tagId);
+                this.showTagEditorPopup(btn, noteId);
             });
         });
 
         // Add delete button handlers
-        listEl.querySelectorAll('.document-delete-btn').forEach(btn => {
+        listEl.querySelectorAll('.note-delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const docId = parseInt(btn.dataset.deleteId);
-                this.confirmDelete(docId);
+                const noteId = parseInt(btn.dataset.deleteId);
+                this.confirmDelete(noteId);
             });
         });
     }
 
     /**
-     * Update the active document highlight
+     * Update the active note highlight
      */
-    updateActiveDocument() {
-        const currentId = appState.currentDocumentId;
+    updateActiveNote() {
+        const currentId = appState.currentNoteId;
 
-        this.$$('.document-item').forEach(item => {
+        this.$$('.note-item').forEach(item => {
             const isActive = parseInt(item.dataset.id) === currentId;
             item.classList.toggle('active', isActive);
             item.setAttribute('aria-selected', isActive);
@@ -317,47 +317,47 @@ export class Sidebar extends BaseComponent {
     }
 
     /**
-     * Create a new document
+     * Create a new note
      */
-    async createNewDocument() {
-        const doc = await storageService.createDocument({
-            title: 'Untitled Document',
+    async createNewNote() {
+        const note = await storageService.createNote({
+            title: 'Untitled Note',
             content: '<p><br></p>',
             plainText: '',
             tags: []
         });
 
-        appState.selectDocument(doc.id);
+        appState.selectNote(note.id);
     }
 
     /**
-     * Show themed confirmation dialog for document deletion
+     * Show themed confirmation dialog for note deletion
      */
-    confirmDelete(docId) {
-        const doc = appState.documents.find(d => d.id === docId);
-        const docTitle = doc?.title || 'Untitled';
+    confirmDelete(noteId) {
+        const note = appState.notes.find(n => n.id === noteId);
+        const noteTitle = note?.title || 'Untitled';
 
         this.showConfirmModal({
-            title: 'Delete Document',
-            message: `Are you sure you want to delete "${sanitizeInput(docTitle)}"? This action cannot be undone.`,
+            title: 'Delete Note',
+            message: `Are you sure you want to delete "${sanitizeInput(noteTitle)}"? This action cannot be undone.`,
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             danger: true,
             onConfirm: () => {
-                storageService.deleteDocument(docId);
+                storageService.deleteNote(noteId);
             }
         });
     }
 
     /**
-     * Show tag editor popup for a document
+     * Show tag editor popup for a note
      */
-    showTagEditorPopup(button, docId) {
+    showTagEditorPopup(button, noteId) {
         // Close any existing popup
         this.closeTagEditorPopup();
 
-        const doc = appState.documents.find(d => d.id === docId);
-        if (!doc) return;
+        const note = appState.notes.find(n => n.id === noteId);
+        if (!note) return;
 
         const popup = document.createElement('div');
         popup.className = 'tag-editor-popup';
@@ -365,7 +365,7 @@ export class Sidebar extends BaseComponent {
         popup.setAttribute('aria-label', 'Edit tags');
 
         const renderPopupContent = () => {
-            const tags = doc.tags || [];
+            const tags = note.tags || [];
             popup.innerHTML = `
                 <div class="tag-editor-header">
                     <span class="tag-editor-title">Tags</span>
@@ -403,9 +403,9 @@ export class Sidebar extends BaseComponent {
             popup.querySelectorAll('.tag-editor-tag-remove').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const tagToRemove = btn.dataset.tag;
-                    const newTags = (doc.tags || []).filter(t => t !== tagToRemove);
-                    await storageService.updateDocument(docId, { tags: newTags });
-                    doc.tags = newTags;
+                    const newTags = (note.tags || []).filter(t => t !== tagToRemove);
+                    await storageService.updateNote(noteId, { tags: newTags });
+                    note.tags = newTags;
                     renderPopupContent();
                 });
             });
@@ -415,10 +415,10 @@ export class Sidebar extends BaseComponent {
                 if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault();
                     const newTag = input.value.trim().replace(/,/g, '');
-                    if (newTag && !(doc.tags || []).includes(newTag)) {
-                        const newTags = [...(doc.tags || []), newTag];
-                        await storageService.updateDocument(docId, { tags: newTags });
-                        doc.tags = newTags;
+                    if (newTag && !(note.tags || []).includes(newTag)) {
+                        const newTags = [...(note.tags || []), newTag];
+                        await storageService.updateNote(noteId, { tags: newTags });
+                        note.tags = newTags;
                         renderPopupContent();
                         popup.querySelector('.tag-editor-input').focus();
                     } else {
@@ -587,9 +587,9 @@ export class Sidebar extends BaseComponent {
     }
 
     /**
-     * Show context menu for document actions
+     * Show context menu for note actions
      */
-    showContextMenu(e, docId) {
+    showContextMenu(e, noteId) {
         // Remove any existing context menu
         document.querySelector('.context-menu')?.remove();
 
@@ -597,7 +597,7 @@ export class Sidebar extends BaseComponent {
         menu.className = 'context-menu dropdown-menu show';
         menu.style.position = 'fixed';
         menu.innerHTML = `
-            <div class="dropdown-item" data-action="delete">Delete Document</div>
+            <div class="dropdown-item" data-action="delete">Delete Note</div>
         `;
 
         document.body.appendChild(menu);
@@ -629,7 +629,7 @@ export class Sidebar extends BaseComponent {
 
         menu.querySelector('[data-action="delete"]').addEventListener('click', () => {
             menu.remove();
-            this.confirmDelete(docId);
+            this.confirmDelete(noteId);
         });
 
         // Close on outside click

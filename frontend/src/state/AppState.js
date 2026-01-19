@@ -9,12 +9,12 @@ import { fonts } from '../data/fonts.js';
 
 // Event types
 export const StateEvents = {
-    // Document events
-    DOCUMENT_CREATED: 'document:created',
-    DOCUMENT_UPDATED: 'document:updated',
-    DOCUMENT_DELETED: 'document:deleted',
-    DOCUMENT_SELECTED: 'document:selected',
-    DOCUMENTS_LOADED: 'documents:loaded',
+    // Note events
+    NOTE_CREATED: 'note:created',
+    NOTE_UPDATED: 'note:updated',
+    NOTE_DELETED: 'note:deleted',
+    NOTE_SELECTED: 'note:selected',
+    NOTES_LOADED: 'notes:loaded',
 
     // Settings events
     THEME_CHANGED: 'settings:theme',
@@ -39,9 +39,9 @@ class AppState extends StateEmitter {
     constructor() {
         super();
 
-        // Documents state
-        this._documents = [];
-        this._currentDocumentId = null;
+        // Notes state
+        this._notes = [];
+        this._currentNoteId = null;
 
         // Settings state
         this._settings = {
@@ -54,7 +54,7 @@ class AppState extends StateEmitter {
                 unusedIndices: [...Array(fonts.length).keys()]
             },
             zenMode: false,
-            sidebarOpen: true,
+            sidebarOpen: false,
             nostr: {
                 enabled: false,
                 defaultRelays: [
@@ -80,71 +80,71 @@ class AppState extends StateEmitter {
             saveStatus: 'saved',
             lastSaveTime: null,
             loading: false,
-            nostrPanelVisible: false
+            nostrPanelVisible: true
         };
     }
 
     // ==================
-    // Document accessors
+    // Note accessors
     // ==================
 
-    get documents() {
-        return this._documents;
+    get notes() {
+        return this._notes;
     }
 
-    set documents(docs) {
-        this._documents = docs;
-        this.emit(StateEvents.DOCUMENTS_LOADED, docs);
+    set notes(notesArray) {
+        this._notes = notesArray;
+        this.emit(StateEvents.NOTES_LOADED, notesArray);
     }
 
-    get currentDocumentId() {
-        return this._currentDocumentId;
+    get currentNoteId() {
+        return this._currentNoteId;
     }
 
-    get currentDocument() {
-        return this._documents.find(d => d.id === this._currentDocumentId) || null;
+    get currentNote() {
+        return this._notes.find(n => n.id === this._currentNoteId) || null;
     }
 
-    selectDocument(id) {
-        this._currentDocumentId = id;
-        this.emit(StateEvents.DOCUMENT_SELECTED, this.currentDocument);
+    selectNote(id) {
+        this._currentNoteId = id;
+        this.emit(StateEvents.NOTE_SELECTED, this.currentNote);
     }
 
-    addDocument(doc) {
-        this._documents.unshift(doc);
-        this.emit(StateEvents.DOCUMENT_CREATED, doc);
+    addNote(note) {
+        this._notes.unshift(note);
+        this.emit(StateEvents.NOTE_CREATED, note);
     }
 
-    updateDocument(id, updates) {
-        const index = this._documents.findIndex(d => d.id === id);
+    updateNote(id, updates) {
+        const index = this._notes.findIndex(n => n.id === id);
         if (index !== -1) {
-            this._documents[index] = { ...this._documents[index], ...updates };
-            this.emit(StateEvents.DOCUMENT_UPDATED, this._documents[index]);
+            this._notes[index] = { ...this._notes[index], ...updates };
+            this.emit(StateEvents.NOTE_UPDATED, this._notes[index]);
         }
     }
 
-    deleteDocument(id) {
-        const index = this._documents.findIndex(d => d.id === id);
+    deleteNote(id) {
+        const index = this._notes.findIndex(n => n.id === id);
         if (index !== -1) {
-            const deleted = this._documents.splice(index, 1)[0];
-            this.emit(StateEvents.DOCUMENT_DELETED, deleted);
+            const deleted = this._notes.splice(index, 1)[0];
+            this.emit(StateEvents.NOTE_DELETED, deleted);
 
-            // If deleted document was selected, select another
-            if (this._currentDocumentId === id) {
-                this._currentDocumentId = this._documents[0]?.id || null;
-                this.emit(StateEvents.DOCUMENT_SELECTED, this.currentDocument);
+            // If deleted note was selected, select another
+            if (this._currentNoteId === id) {
+                this._currentNoteId = this._notes[0]?.id || null;
+                this.emit(StateEvents.NOTE_SELECTED, this.currentNote);
             }
         }
     }
 
-    getFilteredDocuments(query = '') {
-        if (!query) return this._documents;
+    getFilteredNotes(query = '') {
+        if (!query) return this._notes;
 
         const lowerQuery = query.toLowerCase();
-        return this._documents.filter(doc => {
-            return doc.title?.toLowerCase().includes(lowerQuery) ||
-                   doc.plainText?.toLowerCase().includes(lowerQuery) ||
-                   doc.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+        return this._notes.filter(note => {
+            return note.title?.toLowerCase().includes(lowerQuery) ||
+                   note.plainText?.toLowerCase().includes(lowerQuery) ||
+                   note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
         });
     }
 
@@ -233,6 +233,26 @@ class AppState extends StateEmitter {
     toggleZenMode() {
         this._settings.zenMode = !this._settings.zenMode;
         this.emit(StateEvents.ZEN_MODE_TOGGLED, this._settings.zenMode);
+    }
+
+    setZenMode(enabled) {
+        if (this._settings.zenMode !== enabled) {
+            this._settings.zenMode = enabled;
+
+            // Auto-minimize side panels when entering zen mode
+            if (enabled) {
+                if (this._settings.sidebarOpen) {
+                    this._settings.sidebarOpen = false;
+                    this.emit(StateEvents.SIDEBAR_TOGGLED, false);
+                }
+                if (this._ui.nostrPanelVisible) {
+                    this._ui.nostrPanelVisible = false;
+                    this.emit(StateEvents.NOSTR_PANEL_TOGGLED, false);
+                }
+            }
+
+            this.emit(StateEvents.ZEN_MODE_TOGGLED, enabled);
+        }
     }
 
     toggleSidebar() {

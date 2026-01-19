@@ -1,6 +1,6 @@
 /**
  * TON3S Storage Service
- * IndexedDB storage via Dexie.js for documents and settings
+ * IndexedDB storage via Dexie.js for notes and settings
  */
 
 import Dexie from 'dexie';
@@ -11,12 +11,28 @@ class TON3SDatabase extends Dexie {
     constructor() {
         super('ton3s');
 
+        // Version 1: Original documents table
         this.version(1).stores({
             documents: '++id, title, createdAt, updatedAt, *tags',
             settings: 'key'
         });
 
-        this.documents = this.table('documents');
+        // Version 2: Rename documents to notes
+        this.version(2).stores({
+            documents: null, // Delete old table
+            notes: '++id, title, createdAt, updatedAt, *tags',
+            settings: 'key'
+        }).upgrade(async tx => {
+            // Migrate data from documents to notes
+            const oldTable = tx.table('documents');
+            const newTable = tx.table('notes');
+            const docs = await oldTable.toArray();
+            if (docs.length > 0) {
+                await newTable.bulkAdd(docs);
+            }
+        });
+
+        this.notes = this.table('notes');
         this.settings = this.table('settings');
     }
 }
@@ -60,12 +76,12 @@ class StorageService {
             const savedFontIndex = localStorage.getItem('savedFontIndex');
             const zenMode = localStorage.getItem('zenMode');
 
-            // Migrate content to a document
+            // Migrate content to a note
             if (savedContent && savedContent.trim()) {
                 const plainText = this.extractPlainText(savedContent);
-                const title = this.extractTitle(plainText) || 'Untitled Document';
+                const title = this.extractTitle(plainText) || 'Untitled Note';
 
-                await this.createDocument({
+                await this.createNote({
                     title,
                     content: savedContent,
                     plainText,
@@ -124,15 +140,15 @@ class StorageService {
     }
 
     // ==================
-    // Document operations
+    // Note operations
     // ==================
 
     /**
-     * Create a new document
+     * Create a new note
      */
-    async createDocument(data) {
+    async createNote(data) {
         const now = Date.now();
-        const doc = {
+        const note = {
             title: data.title || 'Untitled',
             content: data.content || '<p><br></p>',
             plainText: data.plainText || '',
@@ -146,33 +162,33 @@ class StorageService {
             }
         };
 
-        const id = await this.db.documents.add(doc);
-        const newDoc = { ...doc, id };
-        appState.addDocument(newDoc);
-        return newDoc;
+        const id = await this.db.notes.add(note);
+        const newNote = { ...note, id };
+        appState.addNote(newNote);
+        return newNote;
     }
 
     /**
-     * Get a document by ID
+     * Get a note by ID
      */
-    async getDocument(id) {
-        return await this.db.documents.get(id);
+    async getNote(id) {
+        return await this.db.notes.get(id);
     }
 
     /**
-     * Get all documents
+     * Get all notes
      */
-    async getAllDocuments() {
-        return await this.db.documents
+    async getAllNotes() {
+        return await this.db.notes
             .orderBy('updatedAt')
             .reverse()
             .toArray();
     }
 
     /**
-     * Update a document (throttled)
+     * Update a note (throttled)
      */
-    async updateDocument(id, updates) {
+    async updateNote(id, updates) {
         const now = Date.now();
 
         // Throttle saves
@@ -197,51 +213,51 @@ class StorageService {
 
         updates.updatedAt = now;
 
-        await this.db.documents.update(id, updates);
-        appState.updateDocument(id, updates);
+        await this.db.notes.update(id, updates);
+        appState.updateNote(id, updates);
         appState.setSaveStatus('saved', now);
 
-        return await this.getDocument(id);
+        return await this.getNote(id);
     }
 
     /**
-     * Delete a document
+     * Delete a note
      */
-    async deleteDocument(id) {
-        await this.db.documents.delete(id);
-        appState.deleteDocument(id);
+    async deleteNote(id) {
+        await this.db.notes.delete(id);
+        appState.deleteNote(id);
     }
 
     /**
-     * Search documents by query
+     * Search notes by query
      */
-    async searchDocuments(query) {
+    async searchNotes(query) {
         if (!query) {
-            return await this.getAllDocuments();
+            return await this.getAllNotes();
         }
 
         const lowerQuery = query.toLowerCase();
-        return await this.db.documents
-            .filter(doc => {
-                return doc.title?.toLowerCase().includes(lowerQuery) ||
-                       doc.plainText?.toLowerCase().includes(lowerQuery) ||
-                       doc.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+        return await this.db.notes
+            .filter(note => {
+                return note.title?.toLowerCase().includes(lowerQuery) ||
+                       note.plainText?.toLowerCase().includes(lowerQuery) ||
+                       note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
             })
             .toArray();
     }
 
     /**
-     * Get documents by tag
+     * Get notes by tag
      */
-    async getDocumentsByTag(tag) {
-        return await this.db.documents
+    async getNotesByTag(tag) {
+        return await this.db.notes
             .where('tags')
             .equals(tag)
             .toArray();
     }
 
     /**
-     * Mark document as published to NOSTR
+     * Mark note as published to NOSTR
      */
     async markAsPublished(id, eventId) {
         const updates = {
@@ -251,8 +267,8 @@ class StorageService {
                 publishedAt: Date.now()
             }
         };
-        await this.db.documents.update(id, updates);
-        appState.updateDocument(id, updates);
+        await this.db.notes.update(id, updates);
+        appState.updateNote(id, updates);
     }
 
     // ==================
@@ -323,7 +339,7 @@ class StorageService {
      * Clear all data (for privacy)
      */
     async clearAllData() {
-        await this.db.documents.clear();
+        await this.db.notes.clear();
         await this.db.settings.clear();
 
         // Also clear localStorage legacy data
@@ -333,21 +349,21 @@ class StorageService {
         localStorage.removeItem('zenMode');
 
         // Reset app state
-        appState.documents = [];
-        appState.selectDocument(null);
+        appState.notes = [];
+        appState.selectNote(null);
     }
 
     /**
-     * Export all documents as JSON
+     * Export all notes as JSON
      */
     async exportData() {
-        const documents = await this.getAllDocuments();
+        const notes = await this.getAllNotes();
         const settings = await this.getSetting('appSettings');
 
         return {
             version: '2.0',
             exportedAt: new Date().toISOString(),
-            documents,
+            notes,
             settings
         };
     }
@@ -356,9 +372,11 @@ class StorageService {
      * Import data from JSON
      */
     async importData(data) {
-        if (data.documents && Array.isArray(data.documents)) {
-            for (const doc of data.documents) {
-                await this.createDocument(doc);
+        // Support both old 'documents' format and new 'notes' format
+        const notesToImport = data.notes || data.documents;
+        if (notesToImport && Array.isArray(notesToImport)) {
+            for (const note of notesToImport) {
+                await this.createNote(note);
             }
         }
 

@@ -50,23 +50,64 @@ export class Editor extends BaseComponent {
 
         // State subscriptions
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_SELECTED, this.loadDocument.bind(this))
+            appState.on(StateEvents.NOTE_SELECTED, this.loadNote.bind(this))
         );
+
+        // Auto-focus when typing anywhere
+        this.setupAutoFocus();
     }
 
     /**
-     * Load a document into the editor
+     * Setup auto-focus: typing anywhere focuses the editor
      */
-    loadDocument(doc) {
-        // Clear auto-zen timer when switching documents
+    setupAutoFocus() {
+        this.autoFocusHandler = (e) => {
+            // Skip if focused on interactive element
+            const activeElement = document.activeElement;
+            const interactiveElements = ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'];
+            if (interactiveElements.includes(activeElement?.tagName)) return;
+            if (activeElement?.hasAttribute('contenteditable') && activeElement !== this.editorElement) return;
+            if (activeElement?.closest('dialog')) return;
+
+            // Skip if modifier keys held (preserve shortcuts)
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+            // Only handle printable characters (single character keys)
+            if (e.key.length !== 1) return;
+
+            // Focus editor and move cursor to end
+            this.editorElement.focus();
+            this.moveCursorToEnd();
+        };
+
+        document.addEventListener('keydown', this.autoFocusHandler);
+    }
+
+    /**
+     * Move cursor to end of editor content
+     */
+    moveCursorToEnd() {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(this.editorElement);
+        range.collapse(false); // false = collapse to end
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    /**
+     * Load a note into the editor
+     */
+    loadNote(note) {
+        // Clear auto-zen timer when switching notes
         this.clearAutoZenTimer();
 
-        if (!doc) {
+        if (!note) {
             this.editorElement.innerHTML = '<p><br></p>';
             return;
         }
 
-        this.editorElement.innerHTML = doc.content || '<p><br></p>';
+        this.editorElement.innerHTML = note.content || '<p><br></p>';
         this.updateCounts();
     }
 
@@ -78,7 +119,7 @@ export class Editor extends BaseComponent {
         this.autoSave();
         this.updateCounts();
         this.autoScroll();
-        this.resetAutoZenTimer();
+        this.startAutoZenTimer();
     }
 
     /**
@@ -181,7 +222,7 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Auto-save document
+     * Auto-save note
      */
     async autoSave() {
         if (this.saveTimeout) {
@@ -189,11 +230,11 @@ export class Editor extends BaseComponent {
         }
 
         this.saveTimeout = setTimeout(async () => {
-            const doc = appState.currentDocument;
-            if (!doc) return;
+            const note = appState.currentNote;
+            if (!note) return;
 
             const content = this.editorElement.innerHTML;
-            await storageService.updateDocument(doc.id, { content });
+            await storageService.updateNote(note.id, { content });
         }, 100);
     }
 
@@ -213,22 +254,19 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Reset auto-zen timer on each input
+     * Start auto-zen timer on input (only starts if not already running)
      */
-    resetAutoZenTimer() {
-        // Don't trigger if already in zen mode
-        if (appState.settings.zenMode) {
-            return;
-        }
+    startAutoZenTimer() {
+        // Only start timer if one isn't already running
+        if (this.autoZenTimeout) return;
 
-        // Clear existing timer
-        this.clearAutoZenTimer();
-
-        // Start new timer - enter zen mode after continuous typing
+        // Start timer - enter zen mode after 3s of typing
         this.autoZenTimeout = setTimeout(() => {
-            if (this.isTyping && !appState.settings.zenMode) {
-                appState.toggleZenMode();
+            // Always activate zen mode after 3s of typing (allow re-entry)
+            if (this.isTyping) {
+                appState.setZenMode(true);
             }
+            this.autoZenTimeout = null;
         }, this.autoZenDelay);
     }
 
@@ -258,6 +296,7 @@ export class Editor extends BaseComponent {
 
     /**
      * Auto-scroll when typing near bottom
+     * Scrolls the window since editor now extends indefinitely
      */
     autoScroll() {
         const selection = window.getSelection();
@@ -270,20 +309,9 @@ export class Editor extends BaseComponent {
             cursorNode = cursorNode.parentElement;
         }
 
-        let blockElement = cursorNode;
-        while (blockElement && blockElement !== this.editorElement && !['P', 'DIV'].includes(blockElement.tagName)) {
-            blockElement = blockElement.parentElement;
-        }
-
-        if (!blockElement || blockElement === this.editorElement) return;
-
-        const editorRect = this.editorElement.getBoundingClientRect();
-        const blockRect = blockElement.getBoundingClientRect();
-        const bufferSpace = 60;
-
-        if (blockRect.bottom > (editorRect.bottom - bufferSpace)) {
-            const scrollAmount = blockRect.bottom - (editorRect.bottom - bufferSpace);
-            this.editorElement.scrollTop += scrollAmount;
+        // Scroll cursor into view with smooth behavior
+        if (cursorNode) {
+            cursorNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
     }
 

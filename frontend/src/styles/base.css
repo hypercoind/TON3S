@@ -25,10 +25,10 @@ body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--fg);
-    height: 100vh;
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
 }
 
@@ -67,9 +67,9 @@ select:focus-visible,
 .privacy-btn:focus-visible,
 .sidebar-collapse-btn:focus-visible,
 .sidebar-expand-tab:focus-visible,
-.new-document-btn:focus-visible,
-.document-item:focus-visible,
-.document-delete-btn:focus-visible,
+.new-note-btn:focus-visible,
+.note-item:focus-visible,
+.note-delete-btn:focus-visible,
 .nostr-publish-btn:focus-visible,
 .connect-nostr-btn:focus-visible,
 .confirm-cancel:focus-visible,
@@ -79,7 +79,7 @@ select:focus-visible,
 }
 
 /* Inset focus for items within containers */
-.document-item:focus-visible {
+.note-item:focus-visible {
     outline-offset: -2px;
 }
 

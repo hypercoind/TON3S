@@ -6,7 +6,7 @@
 .app-container {
     max-width: 1800px;
     margin: 0 auto;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -92,13 +92,13 @@
     letter-spacing: 0.05em;
 }
 
-.document-list {
+.note-list {
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem 0;
 }
 
-.document-item {
+.note-item {
     padding: 0.75rem 1rem;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -106,17 +106,17 @@
     position: relative;
 }
 
-.document-item:hover {
+.note-item:hover {
     background: var(--secondary);
 }
 
-.document-item.active {
+.note-item.active {
     background: var(--secondary);
     border-left-color: var(--accent);
 }
 
-/* Document item actions container */
-.document-item-actions {
+/* Note item actions container */
+.note-item-actions {
     position: absolute;
     right: 0.5rem;
     top: 50%;
@@ -127,12 +127,12 @@
     transition: opacity 0.2s ease;
 }
 
-.document-item:hover .document-item-actions {
+.note-item:hover .note-item-actions {
     opacity: 1;
 }
 
 /* Tag button */
-.document-tag-btn {
+.note-tag-btn {
     background: transparent;
     border: none;
     color: var(--fg-dim);
@@ -145,18 +145,18 @@
     justify-content: center;
 }
 
-.document-tag-btn svg {
+.note-tag-btn svg {
     width: 16px;
     height: 16px;
 }
 
-.document-tag-btn:hover {
+.note-tag-btn:hover {
     color: var(--accent);
     background: var(--hover);
 }
 
 /* Delete button */
-.document-delete-btn {
+.note-delete-btn {
     background: transparent;
     border: none;
     color: var(--fg-dim);
@@ -169,12 +169,12 @@
     justify-content: center;
 }
 
-.document-delete-btn svg {
+.note-delete-btn svg {
     width: 16px;
     height: 16px;
 }
 
-.document-delete-btn:hover {
+.note-delete-btn:hover {
     color: #ef4444;
     background: var(--hover);
 }
@@ -289,7 +289,7 @@
     color: var(--fg-dim);
 }
 
-.document-item-title {
+.note-item-title {
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--fg);
@@ -299,12 +299,12 @@
     text-overflow: ellipsis;
 }
 
-.document-item-meta {
+.note-item-meta {
     font-size: 0.75rem;
     color: var(--fg-dim);
 }
 
-.document-item-tags {
+.note-item-tags {
     display: flex;
     gap: 0.25rem;
     margin-top: 0.25rem;
@@ -416,7 +416,7 @@
     border-top: 1px solid var(--secondary);
 }
 
-.new-document-btn {
+.new-note-btn {
     width: 100%;
     padding: 0.6rem 1rem;
     background: var(--accent);
@@ -434,11 +434,11 @@
     gap: 0.5rem;
 }
 
-.new-document-btn:hover {
+.new-note-btn:hover {
     opacity: 0.9;
 }
 
-.new-document-btn svg {
+.new-note-btn svg {
     width: 16px;
     height: 16px;
 }

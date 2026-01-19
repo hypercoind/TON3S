@@ -60,18 +60,18 @@ TON3S supports two Nostr event types:
 
 **Kind 1 - Short-form Notes**
 - Best for: Short posts, updates, thoughts
-- Content: Plain text version of your document
+- Content: Plain text version of your note
 - Limit: Works best under 280 characters
 
 **Kind 30023 - Long-form Articles**
 - Best for: Blog posts, articles, essays
-- Content: Full document with metadata
+- Content: Full note with metadata
 - Features: Title, publish date, tags
 
 ### How to Publish
 
 1. **Connect** your Nostr extension
-2. **Write** your document
+2. **Write** your note
 3. Click **Publish** in the Nostr panel
 4. Choose **Note** (kind 1) or **Article** (kind 30023)
 5. Your extension will ask to sign - approve it
@@ -115,21 +115,21 @@ Without the proxy, relays would see your IP address. The proxy ensures only the 
 
 - Your private key (never leaves extension)
 - Your IP address (backend proxy)
-- Other documents (only published ones are sent)
+- Other notes (only published ones are sent)
 - Local storage content
 
 ## Managing Published Content
 
 ### Viewing Published Status
 
-Documents show their Nostr status:
+Notes show their Nostr status:
 - **Published** - Event ID and timestamp shown
 - **Not published** - "Publish" button available
 
 ### Updating Content
 
 Nostr events are immutable. To "update" content:
-1. Edit your document
+1. Edit your note
 2. Publish again as a new event
 3. The new event has a new ID
 
@@ -172,7 +172,7 @@ You can request deletion by publishing a **kind 5** event, but:
 1. Check backend is running (self-hosted)
 2. Verify at least one relay is connected
 3. Check browser console for errors
-4. Try publishing a shorter document
+4. Try publishing a shorter note
 
 ### Relay Connection Issues
 

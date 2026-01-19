@@ -61,7 +61,7 @@ export class StatusBar extends BaseComponent {
                     <h4>Local Data Storage</h4>
                     <p>This application stores your data locally in your browser:</p>
                     <ul>
-                        <li><strong>Documents:</strong> All your writing is saved in IndexedDB on your device.</li>
+                        <li><strong>Notes:</strong> All your writing is saved in IndexedDB on your device.</li>
                         <li><strong>Theme & font:</strong> Your preferences persist across sessions.</li>
                         <li><strong>No cloud sync:</strong> Data never leaves your browser unless you explicitly publish to NOSTR.</li>
                     </ul>
@@ -234,7 +234,7 @@ export class StatusBar extends BaseComponent {
         overlay.innerHTML = `
             <div class="confirm-dialog">
                 <h4 id="confirm-title">Clear All Data</h4>
-                <p id="confirm-desc">This will permanently delete all documents and settings. This action cannot be undone.</p>
+                <p id="confirm-desc">This will permanently delete all notes and settings. This action cannot be undone.</p>
                 <div class="confirm-actions">
                     <button class="confirm-ok danger">Clear All Data</button>
                     <button class="confirm-cancel">Cancel</button>

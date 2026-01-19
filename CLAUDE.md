@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TON3S is a minimalist, privacy-focused writing application with a modular frontend/backend architecture. Version 2.0 introduces multi-document support, Nostr integration for decentralized publishing, and Docker deployment.
+TON3S is a minimalist, privacy-focused writing application with a modular frontend/backend architecture. Version 2.0 introduces multi-note support, Nostr integration for decentralized publishing, and Docker deployment.
 
 **Core Philosophy**: Privacy-first, distraction-free writing with extensive customization and optional decentralized publishing.
 
@@ -19,7 +19,7 @@ TON3S/
 │   │   │   ├── BaseComponent.js # Base class with lifecycle methods
 │   │   │   ├── Editor.js        # ContentEditable editor
 │   │   │   ├── Header.js        # Top toolbar
-│   │   │   ├── Sidebar.js       # Document list and search
+│   │   │   ├── Sidebar.js       # Note list and search
 │   │   │   ├── SaveControls.js  # Export dropdown
 │   │   │   ├── StatusBar.js     # Word/character count
 │   │   │   ├── NostrPanel.js    # Nostr publishing UI
@@ -138,10 +138,10 @@ Centralized reactive state via `AppState` singleton:
 import { appState } from './state/AppState.js';
 
 // Get current state
-const { documents, currentDocumentId, settings } = appState.getState();
+const { notes, currentNoteId, settings } = appState.getState();
 
 // Update state (emits 'stateChange' event)
-appState.setState({ currentDocumentId: 123 });
+appState.setState({ currentNoteId: 123 });
 
 // Subscribe to changes
 appState.on('stateChange', (newState) => { ... });
@@ -150,8 +150,8 @@ appState.on('stateChange', (newState) => { ... });
 **State Structure**:
 ```javascript
 {
-  documents: [],              // Array of document objects
-  currentDocumentId: null,    // Active document ID
+  notes: [],              // Array of note objects
+  currentNoteId: null,    // Active note ID
   settings: {
     themeIndex: 0,
     fontIndex: 0,
@@ -186,20 +186,20 @@ Services encapsulate business logic separate from UI:
 import { storageService, exportService } from './services/index.js';
 
 // All services are singleton instances
-await storageService.saveDocument(doc);
+await storageService.saveNote(note);
 const markdown = exportService.toMarkdown(html);
 ```
 
 ### Storage Schema (IndexedDB)
 
 ```javascript
-// Document schema
+// Note schema
 {
   id: number,                  // Auto-generated primary key
-  title: string,               // Document title
+  title: string,               // Note title
   content: string,             // HTML content (h1, h2, p tags)
   plainText: string,           // Extracted text for search
-  tags: string[],              // Document tags
+  tags: string[],              // Note tags
   createdAt: number,           // Unix timestamp
   updatedAt: number,           // Unix timestamp
   nostr: {
@@ -280,7 +280,7 @@ docker compose logs -f
 ### Text Styling
 
 The editor uses `contenteditable` with three text styles:
-- **Title** (h1): Main document title
+- **Title** (h1): Main note title
 - **Heading** (h2): Section headings
 - **Body** (p): Regular paragraphs
 
@@ -437,7 +437,7 @@ Every theme must define:
 ### Storage Issues
 
 - **IndexedDB blocked**: Check browser privacy settings
-- **Quota exceeded**: Large documents may hit limits
+- **Quota exceeded**: Large notes may hit limits
 - **Private mode**: IndexedDB may be restricted; fallback is available
 
 ### Nostr Connection
@@ -460,13 +460,26 @@ Every theme must define:
 
 ## Testing
 
-No formal test suite. Manual testing workflow:
+### Recommended Testing Workflow
 
-1. **Editor**: Test Title/Heading/Body styles, paste handling
-2. **Documents**: Create, switch, delete, search
-3. **Themes/Fonts**: Cycle through multiple themes/fonts
-4. **Export**: Save as Markdown and PDF
-5. **Nostr**: Connect extension, publish note and article
-6. **Zen mode**: Toggle on/off, verify UI changes
+Build and run using Docker:
+
+```bash
+docker compose up --build -d
+```
+
+Access at `http://localhost:3002` and test:
+
+1. **Editor**: Title/Heading/Body styles, paste handling, auto-save
+2. **Notes**: Create, switch, delete, search
+3. **Zen mode**: Activates after 3s of typing, exits on mouse movement
+4. **Themes/Fonts**: Cycle through multiple themes/fonts
+5. **Export**: Save as Markdown and PDF
+6. **Nostr**: Connect extension, publish note and article
 7. **Persistence**: Refresh page, verify data persists
-8. **Docker**: Full docker compose up/down cycle
+
+Stop containers:
+
+```bash
+docker compose down
+```

@@ -17,9 +17,17 @@ import { Editor } from './components/Editor.js';
 import { StatusBar } from './components/StatusBar.js';
 import { NostrPanel } from './components/NostrPanel.js';
 
+// Initialization state (using window to persist across module re-evaluations)
+window.__TON3S_APP__ = window.__TON3S_APP__ || { instance: null, initialized: false };
+
 class TON3SApp {
     constructor() {
         this.components = {};
+        // Event handler references for cleanup
+        this.mouseMoveHandler = null;
+        this.dragOverHandler = null;
+        this.dropHandler = null;
+        this.zenModeHandler = null;
     }
 
     async init() {
@@ -38,8 +46,8 @@ class TON3SApp {
             // Initialize UI components
             this.initComponents();
 
-            // Load documents
-            await this.loadDocuments();
+            // Load notes
+            await this.loadNotes();
 
             // Setup keyboard shortcuts
             this.setupKeyboardShortcuts();
@@ -110,21 +118,21 @@ class TON3SApp {
         }
     }
 
-    async loadDocuments() {
-        const documents = await storageService.getAllDocuments();
-        appState.documents = documents;
+    async loadNotes() {
+        const notes = await storageService.getAllNotes();
+        appState.notes = notes;
 
-        // Select first document or create one if none exist
-        if (documents.length > 0) {
-            appState.selectDocument(documents[0].id);
+        // Select first note or create one if none exist
+        if (notes.length > 0) {
+            appState.selectNote(notes[0].id);
         } else {
-            const newDoc = await storageService.createDocument({
-                title: 'Untitled Document',
+            const newNote = await storageService.createNote({
+                title: 'Untitled Note',
                 content: '<p><br></p>',
                 plainText: '',
                 tags: []
             });
-            appState.selectDocument(newDoc.id);
+            appState.selectNote(newNote.id);
         }
     }
 
@@ -159,14 +167,14 @@ class TON3SApp {
     setupKeyboardShortcuts() {
         keyboardManager.init();
         keyboardManager.setupDefaults({
-            onNewDocument: async () => {
-                const doc = await storageService.createDocument({
-                    title: 'Untitled Document',
+            onNewNote: async () => {
+                const note = await storageService.createNote({
+                    title: 'Untitled Note',
                     content: '<p><br></p>',
                     plainText: '',
                     tags: []
                 });
-                appState.selectDocument(doc.id);
+                appState.selectNote(note.id);
                 this.components.editor?.focus();
             },
             onSearch: () => {
@@ -175,14 +183,30 @@ class TON3SApp {
         });
 
         // Subscribe to zen mode changes
-        appState.on(StateEvents.ZEN_MODE_TOGGLED, (zenMode) => {
+        this.zenModeHandler = (zenMode) => {
             if (zenMode) {
                 document.body.classList.add('zen-mode');
             } else {
                 document.body.classList.remove('zen-mode');
             }
-            storageService.saveZenMode();
-        });
+        };
+        appState.on(StateEvents.ZEN_MODE_TOGGLED, this.zenModeHandler);
+
+        // Setup zen mode hover tracking
+        this.setupZenHoverTracking();
+    }
+
+    /**
+     * Setup mouse tracking to exit zen mode on hover
+     */
+    setupZenHoverTracking() {
+        this.mouseMoveHandler = () => {
+            if (appState.settings.zenMode) {
+                // Exit zen mode on mouse movement
+                appState.setZenMode(false);
+            }
+        };
+        document.addEventListener('mousemove', this.mouseMoveHandler);
     }
 
     initSecurity() {
@@ -197,23 +221,86 @@ class TON3SApp {
         }
 
         // Prevent drag and drop
-        document.addEventListener('dragover', (e) => e.preventDefault());
-        document.addEventListener('drop', (e) => {
+        this.dragOverHandler = (e) => e.preventDefault();
+        this.dropHandler = (e) => {
             e.preventDefault();
             return false;
-        });
+        };
+        document.addEventListener('dragover', this.dragOverHandler);
+        document.addEventListener('drop', this.dropHandler);
 
         // Clear URL fragments
         if (location.hash) {
             history.replaceState(null, null, location.pathname + location.search);
         }
     }
+
+    /**
+     * Cleanup for HMR - remove all event listeners and destroy components
+     */
+    destroy() {
+        // Destroy all components
+        Object.values(this.components).forEach(component => {
+            component.destroy?.();
+        });
+        this.components = {};
+
+        // Remove event listeners
+        if (this.mouseMoveHandler) {
+            document.removeEventListener('mousemove', this.mouseMoveHandler);
+        }
+        if (this.dragOverHandler) {
+            document.removeEventListener('dragover', this.dragOverHandler);
+        }
+        if (this.dropHandler) {
+            document.removeEventListener('drop', this.dropHandler);
+        }
+        if (this.zenModeHandler) {
+            appState.off(StateEvents.ZEN_MODE_TOGGLED, this.zenModeHandler);
+        }
+
+        // Cleanup keyboard manager
+        keyboardManager.destroy?.();
+    }
 }
 
-// Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new TON3SApp();
-    app.init();
-});
+// Initialize app when DOM is ready (with HMR support)
+function initApp() {
+    // Use DOM marker for initialization guard (persists across module re-evaluations)
+    if (document.body?.hasAttribute('data-ton3s-initialized')) {
+        return;
+    }
+
+    // Set DOM marker immediately
+    if (document.body) {
+        document.body.setAttribute('data-ton3s-initialized', 'true');
+    }
+
+    const state = window.__TON3S_APP__;
+    state.initialized = true;
+    state.instance = new TON3SApp();
+    state.instance.init();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp, { once: true });
+} else {
+    initApp();
+}
+
+// HMR cleanup
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        // Clear DOM marker to allow re-initialization
+        document.body?.removeAttribute('data-ton3s-initialized');
+
+        const state = window.__TON3S_APP__;
+        state.initialized = false;
+        if (state.instance) {
+            state.instance.destroy();
+            state.instance = null;
+        }
+    });
+}
 
 export default TON3SApp;

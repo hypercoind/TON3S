@@ -181,16 +181,16 @@ class NostrService {
     }
 
     /**
-     * Publish a document as a NOSTR note
+     * Publish a note as a NOSTR event
      */
-    async publishDocument(document) {
+    async publishNote(note) {
         if (!nostrAuthService.isConnected()) {
             throw new Error('Not connected to NOSTR. Please connect first.');
         }
 
-        const content = document.plainText || '';
+        const content = note.plainText || '';
         if (!content.trim()) {
-            throw new Error('Document is empty');
+            throw new Error('Note is empty');
         }
 
         // Create the event (kind 1 = text note)
@@ -202,13 +202,13 @@ class NostrService {
         };
 
         // Add title as a tag if present
-        if (document.title && document.title !== 'Untitled') {
-            event.tags.push(['title', document.title]);
+        if (note.title && note.title !== 'Untitled') {
+            event.tags.push(['title', note.title]);
         }
 
-        // Add document tags as hashtags
-        if (document.tags && document.tags.length > 0) {
-            for (const tag of document.tags) {
+        // Add note tags as hashtags
+        if (note.tags && note.tags.length > 0) {
+            for (const tag of note.tags) {
                 event.tags.push(['t', tag]);
             }
         }
@@ -251,18 +251,18 @@ class NostrService {
     /**
      * Create a kind 30023 long-form content event
      */
-    async publishLongForm(document) {
+    async publishLongForm(note) {
         if (!nostrAuthService.isConnected()) {
             throw new Error('Not connected to NOSTR');
         }
 
-        const content = document.plainText || '';
+        const content = note.plainText || '';
         if (!content.trim()) {
-            throw new Error('Document is empty');
+            throw new Error('Note is empty');
         }
 
         // Generate a unique identifier for the article
-        const dTag = `ton3s-${document.id}`;
+        const dTag = `ton3s-${note.id}`;
 
         // Create long-form event (kind 30023)
         const event = {
@@ -270,15 +270,15 @@ class NostrService {
             content: content,
             tags: [
                 ['d', dTag],
-                ['title', document.title || 'Untitled'],
+                ['title', note.title || 'Untitled'],
                 ['published_at', String(Math.floor(Date.now() / 1000))]
             ],
             created_at: Math.floor(Date.now() / 1000)
         };
 
-        // Add document tags
-        if (document.tags && document.tags.length > 0) {
-            for (const tag of document.tags) {
+        // Add note tags
+        if (note.tags && note.tags.length > 0) {
+            for (const tag of note.tags) {
                 event.tags.push(['t', tag]);
             }
         }

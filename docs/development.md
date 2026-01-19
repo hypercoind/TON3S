@@ -4,49 +4,65 @@ Local setup, workflow, and code patterns for TON3S development.
 
 ## Prerequisites
 
-- **Node.js** 22 or higher
-- **npm** (included with Node.js)
-- **Docker** and **Docker Compose** (optional, for container testing)
+- **Docker** and **Docker Compose** (recommended)
+- **Node.js** 22 or higher (for local development without Docker)
 - A modern browser (Chrome, Firefox, Safari, Edge)
 
 ## Local Setup
 
-### 1. Clone Repository
+### Option 1: Docker (Recommended)
+
+The simplest way to run the full application for development and testing:
 
 ```bash
+# Clone repository
 git clone https://github.com/hypercoind/TON3S.git
 cd TON3S
+
+# Build and run all services
+docker compose up --build -d
+
+# View logs
+docker compose logs -f
 ```
 
-### 2. Install Dependencies
+Access the app at `http://localhost:3002`
 
+**Ports:**
+- Frontend: `http://localhost:3002` (nginx serving built app)
+- Backend: `http://localhost:3001` (API and WebSocket proxy)
+
+To rebuild after changes:
 ```bash
-# Frontend
-cd frontend
-npm install
-
-# Backend (new terminal)
-cd ../backend
-npm install
+docker compose up --build -d
 ```
 
-### 3. Start Development Servers
-
-**Terminal 1 - Frontend:**
+To stop:
 ```bash
+docker compose down
+```
+
+### Option 2: Local Node.js
+
+For faster hot-reload during active development:
+
+```bash
+# Clone repository
+git clone https://github.com/hypercoind/TON3S.git
+cd TON3S
+
+# Frontend (Terminal 1)
 cd frontend
+npm install
 npm run dev
-```
 
-**Terminal 2 - Backend:**
-```bash
+# Backend (Terminal 2)
 cd backend
+npm install
 npm run dev
 ```
 
-### 4. Open in Browser
-
-Navigate to `http://localhost:3000`
+Access the app at `http://localhost:3000`
 
 The Vite dev server proxies `/ws/*` requests to the backend at port 3001.
 
@@ -276,14 +292,14 @@ export const fonts = [
 ```javascript
 import { appState } from '../state/AppState.js';
 
-const { documents, currentDocumentId, settings } = appState.getState();
+const { notes, currentNoteId, settings } = appState.getState();
 ```
 
 ### Updating State
 
 ```javascript
 // Partial update (merged with existing state)
-appState.setState({ currentDocumentId: 123 });
+appState.setState({ currentNoteId: 123 });
 
 // Nested update
 appState.setState({
@@ -323,13 +339,16 @@ const unsubscribe = appState.on('stateChange', (state) => {
 - [ ] Body style (Ctrl+3)
 - [ ] Paste strips HTML
 - [ ] Auto-save indicator works
+- [ ] Zen mode activates after 3s of continuous typing
+- [ ] Mouse movement exits zen mode
+- [ ] Cursor positioned at end of text on auto-focus
 
-**Documents:**
-- [ ] Create new document
-- [ ] Switch between documents
-- [ ] Delete document
-- [ ] Search filters documents
-- [ ] Documents persist on refresh
+**Notes:**
+- [ ] Create new note
+- [ ] Switch between notes
+- [ ] Delete note
+- [ ] Search filters notes
+- [ ] Notes persist on refresh
 
 **Customization:**
 - [ ] Theme cycling works
@@ -363,7 +382,7 @@ const unsubscribe = appState.on('stateChange', (state) => {
 **IndexedDB Inspection:**
 1. Open DevTools (F12)
 2. Go to Application > IndexedDB > ton3s
-3. Inspect documents table
+3. Inspect notes table
 
 **State Debugging:**
 ```javascript
@@ -445,7 +464,7 @@ if (localStorage.getItem('debug')) {
 |------|------------|---------|
 | Components | PascalCase | `SaveControls` |
 | Services | camelCase | `storageService` |
-| CSS classes | kebab-case | `document-list` |
+| CSS classes | kebab-case | `note-list` |
 | Theme classes | `theme-*` | `theme-dracula` |
 | Font classes | `font-*` | `font-jetbrains` |
 | State events | camelCase | `stateChange` |
@@ -462,8 +481,8 @@ handleStateChange(state) {
 
 // Good: Check if relevant state changed
 handleStateChange(state) {
-  if (state.currentDocumentId !== this.lastDocId) {
-    this.lastDocId = state.currentDocumentId;
+  if (state.currentNoteId !== this.lastNoteId) {
+    this.lastNoteId = state.currentNoteId;
     this.render(state);
   }
 }

@@ -15,14 +15,6 @@ export class Header extends BaseComponent {
         super(container);
         this.activeDropdown = null;
         this.focusedIndex = -1;
-        this.isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    }
-
-    /**
-     * Get the keyboard shortcut for zen mode
-     */
-    getZenShortcut() {
-        return this.isMac ? '⌘\\' : 'Ctrl+\\';
     }
 
     /**
@@ -82,14 +74,6 @@ export class Header extends BaseComponent {
                             ${this.renderGroupedThemes()}
                         </div>
                     </div>
-                    <button class="btn btn-icon zen-toggle-btn" id="zen-toggle" aria-label="Toggle zen mode (${this.getZenShortcut()})" title="Zen Mode (${this.getZenShortcut()})">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" class="zen-expand-icon">
-                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-                        </svg>
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" class="zen-collapse-icon" style="display:none;">
-                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
-                        </svg>
-                    </button>
                     <button class="btn btn-icon nostr-toggle-btn" id="nostr-toggle" aria-label="Toggle NOSTR panel" title="NOSTR Publishing">
                         <span class="nostr-status-dot"></span>
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
@@ -165,11 +149,6 @@ export class Header extends BaseComponent {
             this.closeAllDropdowns();
         });
 
-        // Zen mode toggle button
-        this.$('#zen-toggle')?.addEventListener('click', () => {
-            appState.toggleZenMode();
-        });
-
         // NOSTR panel toggle button
         this.$('#nostr-toggle')?.addEventListener('click', () => {
             appState.toggleNostrPanel();
@@ -181,9 +160,6 @@ export class Header extends BaseComponent {
         );
         this.subscribe(
             appState.on(StateEvents.FONT_CHANGED, this.updateFontDisplay.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.ZEN_MODE_TOGGLED, this.updateZenModeDisplay.bind(this))
         );
         this.subscribe(
             appState.on(StateEvents.NOSTR_CONNECTED, this.updateNostrStatusDot.bind(this))
@@ -203,19 +179,6 @@ export class Header extends BaseComponent {
         const dot = this.$('.nostr-status-dot');
         if (dot) {
             dot.classList.toggle('connected', appState.nostr.connected);
-        }
-    }
-
-    /**
-     * Update zen mode button display
-     */
-    updateZenModeDisplay(isZenMode) {
-        const expandIcon = this.$('.zen-expand-icon');
-        const collapseIcon = this.$('.zen-collapse-icon');
-
-        if (expandIcon && collapseIcon) {
-            expandIcon.style.display = isZenMode ? 'none' : 'block';
-            collapseIcon.style.display = isZenMode ? 'block' : 'none';
         }
     }
 

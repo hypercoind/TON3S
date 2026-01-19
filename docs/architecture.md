@@ -9,7 +9,7 @@ System design and component overview for TON3S.
 │                         Frontend (Vite)                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │ Components  │  │  Services   │  │     State (AppState)    │  │
-│  │  - Editor   │  │  - Storage  │  │  - documents            │  │
+│  │  - Editor   │  │  - Storage  │  │  - notes                │  │
 │  │  - Sidebar  │  │  - Export   │  │  - settings             │  │
 │  │  - Header   │  │  - Nostr    │  │  - nostr                │  │
 │  │  - NostrUI  │  │  - Auth     │  │  - ui                   │  │
@@ -47,9 +47,9 @@ App
 │   ├── NostrButton
 │   └── SaveControls
 ├── Sidebar
-│   ├── NewDocButton
-│   ├── DocumentList
-│   │   └── DocumentItem (×n)
+│   ├── NewNoteButton
+│   ├── NoteList
+│   │   └── NoteItem (×n)
 │   └── SearchInput
 ├── Editor
 │   └── ContentEditable
@@ -159,8 +159,8 @@ class AppState extends StateEmitter {
   constructor() {
     super();
     this.state = {
-      documents: [],
-      currentDocumentId: null,
+      notes: [],
+      currentNoteId: null,
       settings: {
         themeIndex: 0,
         fontIndex: 0,
@@ -218,7 +218,7 @@ User Action → Component Handler → Service Call → State Update → Re-rende
 │ - CRUD ops      │ - toJSON()      │ - Event publishing     │
 │                 │                 │                         │
 │ ┌─────────────┐ │ ┌─────────────┐ │ ┌─────────────────────┐ │
-│ │ documents   │ │ │   jsPDF     │ │ │  NostrAuthService   │ │
+│ │ notes   │ │ │   jsPDF     │ │ │  NostrAuthService   │ │
 │ │ settings    │ │ │             │ │ │  - NIP-07 ext       │ │
 │ └─────────────┘ │ └─────────────┘ │ │  - Key management   │ │
 └─────────────────┴─────────────────┴─┴─────────────────────┴─┘
@@ -231,16 +231,16 @@ class StorageService {
   constructor() {
     this.db = new Dexie('ton3s');
     this.db.version(1).stores({
-      documents: '++id, title, createdAt, updatedAt, *tags'
+      notes: '++id, title, createdAt, updatedAt, *tags'
     });
   }
 
-  async saveDocument(doc) {
+  async saveNote(doc) {
     const now = Date.now();
     if (doc.id) {
-      await this.db.documents.update(doc.id, { ...doc, updatedAt: now });
+      await this.db.notes.update(doc.id, { ...doc, updatedAt: now });
     } else {
-      doc.id = await this.db.documents.add({
+      doc.id = await this.db.notes.add({
         ...doc,
         createdAt: now,
         updatedAt: now
@@ -249,12 +249,12 @@ class StorageService {
     return doc;
   }
 
-  async getDocuments() {
-    return this.db.documents.orderBy('updatedAt').reverse().toArray();
+  async getNotes() {
+    return this.db.notes.orderBy('updatedAt').reverse().toArray();
   }
 
-  async deleteDocument(id) {
-    return this.db.documents.delete(id);
+  async deleteNote(id) {
+    return this.db.notes.delete(id);
   }
 }
 ```
@@ -304,10 +304,10 @@ class NostrService extends StateEmitter {
 ```javascript
 // Database: ton3s
 
-// Table: documents
+// Table: notes
 {
   id: number,           // Auto-increment primary key
-  title: string,        // Document title
+  title: string,        // Note title
   content: string,      // HTML content
   plainText: string,    // Extracted for search
   tags: string[],       // Indexed array
@@ -332,8 +332,8 @@ async migrateFromLocalStorage() {
   const oldFont = localStorage.getItem('savedFontIndex');
 
   if (oldContent) {
-    await this.saveDocument({
-      title: 'Migrated Document',
+    await this.saveNote({
+      title: 'Migrated Note',
       content: oldContent,
       plainText: this.extractText(oldContent)
     });
@@ -503,7 +503,7 @@ class Editor {
 
 - Fonts loaded from Google Fonts with `display=swap`
 - jsPDF loaded only when PDF export is triggered
-- Documents loaded on-demand from IndexedDB
+- Notes loaded on-demand from IndexedDB
 
 ### Bundle Optimization (Vite)
 

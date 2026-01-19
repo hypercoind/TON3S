@@ -63,15 +63,15 @@ export class NostrPanel extends BaseComponent {
     }
 
     getPublishStatus() {
-        const doc = appState.currentDocument;
-        if (!doc || !doc.nostr?.published) return '';
+        const note = appState.currentNote;
+        if (!note || !note.nostr?.published) return '';
 
-        const publishedAt = new Date(doc.nostr.publishedAt).toLocaleString();
+        const publishedAt = new Date(note.nostr.publishedAt).toLocaleString();
         return `
             <div class="nostr-published-info" style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--fg-dim);">
                 <span style="color: var(--accent);">Published</span>
                 <br>${publishedAt}
-                ${doc.nostr.eventId ? `<br><code style="font-size: 0.65rem;">${doc.nostr.eventId.slice(0, 16)}...</code>` : ''}
+                ${note.nostr.eventId ? `<br><code style="font-size: 0.65rem;">${note.nostr.eventId.slice(0, 16)}...</code>` : ''}
             </div>
         `;
     }
@@ -84,7 +84,7 @@ export class NostrPanel extends BaseComponent {
             }
 
             if (e.target.closest('.publish-nostr-btn')) {
-                await this.publishDocument();
+                await this.publishNote();
             }
 
             if (e.target.closest('.disconnect-nostr-btn')) {
@@ -103,7 +103,7 @@ export class NostrPanel extends BaseComponent {
             appState.on(StateEvents.NOSTR_ERROR, () => this.render())
         );
         this.subscribe(
-            appState.on(StateEvents.DOCUMENT_SELECTED, () => this.render())
+            appState.on(StateEvents.NOTE_SELECTED, () => this.render())
         );
         this.subscribe(
             appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render())
@@ -130,17 +130,17 @@ export class NostrPanel extends BaseComponent {
         this.render();
     }
 
-    async publishDocument() {
+    async publishNote() {
         if (this.publishing) return;
 
-        const doc = appState.currentDocument;
-        if (!doc) {
-            alert('No document selected');
+        const note = appState.currentNote;
+        if (!note) {
+            alert('No note selected');
             return;
         }
 
-        if (!doc.plainText?.trim()) {
-            alert('Document is empty');
+        if (!note.plainText?.trim()) {
+            alert('Note is empty');
             return;
         }
 
@@ -148,13 +148,13 @@ export class NostrPanel extends BaseComponent {
         this.render();
 
         try {
-            const result = await nostrService.publishDocument(doc);
+            const result = await nostrService.publishNote(note);
             console.log('[NOSTR] Published:', result);
 
-            // Update document with publish info
-            await storageService.markAsPublished(doc.id, result.eventId);
+            // Update note with publish info
+            await storageService.markAsPublished(note.id, result.eventId);
 
-            alert('Document published to NOSTR!');
+            alert('Note published to NOSTR!');
         } catch (error) {
             console.error('[NOSTR] Publish failed:', error);
             alert(`Publish failed: ${error.message}`);

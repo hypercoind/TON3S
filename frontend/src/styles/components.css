@@ -583,8 +583,8 @@
     font-size: 0.9rem;
 }
 
-/* Empty state for document list */
-.document-item-empty {
+/* Empty state for note list */
+.note-item-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -595,18 +595,18 @@
     gap: 0.5rem;
 }
 
-.document-item-empty .empty-state-icon {
+.note-item-empty .empty-state-icon {
     opacity: 0.4;
     margin-bottom: 0.5rem;
 }
 
-.document-item-empty p {
+.note-item-empty p {
     margin: 0;
     font-size: 0.9rem;
     color: var(--fg);
 }
 
-.document-item-empty .empty-state-hint {
+.note-item-empty .empty-state-hint {
     font-size: 0.8rem;
     opacity: 0.7;
 }
