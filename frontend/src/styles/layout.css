@@ -59,6 +59,7 @@
 
 /* Sidebar */
 .sidebar {
+    position: relative;
     width: 280px;
     min-width: 280px;
     border-right: 1px solid var(--secondary);
@@ -208,6 +209,38 @@
 .save-indicator svg {
     color: var(--accent);
     flex-shrink: 0;
+}
+
+/* Save indicator states */
+.save-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background-color 0.2s ease;
+}
+
+.save-indicator.unsaved .save-dot {
+    background: var(--accent);
+}
+
+.save-indicator.saving .save-icon-check {
+    display: none;
+}
+
+.save-indicator.saving .save-icon-saving {
+    display: block !important;
+    animation: pulse 0.8s infinite;
+}
+
+.save-indicator.saved .save-icon-check {
+    animation: save-flash 0.3s ease-out;
+}
+
+@keyframes save-flash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }
 
 /* Search bar */

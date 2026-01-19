@@ -17,9 +17,10 @@ export class NostrPanel extends BaseComponent {
 
     render() {
         const { connected, pubkey, extension, error } = appState.nostr;
+        const isVisible = appState.ui.nostrPanelVisible;
 
         this.container.innerHTML = `
-            <div class="nostr-panel">
+            <div class="nostr-panel ${isVisible ? 'visible' : ''}">
                 <div class="nostr-status">
                     <span class="nostr-status-indicator ${connected ? 'connected' : ''}"></span>
                     <span class="nostr-status-text">
@@ -106,6 +107,9 @@ export class NostrPanel extends BaseComponent {
         );
         this.subscribe(
             appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render())
+        );
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_PANEL_TOGGLED, () => this.render())
         );
     }
 

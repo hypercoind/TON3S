@@ -47,9 +47,29 @@ class TON3SApp {
             // Initialize security measures
             this.initSecurity();
 
+            // Hide loading overlay
+            this.hideLoading();
+
             console.log('TON3S v2.0 initialized');
         } catch (error) {
             console.error('Failed to initialize TON3S:', error);
+            // Still hide loading on error to show the app
+            this.hideLoading();
+        }
+    }
+
+    /**
+     * Hide the loading overlay
+     */
+    hideLoading() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+            loadingOverlay.setAttribute('aria-busy', 'false');
+            // Remove from DOM after transition
+            setTimeout(() => {
+                loadingOverlay.remove();
+            }, 300);
         }
     }
 

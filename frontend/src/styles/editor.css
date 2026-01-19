@@ -95,6 +95,21 @@
     border-bottom: 1px solid var(--secondary);
 }
 
+/* Tag input icon */
+.tag-input-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-dim);
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.tags-container:focus-within .tag-input-icon {
+    opacity: 1;
+    color: var(--accent);
+}
+
 .tag-input {
     border: none;
     background: transparent;

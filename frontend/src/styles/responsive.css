@@ -45,9 +45,64 @@
         gap: 0.5rem;
     }
 
+    /* Ensure minimum 44x44px touch targets (WCAG 2.5.5) */
     .btn {
         padding: 0.4rem 0.75rem;
         font-size: 0.85rem;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .btn-dropdown {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .btn-icon {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .document-delete-btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem;
+    }
+
+    .sidebar-collapse-btn,
+    .sidebar-expand-tab {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .new-document-btn {
+        min-height: 44px;
+    }
+
+    .privacy-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .confirm-cancel,
+    .confirm-ok {
+        min-height: 44px;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .dropdown-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .document-tag .remove-tag {
+        min-height: 32px;
+        min-width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn span {

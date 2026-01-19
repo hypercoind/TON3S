@@ -6,13 +6,38 @@
 import { BaseComponent } from './BaseComponent.js';
 import { appState, StateEvents } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
-import { themes } from '../data/themes.js';
+import { themes, getThemesByCategory } from '../data/themes.js';
 import { fonts } from '../data/fonts.js';
 import { sanitizeInput } from '../utils/sanitizer.js';
 
 export class Header extends BaseComponent {
     constructor(container) {
         super(container);
+        this.activeDropdown = null;
+        this.focusedIndex = -1;
+        this.isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    }
+
+    /**
+     * Get the keyboard shortcut for zen mode
+     */
+    getZenShortcut() {
+        return this.isMac ? '⌘\\' : 'Ctrl+\\';
+    }
+
+    /**
+     * Render themes grouped by category
+     */
+    renderGroupedThemes() {
+        const grouped = getThemesByCategory();
+        return grouped.map(category => `
+            <div class="dropdown-category" role="group" aria-label="${sanitizeInput(category.name)}">
+                <div class="dropdown-category-header">${sanitizeInput(category.name)}</div>
+                ${category.themes.map(theme =>
+                    `<div class="dropdown-item" role="option" tabindex="-1" data-index="${theme.index}">${sanitizeInput(theme.full)}</div>`
+                ).join('')}
+            </div>
+        `).join('');
     }
 
     render() {
@@ -30,14 +55,14 @@ export class Header extends BaseComponent {
                             </svg>
                             <span id="font-name">${sanitizeInput(currentFont.name)}</span>
                         </button>
-                        <button class="btn-dropdown" id="font-dropdown" aria-label="Show all fonts">
+                        <button class="btn-dropdown" id="font-dropdown" aria-label="Show all fonts" aria-haspopup="listbox" aria-expanded="false">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
                             </svg>
                         </button>
-                        <div class="dropdown-menu" id="font-dropdown-menu" role="menu">
+                        <div class="dropdown-menu" id="font-dropdown-menu" role="listbox" aria-label="Font selection">
                             ${fonts.map((font, index) =>
-                                `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(font.full)}</div>`
+                                `<div class="dropdown-item" role="option" tabindex="-1" data-index="${index}">${sanitizeInput(font.full)}</div>`
                             ).join('')}
                         </div>
                     </div>
@@ -48,17 +73,29 @@ export class Header extends BaseComponent {
                             </svg>
                             <span id="theme-name">${sanitizeInput(currentTheme.name)}</span>
                         </button>
-                        <button class="btn-dropdown" id="theme-dropdown" aria-label="Show all themes">
+                        <button class="btn-dropdown" id="theme-dropdown" aria-label="Show all themes" aria-haspopup="listbox" aria-expanded="false">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
                             </svg>
                         </button>
-                        <div class="dropdown-menu" id="theme-dropdown-menu" role="menu">
-                            ${themes.map((theme, index) =>
-                                `<div class="dropdown-item" role="menuitem" tabindex="0" data-index="${index}">${sanitizeInput(theme.full)}</div>`
-                            ).join('')}
+                        <div class="dropdown-menu" id="theme-dropdown-menu" role="listbox" aria-label="Theme selection">
+                            ${this.renderGroupedThemes()}
                         </div>
                     </div>
+                    <button class="btn btn-icon zen-toggle-btn" id="zen-toggle" aria-label="Toggle zen mode (${this.getZenShortcut()})" title="Zen Mode (${this.getZenShortcut()})">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" class="zen-expand-icon">
+                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                        </svg>
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" class="zen-collapse-icon" style="display:none;">
+                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-icon nostr-toggle-btn" id="nostr-toggle" aria-label="Toggle NOSTR panel" title="NOSTR Publishing">
+                        <span class="nostr-status-dot"></span>
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         `;
@@ -76,38 +113,66 @@ export class Header extends BaseComponent {
         });
 
         // Theme dropdown toggle
-        this.$('#theme-dropdown')?.addEventListener('click', (e) => {
+        const themeDropdownBtn = this.$('#theme-dropdown');
+        themeDropdownBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.toggleDropdown('theme-dropdown-menu');
+            this.toggleDropdown('theme-dropdown-menu', themeDropdownBtn);
+        });
+        themeDropdownBtn?.addEventListener('keydown', (e) => {
+            this.handleDropdownButtonKeydown(e, 'theme-dropdown-menu', themeDropdownBtn);
         });
 
         // Font dropdown toggle
-        this.$('#font-dropdown')?.addEventListener('click', (e) => {
+        const fontDropdownBtn = this.$('#font-dropdown');
+        fontDropdownBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.toggleDropdown('font-dropdown-menu');
+            this.toggleDropdown('font-dropdown-menu', fontDropdownBtn);
+        });
+        fontDropdownBtn?.addEventListener('keydown', (e) => {
+            this.handleDropdownButtonKeydown(e, 'font-dropdown-menu', fontDropdownBtn);
         });
 
-        // Theme dropdown items
-        this.$('#theme-dropdown-menu')?.addEventListener('click', (e) => {
+        // Theme dropdown items and keyboard navigation
+        const themeMenu = this.$('#theme-dropdown-menu');
+        themeMenu?.addEventListener('click', (e) => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
                 this.setTheme(index);
                 this.closeDropdown('theme-dropdown-menu');
+                themeDropdownBtn?.focus();
             }
         });
+        themeMenu?.addEventListener('keydown', (e) => {
+            this.handleDropdownKeydown(e, 'theme-dropdown-menu', themeDropdownBtn, (index) => this.setTheme(index));
+        });
 
-        // Font dropdown items
-        this.$('#font-dropdown-menu')?.addEventListener('click', (e) => {
+        // Font dropdown items and keyboard navigation
+        const fontMenu = this.$('#font-dropdown-menu');
+        fontMenu?.addEventListener('click', (e) => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
                 this.setFont(index);
                 this.closeDropdown('font-dropdown-menu');
+                fontDropdownBtn?.focus();
             }
+        });
+        fontMenu?.addEventListener('keydown', (e) => {
+            this.handleDropdownKeydown(e, 'font-dropdown-menu', fontDropdownBtn, (index) => this.setFont(index));
         });
 
         // Close dropdowns on outside click
         document.addEventListener('click', () => {
             this.closeAllDropdowns();
+        });
+
+        // Zen mode toggle button
+        this.$('#zen-toggle')?.addEventListener('click', () => {
+            appState.toggleZenMode();
+        });
+
+        // NOSTR panel toggle button
+        this.$('#nostr-toggle')?.addEventListener('click', () => {
+            appState.toggleNostrPanel();
         });
 
         // State subscriptions
@@ -117,6 +182,125 @@ export class Header extends BaseComponent {
         this.subscribe(
             appState.on(StateEvents.FONT_CHANGED, this.updateFontDisplay.bind(this))
         );
+        this.subscribe(
+            appState.on(StateEvents.ZEN_MODE_TOGGLED, this.updateZenModeDisplay.bind(this))
+        );
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_CONNECTED, this.updateNostrStatusDot.bind(this))
+        );
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_DISCONNECTED, this.updateNostrStatusDot.bind(this))
+        );
+
+        // Initial NOSTR status dot update
+        this.updateNostrStatusDot();
+    }
+
+    /**
+     * Update NOSTR status dot indicator
+     */
+    updateNostrStatusDot() {
+        const dot = this.$('.nostr-status-dot');
+        if (dot) {
+            dot.classList.toggle('connected', appState.nostr.connected);
+        }
+    }
+
+    /**
+     * Update zen mode button display
+     */
+    updateZenModeDisplay(isZenMode) {
+        const expandIcon = this.$('.zen-expand-icon');
+        const collapseIcon = this.$('.zen-collapse-icon');
+
+        if (expandIcon && collapseIcon) {
+            expandIcon.style.display = isZenMode ? 'none' : 'block';
+            collapseIcon.style.display = isZenMode ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Handle keydown on dropdown toggle button
+     */
+    handleDropdownButtonKeydown(e, menuId, button) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.toggleDropdown(menuId, button);
+            // Focus first item when opening with keyboard
+            const menu = document.getElementById(menuId);
+            if (menu?.classList.contains('show')) {
+                const items = menu.querySelectorAll('.dropdown-item');
+                if (items.length > 0) {
+                    this.focusedIndex = 0;
+                    items[0].focus();
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle keydown within dropdown menu
+     */
+    handleDropdownKeydown(e, menuId, button, onSelect) {
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+
+        const items = menu.querySelectorAll('.dropdown-item');
+        if (items.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                this.focusedIndex = Math.min(this.focusedIndex + 1, items.length - 1);
+                items[this.focusedIndex].focus();
+                // Scroll item into view
+                items[this.focusedIndex].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
+                items[this.focusedIndex].focus();
+                items[this.focusedIndex].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'Home':
+                e.preventDefault();
+                this.focusedIndex = 0;
+                items[0].focus();
+                items[0].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'End':
+                e.preventDefault();
+                this.focusedIndex = items.length - 1;
+                items[this.focusedIndex].focus();
+                items[this.focusedIndex].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                const focusedItem = items[this.focusedIndex];
+                if (focusedItem) {
+                    const index = parseInt(focusedItem.dataset.index);
+                    onSelect(index);
+                    this.closeDropdown(menuId);
+                    button?.focus();
+                }
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                this.closeDropdown(menuId);
+                button?.focus();
+                break;
+
+            case 'Tab':
+                // Close dropdown and allow normal tab behavior
+                this.closeDropdown(menuId);
+                break;
+        }
     }
 
     rotateTheme() {
@@ -191,9 +375,11 @@ export class Header extends BaseComponent {
         }
     }
 
-    toggleDropdown(menuId) {
+    toggleDropdown(menuId, button) {
         const menu = document.getElementById(menuId);
         if (!menu) return;
+
+        const isOpening = !menu.classList.contains('show');
 
         // Close other dropdowns
         this.$$('.dropdown-menu').forEach(dropdown => {
@@ -201,19 +387,48 @@ export class Header extends BaseComponent {
                 dropdown.classList.remove('show');
             }
         });
+        // Update aria-expanded for all dropdown buttons
+        this.$$('.btn-dropdown').forEach(btn => {
+            if (btn !== button) {
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
 
         menu.classList.toggle('show');
+        button?.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
+
+        // Reset focused index when opening
+        if (isOpening) {
+            this.focusedIndex = -1;
+            this.activeDropdown = menuId;
+        } else {
+            this.activeDropdown = null;
+        }
     }
 
     closeDropdown(menuId) {
         const menu = document.getElementById(menuId);
         menu?.classList.remove('show');
+
+        // Update aria-expanded
+        const button = menuId === 'theme-dropdown-menu' ?
+            this.$('#theme-dropdown') :
+            this.$('#font-dropdown');
+        button?.setAttribute('aria-expanded', 'false');
+
+        this.activeDropdown = null;
+        this.focusedIndex = -1;
     }
 
     closeAllDropdowns() {
         this.$$('.dropdown-menu').forEach(menu => {
             menu.classList.remove('show');
         });
+        this.$$('.btn-dropdown').forEach(btn => {
+            btn.setAttribute('aria-expanded', 'false');
+        });
+        this.activeDropdown = null;
+        this.focusedIndex = -1;
     }
 }
 

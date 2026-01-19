@@ -60,9 +60,35 @@
     animation: slideInLeft 0.3s ease-out;
 }
 
-/* Smooth transitions for theme/font changes */
-* {
+/* Smooth transitions for theme/font changes - applied selectively for performance */
+body,
+.app-container,
+.header,
+.sidebar,
+.container,
+.status,
+.editor,
+.btn,
+.btn-dropdown,
+.btn-icon,
+.dropdown-menu,
+.dropdown-item,
+.document-item,
+.privacy-overlay,
+.privacy-popup,
+.confirm-overlay,
+.confirm-dialog,
+.nostr-panel {
     transition: color 0.4s ease, background-color 0.4s ease, border-color 0.4s ease;
+}
+
+/* GPU-accelerated transforms for animations */
+.sidebar,
+.dropdown-menu,
+.privacy-popup,
+.help-modal,
+.confirm-dialog {
+    will-change: transform, opacity;
 }
 
 /* Loading spinner */

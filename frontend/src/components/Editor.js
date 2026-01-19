@@ -27,11 +27,16 @@ export class Editor extends BaseComponent {
                 aria-label="Document title"
             />
             <div class="tags-container">
+                <span class="tag-input-icon" aria-hidden="true">
+                    <svg fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                </span>
                 <input
                     type="text"
                     class="tag-input"
-                    placeholder="Add tags..."
-                    aria-label="Add tags"
+                    placeholder="Add tags (press Enter)"
+                    aria-label="Add tags, press Enter to add"
                 />
             </div>
             <div

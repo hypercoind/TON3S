@@ -144,6 +144,87 @@ class KeyboardManager {
             handler: callbacks.onSearch || (() => {}),
             description: 'Focus search'
         });
+
+        // Help modal
+        this.register('help', {
+            key: '?',
+            shift: true,
+            cmdOrCtrl: true,
+            handler: () => this.showHelpModal(),
+            description: 'Show keyboard shortcuts'
+        });
+    }
+
+    /**
+     * Show help modal with keyboard shortcuts
+     */
+    showHelpModal() {
+        // Remove existing modal
+        document.querySelector('.help-modal-overlay')?.remove();
+
+        const shortcuts = this.getShortcutsList();
+        const previouslyFocused = document.activeElement;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'help-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'help-modal-title');
+
+        overlay.innerHTML = `
+            <div class="help-modal">
+                <div class="help-modal-header">
+                    <h3 id="help-modal-title">Keyboard Shortcuts</h3>
+                    <button class="help-modal-close" aria-label="Close">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="help-modal-content">
+                    <table class="shortcuts-table">
+                        <tbody>
+                            ${shortcuts.map(shortcut => `
+                                <tr>
+                                    <td class="shortcut-keys"><kbd>${shortcut.keys}</kbd></td>
+                                    <td class="shortcut-desc">${shortcut.description}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
+
+        const closeBtn = overlay.querySelector('.help-modal-close');
+        setTimeout(() => closeBtn.focus(), 50);
+
+        const closeModal = () => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
+                }
+            }, 200);
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleKeyDown);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
     }
 }
 

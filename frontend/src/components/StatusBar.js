@@ -11,19 +11,24 @@ export class StatusBar extends BaseComponent {
     constructor(container) {
         super(container);
         this.saveStatusInterval = null;
+        this.previouslyFocusedElement = null;
     }
 
     render() {
         this.container.innerHTML = `
             <div class="status">
-                <div class="word-count">
+                <div class="word-count" aria-live="polite" aria-atomic="true">
                     <span id="char-count">0 characters</span>
                     <span id="word-count">0 words</span>
                 </div>
-                <div class="save-indicator" id="save-indicator">
-                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                <div class="save-indicator" id="save-indicator" aria-live="polite" aria-atomic="true">
+                    <svg class="save-icon-check" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                     </svg>
+                    <svg class="save-icon-saving" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14" style="display:none;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.5"/>
+                    </svg>
+                    <span class="save-dot"></span>
                     <span id="save-status">Saved just now</span>
                 </div>
                 <button class="privacy-btn" id="privacy-btn" aria-label="Privacy information">
@@ -102,13 +107,8 @@ export class StatusBar extends BaseComponent {
         });
 
         // Clear data button
-        document.getElementById('privacy-clear')?.addEventListener('click', async () => {
-            if (confirm('Clear all data? This cannot be undone.')) {
-                await storageService.clearAllData();
-                this.hidePrivacyPopup();
-                alert('All data has been cleared.');
-                window.location.reload();
-            }
+        document.getElementById('privacy-clear')?.addEventListener('click', () => {
+            this.showClearDataConfirm();
         });
 
         // Listen for editor count updates
@@ -126,11 +126,13 @@ export class StatusBar extends BaseComponent {
             this.updateSaveStatusText();
         }, 10000);
 
-        // Escape to close privacy popup
+        // Escape to close privacy popup and focus trap
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.hidePrivacyPopup();
             }
+            // Handle focus trap for Tab key
+            this.handleFocusTrap(e);
         });
     }
 
@@ -188,7 +190,17 @@ export class StatusBar extends BaseComponent {
      * Show privacy popup
      */
     showPrivacyPopup() {
-        document.getElementById('privacy-overlay')?.classList.add('show');
+        // Store currently focused element to restore later
+        this.previouslyFocusedElement = document.activeElement;
+
+        const overlay = document.getElementById('privacy-overlay');
+        overlay?.classList.add('show');
+
+        // Focus the close button when modal opens
+        setTimeout(() => {
+            const closeBtn = document.getElementById('privacy-close');
+            closeBtn?.focus();
+        }, 100);
     }
 
     /**
@@ -196,6 +208,125 @@ export class StatusBar extends BaseComponent {
      */
     hidePrivacyPopup() {
         document.getElementById('privacy-overlay')?.classList.remove('show');
+
+        // Restore focus to previously focused element
+        if (this.previouslyFocusedElement && typeof this.previouslyFocusedElement.focus === 'function') {
+            this.previouslyFocusedElement.focus();
+            this.previouslyFocusedElement = null;
+        }
+    }
+
+    /**
+     * Show confirmation for clearing all data
+     */
+    showClearDataConfirm() {
+        // Remove any existing confirm modal
+        document.querySelector('.confirm-overlay')?.remove();
+
+        const previouslyFocused = document.activeElement;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.setAttribute('role', 'alertdialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'confirm-title');
+        overlay.setAttribute('aria-describedby', 'confirm-desc');
+        overlay.innerHTML = `
+            <div class="confirm-dialog">
+                <h4 id="confirm-title">Clear All Data</h4>
+                <p id="confirm-desc">This will permanently delete all documents and settings. This action cannot be undone.</p>
+                <div class="confirm-actions">
+                    <button class="confirm-ok danger">Clear All Data</button>
+                    <button class="confirm-cancel">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
+
+        const cancelBtn = overlay.querySelector('.confirm-cancel');
+        const confirmBtn = overlay.querySelector('.confirm-ok');
+
+        setTimeout(() => cancelBtn.focus(), 50);
+
+        const closeModal = () => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
+                }
+            }, 200);
+        };
+
+        cancelBtn.addEventListener('click', closeModal);
+
+        confirmBtn.addEventListener('click', async () => {
+            closeModal();
+            this.hidePrivacyPopup();
+            await storageService.clearAllData();
+            window.location.reload();
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleKeyDown);
+            }
+            if (e.key === 'Tab') {
+                const focusables = overlay.querySelectorAll('button');
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+    }
+
+    /**
+     * Handle focus trap within privacy modal
+     */
+    handleFocusTrap(e) {
+        const overlay = document.getElementById('privacy-overlay');
+        if (!overlay?.classList.contains('show')) return;
+
+        if (e.key !== 'Tab') return;
+
+        const popup = overlay.querySelector('.privacy-popup');
+        const focusableElements = popup.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+
+        if (focusableElements.length === 0) return;
+
+        const firstFocusable = focusableElements[0];
+        const lastFocusable = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+            // Shift+Tab: moving backwards
+            if (document.activeElement === firstFocusable) {
+                e.preventDefault();
+                lastFocusable.focus();
+            }
+        } else {
+            // Tab: moving forwards
+            if (document.activeElement === lastFocusable) {
+                e.preventDefault();
+                firstFocusable.focus();
+            }
+        }
     }
 
     destroy() {

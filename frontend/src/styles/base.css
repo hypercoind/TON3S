@@ -47,13 +47,44 @@ body::after {
 }
 
 /* Visible focus indicators for accessibility (WCAG 2.1 AA) */
-button:focus {
+/* Remove default outline, will add custom focus-visible */
+button:focus,
+input:focus,
+select:focus,
+[tabindex]:focus {
     outline: none;
 }
 
+/* Consistent focus-visible styles for all interactive elements */
 button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible,
+.btn:focus-visible,
+.btn-icon:focus-visible,
+.btn-dropdown:focus-visible,
 .text-style-btn:focus-visible,
-.privacy-btn:focus-visible {
+.privacy-btn:focus-visible,
+.sidebar-collapse-btn:focus-visible,
+.sidebar-expand-tab:focus-visible,
+.new-document-btn:focus-visible,
+.document-item:focus-visible,
+.document-delete-btn:focus-visible,
+.nostr-publish-btn:focus-visible,
+.connect-nostr-btn:focus-visible,
+.confirm-cancel:focus-visible,
+.confirm-ok:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Inset focus for items within containers */
+.document-item:focus-visible {
+    outline-offset: -2px;
+}
+
+/* Focus style for links */
+a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
