@@ -115,20 +115,55 @@
     border-left-color: var(--accent);
 }
 
-/* Delete button */
-.document-delete-btn {
+/* Document item actions container */
+.document-item-actions {
     position: absolute;
     right: 0.5rem;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.document-item:hover .document-item-actions {
+    opacity: 1;
+}
+
+/* Tag button */
+.document-tag-btn {
     background: transparent;
     border: none;
     color: var(--fg-dim);
     cursor: pointer;
     padding: 0.25rem;
     border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-tag-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.document-tag-btn:hover {
+    color: var(--accent);
+    background: var(--hover);
+}
+
+/* Delete button */
+.document-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,13 +174,119 @@
     height: 16px;
 }
 
-.document-item:hover .document-delete-btn {
-    opacity: 1;
-}
-
 .document-delete-btn:hover {
     color: #ef4444;
     background: var(--hover);
+}
+
+/* Tag editor popup */
+.tag-editor-popup {
+    position: fixed;
+    width: 240px;
+    background: var(--bg);
+    border: 1px solid var(--secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.tag-editor-popup.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.tag-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--secondary);
+}
+
+.tag-editor-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--fg);
+}
+
+.tag-editor-close {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.tag-editor-close:hover {
+    color: var(--fg);
+    background: var(--hover);
+}
+
+.tag-editor-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    min-height: 2rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.tag-editor-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--secondary);
+    border-radius: 4px;
+    color: var(--fg);
+}
+
+.tag-editor-tag-remove {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.1rem;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.tag-editor-tag-remove:hover {
+    color: #ef4444;
+}
+
+.tag-editor-input {
+    width: calc(100% - 2rem);
+    margin: 0 1rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--secondary);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 0.85rem;
+}
+
+.tag-editor-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.tag-editor-input::placeholder {
+    color: var(--fg-dim);
 }
 
 .document-item-title {

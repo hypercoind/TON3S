@@ -12,33 +12,15 @@ export class Editor extends BaseComponent {
     constructor(container) {
         super(container);
         this.editorElement = null;
-        this.titleInput = null;
-        this.tagsContainer = null;
-        this.tagInput = null;
         this.saveTimeout = null;
+        // Auto-zen mode properties
+        this.autoZenTimeout = null;
+        this.autoZenDelay = 3000; // 3 seconds of typing triggers zen mode
+        this.isTyping = false;
     }
 
     render() {
         this.container.innerHTML = `
-            <input
-                type="text"
-                class="document-title-input"
-                placeholder="Untitled Document"
-                aria-label="Document title"
-            />
-            <div class="tags-container">
-                <span class="tag-input-icon" aria-hidden="true">
-                    <svg fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                </span>
-                <input
-                    type="text"
-                    class="tag-input"
-                    placeholder="Add tags (press Enter)"
-                    aria-label="Add tags, press Enter to add"
-                />
-            </div>
             <div
                 class="editor"
                 contenteditable="true"
@@ -54,9 +36,6 @@ export class Editor extends BaseComponent {
         `;
 
         this.editorElement = this.$('.editor');
-        this.titleInput = this.$('.document-title-input');
-        this.tagsContainer = this.$('.tags-container');
-        this.tagInput = this.$('.tag-input');
     }
 
     bindEvents() {
@@ -65,11 +44,9 @@ export class Editor extends BaseComponent {
         this.editorElement.addEventListener('keydown', this.handleKeyDown.bind(this));
         this.editorElement.addEventListener('paste', this.handlePaste.bind(this));
 
-        // Title input
-        this.titleInput.addEventListener('input', this.handleTitleChange.bind(this));
-
-        // Tag input
-        this.tagInput.addEventListener('keydown', this.handleTagKeyDown.bind(this));
+        // Auto-zen mode: track focus/blur
+        this.editorElement.addEventListener('focus', this.handleEditorFocus.bind(this));
+        this.editorElement.addEventListener('blur', this.handleEditorBlur.bind(this));
 
         // State subscriptions
         this.subscribe(
@@ -81,16 +58,15 @@ export class Editor extends BaseComponent {
      * Load a document into the editor
      */
     loadDocument(doc) {
+        // Clear auto-zen timer when switching documents
+        this.clearAutoZenTimer();
+
         if (!doc) {
-            this.titleInput.value = '';
             this.editorElement.innerHTML = '<p><br></p>';
-            this.renderTags([]);
             return;
         }
 
-        this.titleInput.value = doc.title || '';
         this.editorElement.innerHTML = doc.content || '<p><br></p>';
-        this.renderTags(doc.tags || []);
         this.updateCounts();
     }
 
@@ -102,6 +78,7 @@ export class Editor extends BaseComponent {
         this.autoSave();
         this.updateCounts();
         this.autoScroll();
+        this.resetAutoZenTimer();
     }
 
     /**
@@ -221,92 +198,48 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Handle title change
+     * Handle editor focus - start tracking typing
      */
-    async handleTitleChange() {
-        const doc = appState.currentDocument;
-        if (!doc) return;
-
-        const title = this.titleInput.value.trim() || 'Untitled';
-        await storageService.updateDocument(doc.id, { title });
+    handleEditorFocus() {
+        this.isTyping = true;
     }
 
     /**
-     * Handle tag input keydown
+     * Handle editor blur - stop tracking typing
      */
-    async handleTagKeyDown(e) {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const tagValue = this.tagInput.value.trim().replace(/,/g, '');
-            if (tagValue) {
-                await this.addTag(tagValue);
-                this.tagInput.value = '';
+    handleEditorBlur() {
+        this.isTyping = false;
+        this.clearAutoZenTimer();
+    }
+
+    /**
+     * Reset auto-zen timer on each input
+     */
+    resetAutoZenTimer() {
+        // Don't trigger if already in zen mode
+        if (appState.settings.zenMode) {
+            return;
+        }
+
+        // Clear existing timer
+        this.clearAutoZenTimer();
+
+        // Start new timer - enter zen mode after continuous typing
+        this.autoZenTimeout = setTimeout(() => {
+            if (this.isTyping && !appState.settings.zenMode) {
+                appState.toggleZenMode();
             }
-        } else if (e.key === 'Backspace' && !this.tagInput.value) {
-            await this.removeLastTag();
+        }, this.autoZenDelay);
+    }
+
+    /**
+     * Clear auto-zen timer
+     */
+    clearAutoZenTimer() {
+        if (this.autoZenTimeout) {
+            clearTimeout(this.autoZenTimeout);
+            this.autoZenTimeout = null;
         }
-    }
-
-    /**
-     * Add a tag to the document
-     */
-    async addTag(tag) {
-        const doc = appState.currentDocument;
-        if (!doc) return;
-
-        const tags = [...(doc.tags || [])];
-        if (!tags.includes(tag)) {
-            tags.push(tag);
-            await storageService.updateDocument(doc.id, { tags });
-            this.renderTags(tags);
-        }
-    }
-
-    /**
-     * Remove a tag from the document
-     */
-    async removeTag(tag) {
-        const doc = appState.currentDocument;
-        if (!doc) return;
-
-        const tags = (doc.tags || []).filter(t => t !== tag);
-        await storageService.updateDocument(doc.id, { tags });
-        this.renderTags(tags);
-    }
-
-    /**
-     * Remove the last tag
-     */
-    async removeLastTag() {
-        const doc = appState.currentDocument;
-        if (!doc || !doc.tags?.length) return;
-
-        const tags = [...doc.tags];
-        tags.pop();
-        await storageService.updateDocument(doc.id, { tags });
-        this.renderTags(tags);
-    }
-
-    /**
-     * Render tags in the container
-     */
-    renderTags(tags) {
-        // Remove existing tag elements (keep input)
-        this.tagsContainer.querySelectorAll('.document-tag').forEach(el => el.remove());
-
-        // Add tag elements before input
-        tags.forEach(tag => {
-            const tagEl = document.createElement('span');
-            tagEl.className = 'document-tag';
-            tagEl.innerHTML = `
-                ${tag}
-                <span class="remove-tag" data-tag="${tag}">&times;</span>
-            `;
-            tagEl.querySelector('.remove-tag').addEventListener('click', () => {
-                this.removeTag(tag);
-            });
-            this.tagsContainer.insertBefore(tagEl, this.tagInput);
-        });
     }
 
     /**

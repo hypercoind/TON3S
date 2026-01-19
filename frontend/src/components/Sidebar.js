@@ -16,6 +16,7 @@ export class Sidebar extends BaseComponent {
         this.isResizing = false;
         this.minWidth = 200;
         this.maxWidth = 500;
+        this.activeTagPopup = null;
     }
 
     render() {
@@ -251,11 +252,18 @@ export class Sidebar extends BaseComponent {
                             ${tags.map(tag => `<span class="tag">${sanitizeInput(tag)}</span>`).join('')}
                         </div>
                     ` : ''}
-                    <button class="document-delete-btn" data-delete-id="${doc.id}" aria-label="Delete document">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                        </svg>
-                    </button>
+                    <div class="document-item-actions">
+                        <button class="document-tag-btn" data-tag-id="${doc.id}" aria-label="Edit tags">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                            </svg>
+                        </button>
+                        <button class="document-delete-btn" data-delete-id="${doc.id}" aria-label="Delete document">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -263,8 +271,8 @@ export class Sidebar extends BaseComponent {
         // Add click handlers
         listEl.querySelectorAll('.document-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // Don't select document if clicking delete button
-                if (e.target.closest('.document-delete-btn')) return;
+                // Don't select document if clicking action buttons
+                if (e.target.closest('.document-item-actions')) return;
                 const id = parseInt(item.dataset.id);
                 appState.selectDocument(id);
             });
@@ -273,6 +281,15 @@ export class Sidebar extends BaseComponent {
             item.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 this.showContextMenu(e, parseInt(item.dataset.id));
+            });
+        });
+
+        // Add tag button handlers
+        listEl.querySelectorAll('.document-tag-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const docId = parseInt(btn.dataset.tagId);
+                this.showTagEditorPopup(btn, docId);
             });
         });
 
@@ -330,6 +347,153 @@ export class Sidebar extends BaseComponent {
                 storageService.deleteDocument(docId);
             }
         });
+    }
+
+    /**
+     * Show tag editor popup for a document
+     */
+    showTagEditorPopup(button, docId) {
+        // Close any existing popup
+        this.closeTagEditorPopup();
+
+        const doc = appState.documents.find(d => d.id === docId);
+        if (!doc) return;
+
+        const popup = document.createElement('div');
+        popup.className = 'tag-editor-popup';
+        popup.setAttribute('role', 'dialog');
+        popup.setAttribute('aria-label', 'Edit tags');
+
+        const renderPopupContent = () => {
+            const tags = doc.tags || [];
+            popup.innerHTML = `
+                <div class="tag-editor-header">
+                    <span class="tag-editor-title">Tags</span>
+                    <button class="tag-editor-close" aria-label="Close">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="tag-editor-tags">
+                    ${tags.map(tag => `
+                        <span class="tag-editor-tag">
+                            ${sanitizeInput(tag)}
+                            <button class="tag-editor-tag-remove" data-tag="${sanitizeInput(tag)}" aria-label="Remove tag ${sanitizeInput(tag)}">
+                                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </span>
+                    `).join('')}
+                </div>
+                <input
+                    type="text"
+                    class="tag-editor-input"
+                    placeholder="Add tag (Enter)"
+                    aria-label="Add new tag"
+                />
+            `;
+
+            // Bind events for the popup content
+            popup.querySelector('.tag-editor-close').addEventListener('click', () => {
+                this.closeTagEditorPopup();
+            });
+
+            popup.querySelectorAll('.tag-editor-tag-remove').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tagToRemove = btn.dataset.tag;
+                    const newTags = (doc.tags || []).filter(t => t !== tagToRemove);
+                    await storageService.updateDocument(docId, { tags: newTags });
+                    doc.tags = newTags;
+                    renderPopupContent();
+                });
+            });
+
+            const input = popup.querySelector('.tag-editor-input');
+            input.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const newTag = input.value.trim().replace(/,/g, '');
+                    if (newTag && !(doc.tags || []).includes(newTag)) {
+                        const newTags = [...(doc.tags || []), newTag];
+                        await storageService.updateDocument(docId, { tags: newTags });
+                        doc.tags = newTags;
+                        renderPopupContent();
+                        popup.querySelector('.tag-editor-input').focus();
+                    } else {
+                        input.value = '';
+                    }
+                }
+            });
+
+            // Focus input after rendering
+            setTimeout(() => input.focus(), 50);
+        };
+
+        renderPopupContent();
+        document.body.appendChild(popup);
+
+        // Position the popup near the button
+        const buttonRect = button.getBoundingClientRect();
+        const popupWidth = 240;
+        const popupHeight = 200;
+
+        let left = buttonRect.right + 8;
+        let top = buttonRect.top;
+
+        // Adjust if would go off-screen right
+        if (left + popupWidth > window.innerWidth - 10) {
+            left = buttonRect.left - popupWidth - 8;
+        }
+
+        // Adjust if would go off-screen bottom
+        if (top + popupHeight > window.innerHeight - 10) {
+            top = window.innerHeight - popupHeight - 10;
+        }
+
+        // Ensure minimum values
+        left = Math.max(10, left);
+        top = Math.max(10, top);
+
+        popup.style.left = `${left}px`;
+        popup.style.top = `${top}px`;
+
+        // Show with animation
+        requestAnimationFrame(() => popup.classList.add('show'));
+
+        this.activeTagPopup = popup;
+
+        // Close on outside click
+        const handleOutsideClick = (e) => {
+            if (!popup.contains(e.target) && !button.contains(e.target)) {
+                this.closeTagEditorPopup();
+                document.removeEventListener('click', handleOutsideClick);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', handleOutsideClick), 0);
+
+        // Close on Escape
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeTagEditorPopup();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    /**
+     * Close tag editor popup
+     */
+    closeTagEditorPopup() {
+        if (this.activeTagPopup) {
+            this.activeTagPopup.classList.remove('show');
+            setTimeout(() => {
+                this.activeTagPopup?.remove();
+                this.activeTagPopup = null;
+            }, 150);
+        }
     }
 
     /**

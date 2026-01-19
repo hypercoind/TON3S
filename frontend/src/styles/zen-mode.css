@@ -1,42 +1,35 @@
 /**
  * TON3S Zen Mode Styles
- * Maximum distraction-free writing
+ * Maximum distraction-free writing - persistent, no hover reveal
  */
 
 body.zen-mode .header {
     opacity: 0;
     transform: translateY(-100%);
+    pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-body.zen-mode:hover .header {
-    opacity: 1;
-    transform: translateY(0);
 }
 
 body.zen-mode .status {
     opacity: 0;
     transform: translateY(100%);
+    pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-body.zen-mode:hover .status {
-    opacity: 1;
-    transform: translateY(0);
 }
 
 body.zen-mode .sidebar {
     opacity: 0;
     transform: translateX(-100%);
+    pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-body.zen-mode:hover .sidebar {
-    opacity: 1;
-    transform: translateX(0);
+body.zen-mode .sidebar-expand-tab {
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* Zen mode indicator */
+/* Zen mode indicator - always visible at low opacity */
 body.zen-mode::before {
     content: '';
     position: fixed;
@@ -45,11 +38,8 @@ body.zen-mode::before {
     right: 0;
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0;
+    opacity: 0.15;
     transition: opacity 0.3s ease;
     z-index: 9999;
-}
-
-body.zen-mode:hover::before {
-    opacity: 0.3;
+    pointer-events: none;
 }

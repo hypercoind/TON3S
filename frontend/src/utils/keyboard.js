@@ -118,16 +118,8 @@ class KeyboardManager {
             description: 'New document'
         });
 
-        // Escape to exit zen mode
-        this.register('escape', {
-            key: 'Escape',
-            handler: () => {
-                if (appState.settings.zenMode) {
-                    appState.toggleZenMode();
-                }
-            },
-            description: 'Exit zen mode'
-        });
+        // Escape is now handled by individual modals/popups
+        // Zen mode is only toggled via Cmd/Ctrl+\
 
         // Toggle sidebar
         this.register('sidebar', {

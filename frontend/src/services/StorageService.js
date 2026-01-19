@@ -187,9 +187,12 @@ class StorageService {
             return;
         }
 
-        // Update plainText if content changed
+        // Update plainText and auto-generate title if content changed
         if (updates.content) {
             updates.plainText = this.extractPlainText(updates.content);
+            // Auto-generate title from first line of content
+            const autoTitle = this.extractTitle(updates.plainText);
+            updates.title = autoTitle || 'Untitled';
         }
 
         updates.updatedAt = now;
