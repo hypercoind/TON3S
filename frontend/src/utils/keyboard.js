@@ -112,14 +112,6 @@ class KeyboardManager {
 
         // Escape is now handled by individual modals/popups
 
-        // Toggle sidebar
-        this.register('sidebar', {
-            key: 'b',
-            cmdOrCtrl: true,
-            handler: () => appState.toggleSidebar(),
-            description: 'Toggle sidebar'
-        });
-
         // Focus search
         this.register('search', {
             key: 'k',

@@ -20,17 +20,10 @@ export class Sidebar extends BaseComponent {
     }
 
     render() {
-        const isOpen = appState.settings.sidebarOpen;
-
         this.container.innerHTML = `
-            <div class="sidebar ${isOpen ? 'open' : ''}">
+            <div class="sidebar">
                 <div class="sidebar-header">
                     <span class="sidebar-title">Notes</span>
-                    <button class="sidebar-collapse-btn" aria-label="Collapse sidebar">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                        </svg>
-                    </button>
                 </div>
                 <div class="search-container">
                     <input
@@ -51,11 +44,6 @@ export class Sidebar extends BaseComponent {
                 </div>
                 <div class="sidebar-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="0"></div>
             </div>
-            <button class="sidebar-expand-tab ${isOpen ? '' : 'visible'}" aria-label="Expand sidebar">
-                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                </svg>
-            </button>
         `;
 
         this.searchInput = this.$('.search-input');
@@ -63,16 +51,6 @@ export class Sidebar extends BaseComponent {
     }
 
     bindEvents() {
-        // Sidebar collapse button
-        this.$('.sidebar-collapse-btn')?.addEventListener('click', () => {
-            appState.toggleSidebar();
-        });
-
-        // Sidebar expand tab
-        this.$('.sidebar-expand-tab')?.addEventListener('click', () => {
-            appState.toggleSidebar();
-        });
-
         // New note button
         this.$('.new-note-btn')?.addEventListener('click', () => {
             this.createNewNote();
@@ -109,9 +87,6 @@ export class Sidebar extends BaseComponent {
         );
         this.subscribe(
             appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.SIDEBAR_TOGGLED, this.toggleSidebar.bind(this))
         );
         // Close tag popup before zen mode transition starts
         this.subscribe(
@@ -650,21 +625,6 @@ export class Sidebar extends BaseComponent {
             }
         };
         setTimeout(() => document.addEventListener('click', closeMenu), 0);
-    }
-
-    /**
-     * Toggle sidebar visibility
-     */
-    toggleSidebar(isOpen) {
-        const sidebar = this.$('.sidebar');
-        const expandTab = this.$('.sidebar-expand-tab');
-
-        if (sidebar) {
-            sidebar.classList.toggle('open', isOpen);
-        }
-        if (expandTab) {
-            expandTab.classList.toggle('visible', !isOpen);
-        }
     }
 
     /**

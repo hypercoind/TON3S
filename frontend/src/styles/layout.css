@@ -3,9 +3,10 @@
  * App container, header, main content, sidebar, status bar
  */
 
-/* Default sidebar width variable for zen mode centering */
+/* Default panel width variables for zen mode centering */
 :root {
     --sidebar-current-width: 280px;
+    --nostr-panel-width: 240px;
 }
 
 .app-container {
@@ -47,41 +48,33 @@
 /* Main content area */
 .main-content {
     flex: 1;
-    display: flex;
     min-height: 0;
+    position: relative;
 }
 
 .container {
-    flex: 1;
     max-width: 700px;
     width: 100%;
     margin: 0 auto;
     padding: 2rem 3rem;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    /* Smooth centering transition for zen mode */
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100%;
+    box-sizing: border-box;
 }
 
-/* Sidebar */
+/* Sidebar - absolute position within main-content */
 .sidebar {
-    position: relative;
-    width: 280px;
-    min-width: 280px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-current-width);
     border-right: 1px solid var(--secondary);
     display: flex;
     flex-direction: column;
     background: var(--bg);
-    transition: transform 0.3s ease, width 0.3s ease, min-width 0.3s ease,
-                opacity 0.3s ease, filter 0.3s ease, margin-left 0.3s ease;
-    transform: translateX(-100%);
-    margin-left: -280px;
-}
-
-.sidebar.open {
-    transform: translateX(0);
-    margin-left: 0;
+    z-index: 100;
 }
 
 .sidebar-header {

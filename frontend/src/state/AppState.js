@@ -32,8 +32,7 @@ export const StateEvents = {
     // UI events
     SEARCH_CHANGED: 'ui:search',
     SAVE_STATUS_CHANGED: 'ui:saveStatus',
-    LOADING_CHANGED: 'ui:loading',
-    NOSTR_PANEL_TOGGLED: 'ui:nostrPanel'
+    LOADING_CHANGED: 'ui:loading'
 };
 
 class AppState extends StateEmitter {
@@ -55,7 +54,7 @@ class AppState extends StateEmitter {
                 unusedIndices: [...Array(fonts.length).keys()]
             },
             zenMode: false,
-            sidebarOpen: false,
+            sidebarOpen: true,
             nostr: {
                 enabled: false,
                 defaultRelays: [
@@ -80,8 +79,7 @@ class AppState extends StateEmitter {
             searchQuery: '',
             saveStatus: 'saved',
             lastSaveTime: null,
-            loading: false,
-            nostrPanelVisible: true
+            loading: false
         };
     }
 
@@ -248,21 +246,6 @@ class AppState extends StateEmitter {
         }
     }
 
-    /**
-     * Sync sidebar state (used by main.js after zen transition completes)
-     */
-    setSidebarOpen(open) {
-        if (this._settings.sidebarOpen !== open) {
-            this._settings.sidebarOpen = open;
-            this.emit(StateEvents.SIDEBAR_TOGGLED, open);
-        }
-    }
-
-    toggleSidebar() {
-        this._settings.sidebarOpen = !this._settings.sidebarOpen;
-        this.emit(StateEvents.SIDEBAR_TOGGLED, this._settings.sidebarOpen);
-    }
-
     loadSettings(settings) {
         this._settings = { ...this._settings, ...settings };
     }
@@ -317,16 +300,6 @@ class AppState extends StateEmitter {
     setLoading(loading) {
         this._ui.loading = loading;
         this.emit(StateEvents.LOADING_CHANGED, loading);
-    }
-
-    toggleNostrPanel() {
-        this._ui.nostrPanelVisible = !this._ui.nostrPanelVisible;
-        this.emit(StateEvents.NOSTR_PANEL_TOGGLED, this._ui.nostrPanelVisible);
-    }
-
-    setNostrPanelVisible(visible) {
-        this._ui.nostrPanelVisible = visible;
-        this.emit(StateEvents.NOSTR_PANEL_TOGGLED, visible);
     }
 }
 

@@ -325,11 +325,20 @@
     text-decoration: none;
 }
 
-/* NOSTR panel */
+/* NOSTR panel - absolute position within main-content */
 .nostr-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--nostr-panel-width);
     padding: 1rem;
-    border-top: 1px solid var(--secondary);
+    border-left: 1px solid var(--secondary);
     background: var(--bg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .nostr-status {
@@ -483,68 +492,6 @@
     background: #ef4444;
 }
 
-/* Sidebar toggle controls */
-.sidebar-collapse-btn {
-    background: transparent;
-    border: none;
-    color: var(--fg-dim);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sidebar-collapse-btn:hover {
-    background: var(--secondary);
-    color: var(--fg);
-}
-
-.sidebar-collapse-btn svg {
-    width: 20px;
-    height: 20px;
-}
-
-.sidebar-expand-tab {
-    position: fixed;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%) translateX(-100%);
-    background: var(--secondary);
-    border: 1px solid var(--hover);
-    border-left: none;
-    border-radius: 0 8px 8px 0;
-    color: var(--fg-dim);
-    cursor: pointer;
-    padding: 0.75rem 0.25rem;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99;
-    opacity: 0;
-    visibility: hidden;
-}
-
-.sidebar-expand-tab.visible {
-    transform: translateY(-50%) translateX(0);
-    opacity: 1;
-    visibility: visible;
-}
-
-.sidebar-expand-tab:hover {
-    background: var(--hover);
-    color: var(--fg);
-    padding-right: 0.5rem;
-}
-
-.sidebar-expand-tab svg {
-    width: 20px;
-    height: 20px;
-}
-
 /* Loading overlay */
 .loading-overlay {
     position: fixed;
@@ -655,39 +602,6 @@
 
 .zen-toggle-btn:hover {
     background: var(--hover);
-}
-
-/* NOSTR toggle button */
-.nostr-toggle-btn {
-    position: relative;
-}
-
-.nostr-toggle-btn:hover {
-    background: var(--hover);
-}
-
-.nostr-status-dot {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--fg-dim);
-    transition: background-color 0.2s ease;
-}
-
-.nostr-status-dot.connected {
-    background: #4ade80;
-}
-
-/* NOSTR panel visibility */
-.nostr-panel {
-    display: none;
-}
-
-.nostr-panel.visible {
-    display: block;
 }
 
 /* Help modal */

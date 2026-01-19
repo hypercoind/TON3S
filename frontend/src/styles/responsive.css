@@ -7,18 +7,26 @@
 @media (max-width: 1024px) {
     .sidebar {
         position: fixed;
-        left: 0;
         top: 0;
         bottom: 0;
-        z-index: 100;
         transform: translateX(-100%);
-        margin-left: 0;
         box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
     }
 
     .sidebar.open {
         transform: translateX(0);
-        margin-left: 0;
+    }
+
+    .nostr-panel {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        transform: translateX(100%);
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .nostr-panel.open {
+        transform: translateX(0);
     }
 }
 
@@ -68,12 +76,6 @@
         min-height: 44px;
         min-width: 44px;
         padding: 0.5rem;
-    }
-
-    .sidebar-collapse-btn,
-    .sidebar-expand-tab {
-        min-height: 44px;
-        min-width: 44px;
     }
 
     .new-note-btn {
@@ -186,6 +188,7 @@
     .header,
     .status,
     .sidebar,
+    .nostr-panel,
     .privacy-overlay {
         display: none !important;
     }

@@ -5,16 +5,22 @@
 
 /* Base transitions for smooth exit from zen mode */
 .header,
-.status,
-.sidebar-expand-tab {
+.status {
     filter: blur(0);
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
                 transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
                 filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Sidebar needs separate transition handling for fixed positioning */
+/* Sidebar transition for zen mode */
 .sidebar {
+    filter: blur(0);
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* NOSTR panel transition for zen mode */
+.nostr-panel {
     filter: blur(0);
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
                 filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -41,22 +47,14 @@ body.zen-mode .status {
 }
 
 body.zen-mode .sidebar {
-    /* Become overlay to remove from document flow */
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 100;
-    /* Pure visual fade - no layout changes */
     opacity: 0;
     filter: blur(8px);
     pointer-events: none;
-    /* Smooth transition */
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
                 filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body.zen-mode .sidebar-expand-tab {
+body.zen-mode .nostr-panel {
     opacity: 0;
     filter: blur(8px);
     pointer-events: none;
@@ -100,10 +98,4 @@ body.zen-mode::before {
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 9999;
     pointer-events: none;
-}
-
-/* Smooth editor centering - only when sidebar was open */
-body.zen-mode:has(.sidebar.open) .container {
-    /* Shift left by half the sidebar width to center the editor */
-    transform: translateX(calc(-0.5 * var(--sidebar-current-width, 280px)));
 }
