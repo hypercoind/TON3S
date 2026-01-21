@@ -6,6 +6,9 @@ dist/
 build/
 .vite/
 
+# Test coverage
+coverage/
+
 # Environment files
 .env
 .env.local
