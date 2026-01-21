@@ -14,7 +14,7 @@
     "no-console": "off",
     "semi": ["error", "always"],
     "quotes": ["error", "single", { "avoidEscape": true }],
-    "indent": ["error", 4, { "SwitchCase": 1 }],
+    "indent": ["error", 4, { "SwitchCase": 1, "ignoredNodes": ["TemplateLiteral *", "CallExpression > ArrowFunctionExpression.arguments > CallExpression", "JSXElement *", "JSXAttribute"] }],
     "comma-dangle": ["error", "never"],
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
