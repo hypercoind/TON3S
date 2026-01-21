@@ -1,0 +1,26 @@
+{
+  "name": "ton3s",
+  "version": "2.0.0",
+  "private": true,
+  "description": "TON3S - Privacy-focused writing application",
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "npm -C frontend test",
+    "test:backend": "npm -C backend test",
+    "test:watch": "npm -C frontend run test:watch",
+    "test:coverage": "npm -C frontend run test:coverage && npm -C backend run test:coverage",
+    "lint": "eslint frontend/src backend/src --ext .js",
+    "lint:fix": "eslint frontend/src backend/src --ext .js --fix",
+    "format": "prettier --write 'frontend/src/**/*.js' 'backend/src/**/*.js'",
+    "format:check": "prettier --check 'frontend/src/**/*.js' 'backend/src/**/*.js'",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-vitest-globals": "^1.5.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.4.0"
+  }
+}

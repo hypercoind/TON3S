@@ -7,14 +7,21 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "dexie": "^4.0.10"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@vitest/coverage-v8": "^4.0.17",
+    "happy-dom": "^20.3.4",
     "sharp": "^0.34.5",
     "vite": "^6.0.0",
-    "vite-plugin-pwa": "^0.21.0"
+    "vite-plugin-pwa": "^0.21.0",
+    "vitest": "^4.0.17"
   }
 }

@@ -57,11 +57,7 @@ class AppState extends StateEmitter {
             sidebarOpen: true,
             nostr: {
                 enabled: false,
-                defaultRelays: [
-                    'wss://relay.damus.io',
-                    'wss://nos.lol',
-                    'wss://relay.nostr.band'
-                ],
+                defaultRelays: ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'],
                 proxyUrl: '/ws/nostr'
             }
         };
@@ -137,13 +133,17 @@ class AppState extends StateEmitter {
     }
 
     getFilteredNotes(query = '') {
-        if (!query) return this._notes;
+        if (!query) {
+            return this._notes;
+        }
 
         const lowerQuery = query.toLowerCase();
         return this._notes.filter(note => {
-            return note.title?.toLowerCase().includes(lowerQuery) ||
-                   note.plainText?.toLowerCase().includes(lowerQuery) ||
-                   note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+            return (
+                note.title?.toLowerCase().includes(lowerQuery) ||
+                note.plainText?.toLowerCase().includes(lowerQuery) ||
+                note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
+            );
         });
     }
 
@@ -166,7 +166,9 @@ class AppState extends StateEmitter {
     setTheme(index) {
         if (index >= 0 && index < themes.length) {
             // Remove from unused list
-            const unusedPos = this._settings.theme.unusedIndices.indexOf(this._settings.theme.currentIndex);
+            const unusedPos = this._settings.theme.unusedIndices.indexOf(
+                this._settings.theme.currentIndex
+            );
             if (unusedPos > -1) {
                 this._settings.theme.unusedIndices.splice(unusedPos, 1);
             }
@@ -187,8 +189,9 @@ class AppState extends StateEmitter {
 
         // Reset if empty
         if (theme.unusedIndices.length === 0) {
-            theme.unusedIndices = [...Array(themes.length).keys()]
-                .filter(i => i !== theme.currentIndex);
+            theme.unusedIndices = [...Array(themes.length).keys()].filter(
+                i => i !== theme.currentIndex
+            );
         }
 
         // Pick random from unused
@@ -200,7 +203,9 @@ class AppState extends StateEmitter {
 
     setFont(index) {
         if (index >= 0 && index < fonts.length) {
-            const unusedPos = this._settings.font.unusedIndices.indexOf(this._settings.font.currentIndex);
+            const unusedPos = this._settings.font.unusedIndices.indexOf(
+                this._settings.font.currentIndex
+            );
             if (unusedPos > -1) {
                 this._settings.font.unusedIndices.splice(unusedPos, 1);
             }
@@ -219,8 +224,9 @@ class AppState extends StateEmitter {
         }
 
         if (font.unusedIndices.length === 0) {
-            font.unusedIndices = [...Array(fonts.length).keys()]
-                .filter(i => i !== font.currentIndex);
+            font.unusedIndices = [...Array(fonts.length).keys()].filter(
+                i => i !== font.currentIndex
+            );
         }
 
         const randomPos = Math.floor(Math.random() * font.unusedIndices.length);
@@ -305,4 +311,5 @@ class AppState extends StateEmitter {
 
 // Singleton instance
 export const appState = new AppState();
+export { AppState };
 export default appState;

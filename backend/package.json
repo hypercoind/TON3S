@@ -6,11 +6,18 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "fastify": "^5.0.0",
     "@fastify/websocket": "^11.0.0",
+    "fastify": "^5.0.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.17",
+    "vitest": "^4.0.17"
   }
 }
