@@ -137,7 +137,6 @@ frontend/
 │       ├── zen-mode.css
 │       └── responsive.css
 ├── public/
-│   ├── favicon.svg
 │   └── manifest.json        # PWA manifest
 ├── index.html
 ├── vite.config.js

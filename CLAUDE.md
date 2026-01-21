@@ -52,7 +52,6 @@ TON3S/
 │   │       ├── zen-mode.css     # Zen mode styling
 │   │       └── responsive.css   # Mobile/tablet styles
 │   ├── public/                  # Static assets
-│   │   ├── favicon.svg
 │   │   └── manifest.json        # PWA manifest
 │   ├── index.html               # Main entry point
 │   ├── vite.config.js           # Vite configuration with PWA plugin

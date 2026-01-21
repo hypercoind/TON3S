@@ -7,6 +7,7 @@ import './styles/main.css';
 
 import { appState, StateEvents } from './state/AppState.js';
 import { storageService } from './services/StorageService.js';
+import { faviconService } from './services/FaviconService.js';
 import { keyboardManager } from './utils/keyboard.js';
 import { themes } from './data/themes.js';
 import { fonts } from './data/fonts.js';
@@ -42,6 +43,9 @@ class TON3SApp {
             this.applyTheme();
             this.applyFont();
             this.applyZenMode();
+
+            // Initialize favicon service (after theme is applied)
+            faviconService.init();
 
             // Initialize UI components
             this.initComponents();
@@ -262,6 +266,9 @@ class TON3SApp {
 
         // Cleanup keyboard manager
         keyboardManager.destroy?.();
+
+        // Cleanup favicon service
+        faviconService.destroy?.();
     }
 }
 

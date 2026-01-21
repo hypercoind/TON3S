@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- TON3S PWA Icon - Catppuccin Mocha Theme -->
+  <!-- This SVG can be converted to PNG using tools like Inkscape, rsvg-convert, or online converters -->
+
+  <!-- Background squircle -->
+  <rect width="472" height="472" x="20" y="20" rx="82" fill="#1e1e2e" stroke="#313244" stroke-width="16"/>
+
+  <!-- Accent vertical bar (T stem) -->
+  <rect x="230" y="180" width="52" height="205" rx="10" fill="#89b4fa"/>
+
+  <!-- Accent horizontal bar (T top) -->
+  <rect x="128" y="128" width="256" height="52" rx="10" fill="#89b4fa"/>
+
+  <!-- Decorative circles -->
+  <circle cx="112" cy="360" r="31" fill="#89b4fa" opacity="0.7"/>
+  <circle cx="400" cy="360" r="31" fill="#89b4fa" opacity="0.7"/>
+  <circle cx="400" cy="112" r="20" fill="#89b4fa" opacity="0.7"/>
+</svg>
