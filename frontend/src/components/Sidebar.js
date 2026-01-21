@@ -32,8 +32,13 @@ export class Sidebar extends BaseComponent {
                         placeholder="Search notes..."
                         aria-label="Search notes"
                     />
+                    <button class="search-clear-btn" aria-label="Clear search" style="display: none;">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
                 </div>
-                <div class="note-list"></div>
+                <div class="note-list" aria-live="polite"></div>
                 <div class="sidebar-actions">
                     <button class="new-note-btn" aria-label="Create new note">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
@@ -47,6 +52,7 @@ export class Sidebar extends BaseComponent {
         `;
 
         this.searchInput = this.$('.search-input');
+        this.searchClearBtn = this.$('.search-clear-btn');
         this.renderNoteList();
     }
 
@@ -57,8 +63,13 @@ export class Sidebar extends BaseComponent {
         });
 
         // Search input with debounce
-        this.searchInput?.addEventListener('input', (e) => {
+        this.searchInput?.addEventListener('input', e => {
             const query = e.target.value;
+
+            // Show/hide clear button based on input
+            if (this.searchClearBtn) {
+                this.searchClearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+            }
 
             // Clear existing debounce timer
             if (this.searchDebounceTimer) {
@@ -72,26 +83,27 @@ export class Sidebar extends BaseComponent {
             }, 200);
         });
 
+        // Search clear button
+        this.searchClearBtn?.addEventListener('click', () => {
+            if (this.searchInput) {
+                this.searchInput.value = '';
+                this.searchInput.focus();
+            }
+            if (this.searchClearBtn) {
+                this.searchClearBtn.style.display = 'none';
+            }
+            appState.setSearchQuery('');
+            this.renderNoteList();
+        });
+
         // State subscriptions
-        this.subscribe(
-            appState.on(StateEvents.NOTES_LOADED, this.renderNoteList.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOTE_CREATED, this.renderNoteList.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOTE_UPDATED, this.renderNoteList.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOTE_DELETED, this.renderNoteList.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this))
-        );
+        this.subscribe(appState.on(StateEvents.NOTES_LOADED, this.renderNoteList.bind(this)));
+        this.subscribe(appState.on(StateEvents.NOTE_CREATED, this.renderNoteList.bind(this)));
+        this.subscribe(appState.on(StateEvents.NOTE_UPDATED, this.renderNoteList.bind(this)));
+        this.subscribe(appState.on(StateEvents.NOTE_DELETED, this.renderNoteList.bind(this)));
+        this.subscribe(appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this)));
         // Close tag popup before zen mode transition starts
-        this.subscribe(
-            appState.on(StateEvents.PRE_ZEN_MODE, this.closeTagEditorPopup.bind(this))
-        );
+        this.subscribe(appState.on(StateEvents.PRE_ZEN_MODE, this.closeTagEditorPopup.bind(this)));
 
         // Sidebar resize handle
         this.initResizeHandle();
@@ -103,9 +115,11 @@ export class Sidebar extends BaseComponent {
     initResizeHandle() {
         const handle = this.$('.sidebar-resize-handle');
         const sidebar = this.$('.sidebar');
-        if (!handle || !sidebar) return;
+        if (!handle || !sidebar) {
+            return;
+        }
 
-        const startResize = (e) => {
+        const startResize = e => {
             e.preventDefault();
             this.isResizing = true;
             document.body.style.cursor = 'col-resize';
@@ -115,8 +129,10 @@ export class Sidebar extends BaseComponent {
             document.addEventListener('mouseup', stopResize);
         };
 
-        const doResize = (e) => {
-            if (!this.isResizing) return;
+        const doResize = e => {
+            if (!this.isResizing) {
+                return;
+            }
 
             const newWidth = Math.min(this.maxWidth, Math.max(this.minWidth, e.clientX));
             sidebar.style.width = `${newWidth}px`;
@@ -143,7 +159,7 @@ export class Sidebar extends BaseComponent {
         handle.addEventListener('mousedown', startResize);
 
         // Keyboard resizing support
-        handle.addEventListener('keydown', (e) => {
+        handle.addEventListener('keydown', e => {
             const currentWidth = sidebar.offsetWidth;
             let newWidth = currentWidth;
 
@@ -160,7 +176,10 @@ export class Sidebar extends BaseComponent {
                 sidebar.style.minWidth = `${newWidth}px`;
                 localStorage.setItem('ton3s-sidebar-width', newWidth);
                 // Update CSS variable for zen mode centering
-                document.documentElement.style.setProperty('--sidebar-current-width', `${newWidth}px`);
+                document.documentElement.style.setProperty(
+                    '--sidebar-current-width',
+                    `${newWidth}px`
+                );
             }
         });
 
@@ -182,7 +201,9 @@ export class Sidebar extends BaseComponent {
      */
     renderNoteList() {
         const listEl = this.$('.note-list');
-        if (!listEl) return;
+        if (!listEl) {
+            return;
+        }
 
         const notes = appState.getFilteredNotes(appState.ui.searchQuery);
         const currentId = appState.currentNoteId;
@@ -197,9 +218,10 @@ export class Sidebar extends BaseComponent {
                     <svg class="empty-state-icon" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
                         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                     </svg>
-                    ${isSearching
-                        ? `<p>No notes found</p><span class="empty-state-hint">Try a different search term</span>`
-                        : `<p>No notes yet</p>
+                    ${
+                        isSearching
+                            ? '<p>No notes found</p><span class="empty-state-hint">Try a different search term</span>'
+                            : `<p>No notes yet</p>
                            <span class="empty-state-hint">Press ${shortcut} or click below</span>
                            <button class="empty-state-create-btn" aria-label="Create your first note">
                                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -219,12 +241,13 @@ export class Sidebar extends BaseComponent {
             return;
         }
 
-        listEl.innerHTML = notes.map(note => {
-            const isActive = note.id === currentId;
-            const updatedAt = this.formatDate(note.updatedAt);
-            const tags = (note.tags || []).slice(0, 3);
+        listEl.innerHTML = notes
+            .map(note => {
+                const isActive = note.id === currentId;
+                const updatedAt = this.formatDate(note.updatedAt);
+                const tags = (note.tags || []).slice(0, 3);
 
-            return `
+                return `
                 <div class="note-item ${isActive ? 'active' : ''}"
                      data-id="${note.id}"
                      role="button"
@@ -232,11 +255,15 @@ export class Sidebar extends BaseComponent {
                      aria-selected="${isActive}">
                     <div class="note-item-title">${sanitizeInput(note.title || 'Untitled')}</div>
                     <div class="note-item-meta">${updatedAt}</div>
-                    ${tags.length > 0 ? `
+                    ${
+                        tags.length > 0
+                            ? `
                         <div class="note-item-tags">
                             ${tags.map(tag => `<span class="tag">${sanitizeInput(tag)}</span>`).join('')}
                         </div>
-                    ` : ''}
+                    `
+                            : ''
+                    }
                     <div class="note-item-actions">
                         <button class="note-tag-btn" data-tag-id="${note.id}" aria-label="Edit tags">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
@@ -251,19 +278,22 @@ export class Sidebar extends BaseComponent {
                     </div>
                 </div>
             `;
-        }).join('');
+            })
+            .join('');
 
         // Add click handlers
         listEl.querySelectorAll('.note-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+            item.addEventListener('click', e => {
                 // Don't select note if clicking action buttons
-                if (e.target.closest('.note-item-actions')) return;
+                if (e.target.closest('.note-item-actions')) {
+                    return;
+                }
                 const id = parseInt(item.dataset.id);
                 appState.selectNote(id);
             });
 
             // Context menu for delete
-            item.addEventListener('contextmenu', (e) => {
+            item.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 this.showContextMenu(e, parseInt(item.dataset.id));
             });
@@ -271,7 +301,7 @@ export class Sidebar extends BaseComponent {
 
         // Add tag button handlers
         listEl.querySelectorAll('.note-tag-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', e => {
                 e.stopPropagation();
                 const noteId = parseInt(btn.dataset.tagId);
                 this.showTagEditorPopup(btn, noteId);
@@ -280,7 +310,7 @@ export class Sidebar extends BaseComponent {
 
         // Add delete button handlers
         listEl.querySelectorAll('.note-delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', e => {
                 e.stopPropagation();
                 const noteId = parseInt(btn.dataset.deleteId);
                 this.confirmDelete(noteId);
@@ -342,7 +372,9 @@ export class Sidebar extends BaseComponent {
         this.closeTagEditorPopup();
 
         const note = appState.notes.find(n => n.id === noteId);
-        if (!note) return;
+        if (!note) {
+            return;
+        }
 
         const popup = document.createElement('div');
         popup.className = 'tag-editor-popup';
@@ -361,7 +393,9 @@ export class Sidebar extends BaseComponent {
                     </button>
                 </div>
                 <div class="tag-editor-tags">
-                    ${tags.map(tag => `
+                    ${tags
+                        .map(
+                            tag => `
                         <span class="tag-editor-tag">
                             ${sanitizeInput(tag)}
                             <button class="tag-editor-tag-remove" data-tag="${sanitizeInput(tag)}" aria-label="Remove tag ${sanitizeInput(tag)}">
@@ -370,7 +404,9 @@ export class Sidebar extends BaseComponent {
                                 </svg>
                             </button>
                         </span>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
                 <input
                     type="text"
@@ -396,7 +432,7 @@ export class Sidebar extends BaseComponent {
             });
 
             const input = popup.querySelector('.tag-editor-input');
-            input.addEventListener('keydown', async (e) => {
+            input.addEventListener('keydown', async e => {
                 if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault();
                     const newTag = input.value.trim().replace(/,/g, '');
@@ -450,7 +486,7 @@ export class Sidebar extends BaseComponent {
         this.activeTagPopup = popup;
 
         // Close on outside click
-        const handleOutsideClick = (e) => {
+        const handleOutsideClick = e => {
             if (!popup.contains(e.target) && !button.contains(e.target)) {
                 this.closeTagEditorPopup();
                 document.removeEventListener('click', handleOutsideClick);
@@ -459,7 +495,7 @@ export class Sidebar extends BaseComponent {
         setTimeout(() => document.addEventListener('click', handleOutsideClick), 0);
 
         // Close on Escape
-        const handleEscape = (e) => {
+        const handleEscape = e => {
             if (e.key === 'Escape') {
                 this.closeTagEditorPopup();
                 document.removeEventListener('keydown', handleEscape);
@@ -541,14 +577,14 @@ export class Sidebar extends BaseComponent {
         });
 
         // Close on overlay click
-        overlay.addEventListener('click', (e) => {
+        overlay.addEventListener('click', e => {
             if (e.target === overlay) {
                 closeModal();
             }
         });
 
         // Keyboard handling
-        const handleKeyDown = (e) => {
+        const handleKeyDown = e => {
             if (e.key === 'Escape') {
                 closeModal();
                 document.removeEventListener('keydown', handleKeyDown);
@@ -618,7 +654,7 @@ export class Sidebar extends BaseComponent {
         });
 
         // Close on outside click
-        const closeMenu = (event) => {
+        const closeMenu = event => {
             if (!menu.contains(event.target)) {
                 menu.remove();
                 document.removeEventListener('click', closeMenu);
@@ -631,7 +667,9 @@ export class Sidebar extends BaseComponent {
      * Format date for display
      */
     formatDate(timestamp) {
-        if (!timestamp) return '';
+        if (!timestamp) {
+            return '';
+        }
 
         const date = new Date(timestamp);
         const now = new Date();

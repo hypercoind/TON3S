@@ -44,7 +44,9 @@ export class StatusBar extends BaseComponent {
 
     renderPrivacyOverlay() {
         // Check if overlay already exists
-        if (document.getElementById('privacy-overlay')) return;
+        if (document.getElementById('privacy-overlay')) {
+            return;
+        }
 
         const overlay = document.createElement('div');
         overlay.className = 'privacy-overlay';
@@ -100,7 +102,7 @@ export class StatusBar extends BaseComponent {
         });
 
         // Privacy overlay click to close
-        document.getElementById('privacy-overlay')?.addEventListener('click', (e) => {
+        document.getElementById('privacy-overlay')?.addEventListener('click', e => {
             if (e.target.id === 'privacy-overlay') {
                 this.hidePrivacyPopup();
             }
@@ -112,7 +114,7 @@ export class StatusBar extends BaseComponent {
         });
 
         // Listen for editor count updates
-        document.addEventListener('editor:counts', (e) => {
+        document.addEventListener('editor:counts', e => {
             this.updateCounts(e.detail);
         });
 
@@ -127,7 +129,7 @@ export class StatusBar extends BaseComponent {
         }, 10000);
 
         // Escape to close privacy popup and focus trap
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 this.hidePrivacyPopup();
             }
@@ -154,7 +156,7 @@ export class StatusBar extends BaseComponent {
     /**
      * Update save status
      */
-    updateSaveStatus({ status, time }) {
+    updateSaveStatus({ status: _status, time: _time }) {
         this.updateSaveStatusText();
     }
 
@@ -163,7 +165,9 @@ export class StatusBar extends BaseComponent {
      */
     updateSaveStatusText() {
         const statusEl = this.$('#save-status');
-        if (!statusEl) return;
+        if (!statusEl) {
+            return;
+        }
 
         const lastSaveTime = appState.ui.lastSaveTime;
         if (!lastSaveTime) {
@@ -210,7 +214,10 @@ export class StatusBar extends BaseComponent {
         document.getElementById('privacy-overlay')?.classList.remove('show');
 
         // Restore focus to previously focused element
-        if (this.previouslyFocusedElement && typeof this.previouslyFocusedElement.focus === 'function') {
+        if (
+            this.previouslyFocusedElement &&
+            typeof this.previouslyFocusedElement.focus === 'function'
+        ) {
             this.previouslyFocusedElement.focus();
             this.previouslyFocusedElement = null;
         }
@@ -269,11 +276,13 @@ export class StatusBar extends BaseComponent {
             window.location.reload();
         });
 
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                closeModal();
+            }
         });
 
-        const handleKeyDown = (e) => {
+        const handleKeyDown = e => {
             if (e.key === 'Escape') {
                 closeModal();
                 document.removeEventListener('keydown', handleKeyDown);
@@ -300,16 +309,22 @@ export class StatusBar extends BaseComponent {
      */
     handleFocusTrap(e) {
         const overlay = document.getElementById('privacy-overlay');
-        if (!overlay?.classList.contains('show')) return;
+        if (!overlay?.classList.contains('show')) {
+            return;
+        }
 
-        if (e.key !== 'Tab') return;
+        if (e.key !== 'Tab') {
+            return;
+        }
 
         const popup = overlay.querySelector('.privacy-popup');
         const focusableElements = popup.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
 
-        if (focusableElements.length === 0) return;
+        if (focusableElements.length === 0) {
+            return;
+        }
 
         const firstFocusable = focusableElements[0];
         const lastFocusable = focusableElements[focusableElements.length - 1];

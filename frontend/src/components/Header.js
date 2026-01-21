@@ -22,14 +22,21 @@ export class Header extends BaseComponent {
      */
     renderGroupedThemes() {
         const grouped = getThemesByCategory();
-        return grouped.map(category => `
+        return grouped
+            .map(
+                category => `
             <div class="dropdown-category" role="group" aria-label="${sanitizeInput(category.name)}">
                 <div class="dropdown-category-header">${sanitizeInput(category.name)}</div>
-                ${category.themes.map(theme =>
-                    `<div class="dropdown-item" role="option" tabindex="-1" data-index="${theme.index}">${sanitizeInput(theme.full)}</div>`
-                ).join('')}
+                ${category.themes
+                    .map(
+                        theme =>
+                            `<div class="dropdown-item" role="option" tabindex="-1" data-index="${theme.index}">${sanitizeInput(theme.full)}</div>`
+                    )
+                    .join('')}
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
 
     render() {
@@ -53,9 +60,12 @@ export class Header extends BaseComponent {
                             </svg>
                         </button>
                         <div class="dropdown-menu" id="font-dropdown-menu" role="listbox" aria-label="Font selection">
-                            ${fonts.map((font, index) =>
-                                `<div class="dropdown-item" role="option" tabindex="-1" data-index="${index}">${sanitizeInput(font.full)}</div>`
-                            ).join('')}
+                            ${fonts
+                                .map(
+                                    (font, index) =>
+                                        `<div class="dropdown-item" role="option" tabindex="-1" data-index="${index}">${sanitizeInput(font.full)}</div>`
+                                )
+                                .join('')}
                         </div>
                     </div>
                     <div class="btn-wrapper">
@@ -92,27 +102,27 @@ export class Header extends BaseComponent {
 
         // Theme dropdown toggle
         const themeDropdownBtn = this.$('#theme-dropdown');
-        themeDropdownBtn?.addEventListener('click', (e) => {
+        themeDropdownBtn?.addEventListener('click', e => {
             e.stopPropagation();
             this.toggleDropdown('theme-dropdown-menu', themeDropdownBtn);
         });
-        themeDropdownBtn?.addEventListener('keydown', (e) => {
+        themeDropdownBtn?.addEventListener('keydown', e => {
             this.handleDropdownButtonKeydown(e, 'theme-dropdown-menu', themeDropdownBtn);
         });
 
         // Font dropdown toggle
         const fontDropdownBtn = this.$('#font-dropdown');
-        fontDropdownBtn?.addEventListener('click', (e) => {
+        fontDropdownBtn?.addEventListener('click', e => {
             e.stopPropagation();
             this.toggleDropdown('font-dropdown-menu', fontDropdownBtn);
         });
-        fontDropdownBtn?.addEventListener('keydown', (e) => {
+        fontDropdownBtn?.addEventListener('keydown', e => {
             this.handleDropdownButtonKeydown(e, 'font-dropdown-menu', fontDropdownBtn);
         });
 
         // Theme dropdown items and keyboard navigation
         const themeMenu = this.$('#theme-dropdown-menu');
-        themeMenu?.addEventListener('click', (e) => {
+        themeMenu?.addEventListener('click', e => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
                 this.setTheme(index);
@@ -120,13 +130,15 @@ export class Header extends BaseComponent {
                 themeDropdownBtn?.focus();
             }
         });
-        themeMenu?.addEventListener('keydown', (e) => {
-            this.handleDropdownKeydown(e, 'theme-dropdown-menu', themeDropdownBtn, (index) => this.setTheme(index));
+        themeMenu?.addEventListener('keydown', e => {
+            this.handleDropdownKeydown(e, 'theme-dropdown-menu', themeDropdownBtn, index =>
+                this.setTheme(index)
+            );
         });
 
         // Font dropdown items and keyboard navigation
         const fontMenu = this.$('#font-dropdown-menu');
-        fontMenu?.addEventListener('click', (e) => {
+        fontMenu?.addEventListener('click', e => {
             if (e.target.classList.contains('dropdown-item')) {
                 const index = parseInt(e.target.dataset.index);
                 this.setFont(index);
@@ -134,8 +146,10 @@ export class Header extends BaseComponent {
                 fontDropdownBtn?.focus();
             }
         });
-        fontMenu?.addEventListener('keydown', (e) => {
-            this.handleDropdownKeydown(e, 'font-dropdown-menu', fontDropdownBtn, (index) => this.setFont(index));
+        fontMenu?.addEventListener('keydown', e => {
+            this.handleDropdownKeydown(e, 'font-dropdown-menu', fontDropdownBtn, index =>
+                this.setFont(index)
+            );
         });
 
         // Close dropdowns on outside click
@@ -144,16 +158,10 @@ export class Header extends BaseComponent {
         });
 
         // State subscriptions
-        this.subscribe(
-            appState.on(StateEvents.THEME_CHANGED, this.updateThemeDisplay.bind(this))
-        );
-        this.subscribe(
-            appState.on(StateEvents.FONT_CHANGED, this.updateFontDisplay.bind(this))
-        );
+        this.subscribe(appState.on(StateEvents.THEME_CHANGED, this.updateThemeDisplay.bind(this)));
+        this.subscribe(appState.on(StateEvents.FONT_CHANGED, this.updateFontDisplay.bind(this)));
         // Close dropdowns before zen mode transition starts
-        this.subscribe(
-            appState.on(StateEvents.PRE_ZEN_MODE, this.closeAllDropdowns.bind(this))
-        );
+        this.subscribe(appState.on(StateEvents.PRE_ZEN_MODE, this.closeAllDropdowns.bind(this)));
     }
 
     /**
@@ -180,10 +188,14 @@ export class Header extends BaseComponent {
      */
     handleDropdownKeydown(e, menuId, button, onSelect) {
         const menu = document.getElementById(menuId);
-        if (!menu) return;
+        if (!menu) {
+            return;
+        }
 
         const items = menu.querySelectorAll('.dropdown-item');
-        if (items.length === 0) return;
+        if (items.length === 0) {
+            return;
+        }
 
         switch (e.key) {
             case 'ArrowDown':
@@ -216,7 +228,7 @@ export class Header extends BaseComponent {
                 break;
 
             case 'Enter':
-            case ' ':
+            case ' ': {
                 e.preventDefault();
                 const focusedItem = items[this.focusedIndex];
                 if (focusedItem) {
@@ -226,6 +238,7 @@ export class Header extends BaseComponent {
                     button?.focus();
                 }
                 break;
+            }
 
             case 'Escape':
                 e.preventDefault();
@@ -314,7 +327,9 @@ export class Header extends BaseComponent {
 
     toggleDropdown(menuId, button) {
         const menu = document.getElementById(menuId);
-        if (!menu) return;
+        if (!menu) {
+            return;
+        }
 
         const isOpening = !menu.classList.contains('show');
 
@@ -348,9 +363,8 @@ export class Header extends BaseComponent {
         menu?.classList.remove('show');
 
         // Update aria-expanded
-        const button = menuId === 'theme-dropdown-menu' ?
-            this.$('#theme-dropdown') :
-            this.$('#font-dropdown');
+        const button =
+            menuId === 'theme-dropdown-menu' ? this.$('#theme-dropdown') : this.$('#font-dropdown');
         button?.setAttribute('aria-expanded', 'false');
 
         this.activeDropdown = null;

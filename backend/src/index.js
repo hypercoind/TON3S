@@ -4,12 +4,23 @@
  */
 
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
 import { NostrProxy } from './websocket/NostrProxy.js';
 import { randomUUID } from 'crypto';
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:3002',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3002',
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
 // Initialize Fastify
 const fastify = Fastify({
@@ -18,6 +29,46 @@ const fastify = Fastify({
 
 // Initialize NOSTR proxy
 const nostrProxy = new NostrProxy();
+
+// Register CORS plugin with origin validation
+await fastify.register(cors, {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        // Check if origin is allowed
+        if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.ton3s.app')) {
+            return callback(null, true);
+        }
+
+        // In development, allow localhost with any port
+        if (
+            process.env.NODE_ENV !== 'production' &&
+            origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)
+        ) {
+            return callback(null, true);
+        }
+
+        callback(new Error('Not allowed by CORS'), false);
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true
+});
+
+// Register rate limiting plugin
+await fastify.register(rateLimit, {
+    max: 100, // Maximum 100 requests
+    timeWindow: '1 minute',
+    // Custom error response
+    errorResponseBuilder: () => ({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.'
+    })
+});
 
 // Register WebSocket plugin
 await fastify.register(websocket);
@@ -52,17 +103,17 @@ fastify.get('/api/relays', async () => {
 
 // WebSocket endpoint for NOSTR proxy
 fastify.register(async function (fastify) {
-    fastify.get('/ws/nostr', { websocket: true }, (socket, req) => {
+    fastify.get('/ws/nostr', { websocket: true }, (socket, _req) => {
         const clientId = randomUUID();
         nostrProxy.handleConnection(socket, clientId);
     });
 });
 
-// CORS headers for API routes
+// Security headers
 fastify.addHook('onSend', async (request, reply) => {
-    reply.header('Access-Control-Allow-Origin', '*');
-    reply.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    reply.header('Access-Control-Allow-Headers', 'Content-Type');
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('X-XSS-Protection', '1; mode=block');
 });
 
 // Start server

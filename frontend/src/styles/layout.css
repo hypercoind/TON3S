@@ -176,7 +176,7 @@
 }
 
 .note-delete-btn:hover {
-    color: #ef4444;
+    color: var(--danger);
     background: var(--hover);
 }
 
@@ -266,7 +266,7 @@
 }
 
 .tag-editor-tag-remove:hover {
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .tag-editor-input {
@@ -389,10 +389,14 @@
 .search-container {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--secondary);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .search-input {
-    width: 100%;
+    flex: 1;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--secondary);
     border-radius: 6px;
@@ -409,6 +413,24 @@
 
 .search-input::placeholder {
     color: var(--fg-dim);
+}
+
+.search-clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.search-clear-btn:hover {
+    color: var(--fg);
+    background: var(--hover);
 }
 
 /* Sidebar actions */

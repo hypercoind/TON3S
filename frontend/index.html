@@ -6,20 +6,22 @@
     <title>TON3S - Write to Inspire</title>
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self' ws://localhost:* wss://*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; media-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: blob:; connect-src 'self' ws://localhost:* wss://* http://localhost:* https://*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; media-src 'none'; upgrade-insecure-requests;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), fullscreen=(self)">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), fullscreen=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()">
 
     <!-- SEO and PWA -->
     <meta name="description" content="TON3S - A privacy-focused, distraction-free writing application with NOSTR integration">
     <meta name="theme-color" content="#1e1e2e">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body class="theme-catppuccin-mocha font-jetbrains">
+    <!-- Skip link for keyboard navigation -->
+    <a href="#editor-container" class="skip-link">Skip to editor</a>
     <!-- Loading overlay shown during initialization -->
     <div id="loading-overlay" class="loading-overlay" aria-live="polite" aria-busy="true">
         <div class="loading-content">
@@ -39,7 +41,7 @@
 
             <!-- Editor Area -->
             <div class="container">
-                <div id="editor-container"></div>
+                <div id="editor-container" tabindex="-1"></div>
             </div>
 
             <!-- NOSTR Panel -->

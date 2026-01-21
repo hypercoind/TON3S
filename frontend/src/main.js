@@ -65,8 +65,9 @@ class TON3SApp {
             console.log('TON3S v2.0 initialized');
         } catch (error) {
             console.error('Failed to initialize TON3S:', error);
-            // Still hide loading on error to show the app
-            this.hideLoading();
+            this.showLoadingError(error);
+            // Still hide loading after showing error briefly
+            setTimeout(() => this.hideLoading(), 3000);
         }
     }
 
@@ -82,6 +83,33 @@ class TON3SApp {
             setTimeout(() => {
                 loadingOverlay.remove();
             }, 300);
+        }
+    }
+
+    /**
+     * Show loading error with retry option
+     */
+    showLoadingError(_error) {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = loadingOverlay?.querySelector('.loading-text');
+        const spinner = loadingOverlay?.querySelector('.spinner');
+
+        if (loadingText) {
+            loadingText.textContent = 'Error loading TON3S. Click to retry.';
+            loadingText.style.cursor = 'pointer';
+        }
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
+        if (loadingOverlay) {
+            loadingOverlay.style.cursor = 'pointer';
+            loadingOverlay.addEventListener('click', () => {
+                // Clear caches and reload
+                if ('caches' in window) {
+                    caches.keys().then(names => names.forEach(name => caches.delete(name)));
+                }
+                location.reload();
+            });
         }
     }
 
@@ -188,7 +216,7 @@ class TON3SApp {
 
         // Subscribe to zen mode changes
         // Simplified handler: just toggle CSS class, state remains intact
-        this.zenModeHandler = (zenMode) => {
+        this.zenModeHandler = zenMode => {
             if (zenMode) {
                 document.body.classList.add('zen-mode');
             } else {
@@ -202,13 +230,32 @@ class TON3SApp {
     }
 
     /**
-     * Setup mouse tracking to exit zen mode on hover
+     * Setup mouse tracking to exit zen mode on significant movement
      */
     setupZenHoverTracking() {
-        this.mouseMoveHandler = () => {
+        let lastX = 0;
+        let lastY = 0;
+        const MOVEMENT_THRESHOLD = 50; // Pixels of movement required to exit zen mode
+
+        this.mouseMoveHandler = e => {
             if (appState.settings.zenMode) {
-                // Exit zen mode on mouse movement
-                appState.setZenMode(false);
+                // Calculate movement distance from last position
+                const deltaX = Math.abs(e.clientX - lastX);
+                const deltaY = Math.abs(e.clientY - lastY);
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                // Only exit zen mode if significant movement detected
+                if (distance > MOVEMENT_THRESHOLD) {
+                    appState.setZenMode(false);
+                }
+
+                // Update last position
+                lastX = e.clientX;
+                lastY = e.clientY;
+            } else {
+                // Always track position when not in zen mode
+                lastX = e.clientX;
+                lastY = e.clientY;
             }
         };
         document.addEventListener('mousemove', this.mouseMoveHandler);
@@ -216,7 +263,7 @@ class TON3SApp {
 
     initSecurity() {
         // Disable eval
-        window.eval = function() {
+        window.eval = function () {
             throw new Error('eval() is disabled for security');
         };
 
@@ -226,17 +273,20 @@ class TON3SApp {
         }
 
         // Prevent drag and drop
-        this.dragOverHandler = (e) => e.preventDefault();
-        this.dropHandler = (e) => {
+        this.dragOverHandler = e => e.preventDefault();
+        this.dropHandler = e => {
             e.preventDefault();
             return false;
         };
         document.addEventListener('dragover', this.dragOverHandler);
         document.addEventListener('drop', this.dropHandler);
 
-        // Clear URL fragments
+        // Clear URL fragments (except accessibility anchors)
         if (location.hash) {
-            history.replaceState(null, null, location.pathname + location.search);
+            const accessibilityHashes = ['#editor-container', '#main-content'];
+            if (!accessibilityHashes.includes(location.hash)) {
+                history.replaceState(null, null, location.pathname + location.search);
+            }
         }
     }
 

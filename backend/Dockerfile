@@ -2,6 +2,10 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
 # Copy package files
 COPY package*.json ./
 
@@ -10,6 +14,12 @@ RUN npm ci --omit=dev
 
 # Copy source code
 COPY src ./src
+
+# Change ownership to non-root user
+RUN chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
 
 # Expose port
 EXPOSE 3001

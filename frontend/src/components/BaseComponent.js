@@ -17,7 +17,9 @@ export class BaseComponent {
      * Initialize the component
      */
     init() {
-        if (this.initialized) return;
+        if (this.initialized) {
+            return;
+        }
         this.render();
         this.bindEvents();
         this.initialized = true;

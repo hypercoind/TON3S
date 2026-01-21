@@ -8,6 +8,7 @@ import { appState, StateEvents } from '../state/AppState.js';
 import { nostrAuthService } from '../services/NostrAuthService.js';
 import { nostrService } from '../services/NostrService.js';
 import { storageService } from '../services/StorageService.js';
+import { toast } from './Toast.js';
 
 export class NostrPanel extends BaseComponent {
     constructor(container) {
@@ -27,24 +28,35 @@ export class NostrPanel extends BaseComponent {
                     </span>
                 </div>
 
-                ${connected && pubkey ? `
+                ${
+                    connected && pubkey
+                        ? `
                     <div class="nostr-pubkey" title="${pubkey}">
                         ${nostrAuthService.getShortPubkey()}
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
 
-                ${error ? `
+                ${
+                    error
+                        ? `
                     <div class="nostr-error">${error}</div>
-                ` : ''}
+                `
+                        : ''
+                }
 
-                ${!connected ? `
+                ${
+                    !connected
+                        ? `
                     <button class="nostr-publish-btn connect-nostr-btn">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                         </svg>
                         Connect NOSTR
                     </button>
-                ` : `
+                `
+                        : `
                     <button class="nostr-publish-btn publish-nostr-btn" ${this.publishing ? 'disabled' : ''}>
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/>
@@ -54,7 +66,8 @@ export class NostrPanel extends BaseComponent {
                     <button class="nostr-publish-btn disconnect-nostr-btn" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--secondary);">
                         Disconnect
                     </button>
-                `}
+                `
+                }
 
                 ${this.getPublishStatus()}
             </div>
@@ -63,7 +76,9 @@ export class NostrPanel extends BaseComponent {
 
     getPublishStatus() {
         const note = appState.currentNote;
-        if (!note || !note.nostr?.published) return '';
+        if (!note || !note.nostr?.published) {
+            return '';
+        }
 
         const publishedAt = new Date(note.nostr.publishedAt).toLocaleString();
         return `
@@ -77,7 +92,7 @@ export class NostrPanel extends BaseComponent {
 
     bindEvents() {
         // Connect button
-        this.container.addEventListener('click', async (e) => {
+        this.container.addEventListener('click', async e => {
             if (e.target.closest('.connect-nostr-btn')) {
                 await this.connectToNostr();
             }
@@ -92,51 +107,45 @@ export class NostrPanel extends BaseComponent {
         });
 
         // State subscriptions
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_CONNECTED, () => this.render())
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_DISCONNECTED, () => this.render())
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_ERROR, () => this.render())
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOTE_SELECTED, () => this.render())
-        );
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render())
-        );
+        this.subscribe(appState.on(StateEvents.NOSTR_CONNECTED, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOSTR_DISCONNECTED, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOSTR_ERROR, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOTE_SELECTED, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render()));
     }
 
     async connectToNostr() {
         try {
             await nostrAuthService.connect();
             await nostrService.connect();
+            toast.success('Connected to NOSTR');
             this.render();
         } catch (error) {
             console.error('[NOSTR] Connection failed:', error);
-            alert(`NOSTR connection failed: ${error.message}`);
+            toast.error(`NOSTR connection failed: ${error.message}`);
         }
     }
 
     disconnectFromNostr() {
         nostrAuthService.disconnect();
         nostrService.disconnect();
+        toast.info('Disconnected from NOSTR');
         this.render();
     }
 
     async publishNote() {
-        if (this.publishing) return;
+        if (this.publishing) {
+            return;
+        }
 
         const note = appState.currentNote;
         if (!note) {
-            alert('No note selected');
+            toast.warning('No note selected');
             return;
         }
 
         if (!note.plainText?.trim()) {
-            alert('Note is empty');
+            toast.warning('Note is empty');
             return;
         }
 
@@ -150,10 +159,10 @@ export class NostrPanel extends BaseComponent {
             // Update note with publish info
             await storageService.markAsPublished(note.id, result.eventId);
 
-            alert('Note published to NOSTR!');
+            toast.success('Note published to NOSTR!');
         } catch (error) {
             console.error('[NOSTR] Publish failed:', error);
-            alert(`Publish failed: ${error.message}`);
+            toast.error(`Publish failed: ${error.message}`);
         } finally {
             this.publishing = false;
             this.render();

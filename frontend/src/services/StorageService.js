@@ -18,19 +18,21 @@ class TON3SDatabase extends Dexie {
         });
 
         // Version 2: Rename documents to notes
-        this.version(2).stores({
-            documents: null, // Delete old table
-            notes: '++id, title, createdAt, updatedAt, *tags',
-            settings: 'key'
-        }).upgrade(async tx => {
-            // Migrate data from documents to notes
-            const oldTable = tx.table('documents');
-            const newTable = tx.table('notes');
-            const docs = await oldTable.toArray();
-            if (docs.length > 0) {
-                await newTable.bulkAdd(docs);
-            }
-        });
+        this.version(2)
+            .stores({
+                documents: null, // Delete old table
+                notes: '++id, title, createdAt, updatedAt, *tags',
+                settings: 'key'
+            })
+            .upgrade(async tx => {
+                // Migrate data from documents to notes
+                const oldTable = tx.table('documents');
+                const newTable = tx.table('notes');
+                const docs = await oldTable.toArray();
+                if (docs.length > 0) {
+                    await newTable.bulkAdd(docs);
+                }
+            });
 
         this.notes = this.table('notes');
         this.settings = this.table('settings');
@@ -50,7 +52,9 @@ class StorageService {
      * Initialize storage and migrate from localStorage if needed
      */
     async init() {
-        if (this.initialized) return;
+        if (this.initialized) {
+            return;
+        }
 
         try {
             await this.db.open();
@@ -68,7 +72,9 @@ class StorageService {
     async migrateFromLocalStorage() {
         // Check if migration already done
         const migrated = await this.getSetting('ton3s_migrated_v2');
-        if (migrated) return;
+        if (migrated) {
+            return;
+        }
 
         try {
             const savedContent = localStorage.getItem('savedContent');
@@ -134,7 +140,7 @@ class StorageService {
     extractTitle(plainText) {
         const firstLine = plainText.split('\n')[0].trim();
         if (firstLine.length > 50) {
-            return firstLine.substring(0, 47) + '...';
+            return `${firstLine.substring(0, 47)}...`;
         }
         return firstLine || null;
     }
@@ -179,10 +185,7 @@ class StorageService {
      * Get all notes
      */
     async getAllNotes() {
-        return await this.db.notes
-            .orderBy('updatedAt')
-            .reverse()
-            .toArray();
+        return await this.db.notes.orderBy('updatedAt').reverse().toArray();
     }
 
     /**
@@ -239,9 +242,11 @@ class StorageService {
         const lowerQuery = query.toLowerCase();
         return await this.db.notes
             .filter(note => {
-                return note.title?.toLowerCase().includes(lowerQuery) ||
-                       note.plainText?.toLowerCase().includes(lowerQuery) ||
-                       note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+                return (
+                    note.title?.toLowerCase().includes(lowerQuery) ||
+                    note.plainText?.toLowerCase().includes(lowerQuery) ||
+                    note.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
+                );
             })
             .toArray();
     }
@@ -250,10 +255,7 @@ class StorageService {
      * Get notes by tag
      */
     async getNotesByTag(tag) {
-        return await this.db.notes
-            .where('tags')
-            .equals(tag)
-            .toArray();
+        return await this.db.notes.where('tags').equals(tag).toArray();
     }
 
     /**
