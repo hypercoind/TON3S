@@ -15,6 +15,7 @@
 .theme-catppuccin-mocha {
     --bg: #1e1e2e;
     --fg: #cdd6f4;
+    --fg-dim: #6c7086;
     --accent: #89b4fa;
     --secondary: #313244;
     --hover: #45475a;
@@ -23,6 +24,7 @@
 .theme-catppuccin-macchiato {
     --bg: #24273a;
     --fg: #cad3f5;
+    --fg-dim: #6e738d;
     --accent: #8aadf4;
     --secondary: #363a4f;
     --hover: #494d64;
@@ -31,6 +33,7 @@
 .theme-catppuccin-frappe {
     --bg: #303446;
     --fg: #c6d0f5;
+    --fg-dim: #737994;
     --accent: #8caaee;
     --secondary: #414559;
     --hover: #51576d;
@@ -39,6 +42,7 @@
 .theme-catppuccin-latte {
     --bg: #eff1f5;
     --fg: #4c4f69;
+    --fg-dim: #8c8fa1;
     --accent: #1e66f5;
     --secondary: #dce0e8;
     --hover: #bcc0cc;
@@ -47,6 +51,7 @@
 .theme-dracula {
     --bg: #282a36;
     --fg: #f8f8f2;
+    --fg-dim: #6272a4;
     --accent: #bd93f9;
     --secondary: #44475a;
     --hover: #6272a4;
@@ -55,6 +60,7 @@
 .theme-dracula-soft {
     --bg: #282a36;
     --fg: #f8f8f2;
+    --fg-dim: #6272a4;
     --accent: #8be9fd;
     --secondary: #44475a;
     --hover: #6272a4;
@@ -63,6 +69,7 @@
 .theme-gruvbox-dark {
     --bg: #282828;
     --fg: #ebdbb2;
+    --fg-dim: #928374;
     --accent: #fb4934;
     --secondary: #3c3836;
     --hover: #504945;
@@ -71,6 +78,7 @@
 .theme-gruvbox-light {
     --bg: #fbf1c7;
     --fg: #3c3836;
+    --fg-dim: #7c6f64;
     --accent: #cc241d;
     --secondary: #ebdbb2;
     --hover: #d5c4a1;
@@ -79,6 +87,7 @@
 .theme-gruvbox-material {
     --bg: #1d2021;
     --fg: #fbf1c7;
+    --fg-dim: #928374;
     --accent: #fabd2f;
     --secondary: #3c3836;
     --hover: #504945;
@@ -87,6 +96,7 @@
 .theme-tokyo-night {
     --bg: #1a1b26;
     --fg: #a9b1d6;
+    --fg-dim: #565f89;
     --accent: #7aa2f7;
     --secondary: #24283b;
     --hover: #414868;
@@ -95,6 +105,7 @@
 .theme-tokyo-night-storm {
     --bg: #24283b;
     --fg: #a9b1d6;
+    --fg-dim: #565f89;
     --accent: #7aa2f7;
     --secondary: #1f2335;
     --hover: #414868;
@@ -103,6 +114,7 @@
 .theme-tokyo-night-light {
     --bg: #d5d6db;
     --fg: #565a6e;
+    --fg-dim: #9699a3;
     --accent: #34548a;
     --secondary: #cbccd1;
     --hover: #9699a3;
@@ -111,6 +123,7 @@
 .theme-nord {
     --bg: #2e3440;
     --fg: #eceff4;
+    --fg-dim: #81899c;
     --accent: #88c0d0;
     --secondary: #3b4252;
     --hover: #434c5e;
@@ -119,6 +132,7 @@
 .theme-nord-aurora {
     --bg: #2e3440;
     --fg: #eceff4;
+    --fg-dim: #81899c;
     --accent: #bf616a;
     --secondary: #3b4252;
     --hover: #434c5e;
@@ -127,6 +141,7 @@
 .theme-solarized-dark {
     --bg: #002b36;
     --fg: #839496;
+    --fg-dim: #586e75;
     --accent: #268bd2;
     --secondary: #073642;
     --hover: #586e75;
@@ -135,6 +150,7 @@
 .theme-solarized-light {
     --bg: #fdf6e3;
     --fg: #657b83;
+    --fg-dim: #93a1a1;
     --accent: #268bd2;
     --secondary: #eee8d5;
     --hover: #93a1a1;
@@ -143,6 +159,7 @@
 .theme-monokai {
     --bg: #272822;
     --fg: #f8f8f2;
+    --fg-dim: #75715e;
     --accent: #66d9ef;
     --secondary: #3e3d32;
     --hover: #75715e;
@@ -151,6 +168,7 @@
 .theme-monokai-pro {
     --bg: #2d2a2e;
     --fg: #fcfcfa;
+    --fg-dim: #939293;
     --accent: #ff6188;
     --secondary: #403e41;
     --hover: #5b595c;
@@ -159,6 +177,7 @@
 .theme-monokai-ristretto {
     --bg: #2c2525;
     --fg: #fff1f3;
+    --fg-dim: #948b8c;
     --accent: #fd6a85;
     --secondary: #403838;
     --hover: #72696a;
@@ -167,6 +186,7 @@
 .theme-one-dark {
     --bg: #282c34;
     --fg: #abb2bf;
+    --fg-dim: #5c6370;
     --accent: #61afef;
     --secondary: #3e4451;
     --hover: #5c6370;
@@ -175,6 +195,7 @@
 .theme-one-light {
     --bg: #fafafa;
     --fg: #383a42;
+    --fg-dim: #a0a1a7;
     --accent: #4078f2;
     --secondary: #e5e5e6;
     --hover: #a0a1a7;
@@ -183,6 +204,7 @@
 .theme-one-dark-pro {
     --bg: #282c34;
     --fg: #abb2bf;
+    --fg-dim: #5c6370;
     --accent: #c678dd;
     --secondary: #21252b;
     --hover: #2c313c;
@@ -191,6 +213,7 @@
 .theme-ayu-dark {
     --bg: #0a0e14;
     --fg: #b3b1ad;
+    --fg-dim: #5c6773;
     --accent: #39bae6;
     --secondary: #1f2430;
     --hover: #232834;
@@ -199,6 +222,7 @@
 .theme-ayu-mirage {
     --bg: #1f2430;
     --fg: #cbccc6;
+    --fg-dim: #707a8c;
     --accent: #5ccfe6;
     --secondary: #232834;
     --hover: #33415e;
@@ -207,6 +231,7 @@
 .theme-ayu-light {
     --bg: #fafafa;
     --fg: #575f66;
+    --fg-dim: #abb0b6;
     --accent: #55b4d4;
     --secondary: #f0f0f0;
     --hover: #abb0b6;
@@ -215,6 +240,7 @@
 .theme-material-darker {
     --bg: #212121;
     --fg: #eeffff;
+    --fg-dim: #717cb4;
     --accent: #82aaff;
     --secondary: #424242;
     --hover: #616161;
@@ -223,6 +249,7 @@
 .theme-material-ocean {
     --bg: #0f111a;
     --fg: #8f93a2;
+    --fg-dim: #464b5d;
     --accent: #84ffff;
     --secondary: #1a1c25;
     --hover: #464b5d;
@@ -231,6 +258,7 @@
 .theme-material-palenight {
     --bg: #292d3e;
     --fg: #a6accd;
+    --fg-dim: #676e95;
     --accent: #c3e88d;
     --secondary: #444267;
     --hover: #676e95;
@@ -239,6 +267,7 @@
 .theme-material-lighter {
     --bg: #fafafa;
     --fg: #90a4ae;
+    --fg-dim: #ccd7dc;
     --accent: #00bcd4;
     --secondary: #f5f5f5;
     --hover: #e0e0e0;
@@ -247,6 +276,7 @@
 .theme-tomorrow-night {
     --bg: #1d1f21;
     --fg: #c5c8c6;
+    --fg-dim: #969896;
     --accent: #81a2be;
     --secondary: #282a2e;
     --hover: #373b41;
@@ -255,6 +285,7 @@
 .theme-tomorrow-night-bright {
     --bg: #000000;
     --fg: #eaeaea;
+    --fg-dim: #969896;
     --accent: #7aa6da;
     --secondary: #2a2a2a;
     --hover: #424242;
@@ -263,6 +294,7 @@
 .theme-tomorrow-night-blue {
     --bg: #002451;
     --fg: #ffffff;
+    --fg-dim: #7285b7;
     --accent: #7285b7;
     --secondary: #003f8e;
     --hover: #0056d6;
@@ -271,6 +303,7 @@
 .theme-base16-ocean {
     --bg: #2b303b;
     --fg: #c0c5ce;
+    --fg-dim: #65737e;
     --accent: #8fa1b3;
     --secondary: #343d46;
     --hover: #4f5b66;
@@ -279,6 +312,7 @@
 .theme-base16-tomorrow {
     --bg: #1d1f21;
     --fg: #c5c8c6;
+    --fg-dim: #969896;
     --accent: #81a2be;
     --secondary: #282a2e;
     --hover: #373b41;
@@ -287,6 +321,7 @@
 .theme-base16-onedark {
     --bg: #282c34;
     --fg: #abb2bf;
+    --fg-dim: #5c6370;
     --accent: #61afef;
     --secondary: #3e4451;
     --hover: #5c6370;
@@ -295,6 +330,7 @@
 .theme-base16-atelier {
     --bg: #1b181b;
     --fg: #8b8792;
+    --fg-dim: #5e5a65;
     --accent: #955ae7;
     --secondary: #2d2a2e;
     --hover: #5e5a65;
@@ -303,6 +339,7 @@
 .theme-zenburn {
     --bg: #3f3f3f;
     --fg: #dcdccc;
+    --fg-dim: #7f9f7f;
     --accent: #93e0e3;
     --secondary: #4f4f4f;
     --hover: #5f5f5f;
@@ -311,6 +348,7 @@
 .theme-apprentice {
     --bg: #262626;
     --fg: #bcbcbc;
+    --fg-dim: #6c6c6c;
     --accent: #5f8787;
     --secondary: #303030;
     --hover: #444444;
@@ -319,6 +357,7 @@
 .theme-horizon-dark {
     --bg: #1c1e26;
     --fg: #e0e0e0;
+    --fg-dim: #6c6f93;
     --accent: #ee64ac;
     --secondary: #232530;
     --hover: #2e303e;
@@ -327,6 +366,7 @@
 .theme-horizon-bright {
     --bg: #fdf0ed;
     --fg: #16161c;
+    --fg-dim: #6c6f93;
     --accent: #e95678;
     --secondary: #f7ebe8;
     --hover: #fadad7;
@@ -335,6 +375,7 @@
 .theme-synthwave-84 {
     --bg: #262335;
     --fg: #ffffff;
+    --fg-dim: #848bbd;
     --accent: #ff7edb;
     --secondary: #241b2f;
     --hover: #34294f;
@@ -343,6 +384,7 @@
 .theme-cyberpunk {
     --bg: #000b1a;
     --fg: #6dffb8;
+    --fg-dim: #3d8a6d;
     --accent: #ff4d7a;
     --secondary: #001933;
     --hover: #003366;
@@ -351,6 +393,7 @@
 .theme-night-owl {
     --bg: #011627;
     --fg: #d6deeb;
+    --fg-dim: #637777;
     --accent: #82aaff;
     --secondary: #0b2942;
     --hover: #1d3b53;
@@ -359,6 +402,7 @@
 .theme-light-owl {
     --bg: #fbfbfb;
     --fg: #403f53;
+    --fg-dim: #90a7b2;
     --accent: #0c969b;
     --secondary: #f0f0f0;
     --hover: #e0e7ea;
@@ -367,6 +411,7 @@
 .theme-cobalt2 {
     --bg: #193549;
     --fg: #ffffff;
+    --fg-dim: #6b8a94;
     --accent: #ffc600;
     --secondary: #0d3a58;
     --hover: #15232d;
@@ -375,6 +420,7 @@
 .theme-palenight {
     --bg: #292d3e;
     --fg: #a6accd;
+    --fg-dim: #676e95;
     --accent: #82aaff;
     --secondary: #444267;
     --hover: #676e95;
@@ -383,6 +429,7 @@
 .theme-everforest-dark {
     --bg: #2d353b;
     --fg: #d3c6aa;
+    --fg-dim: #859289;
     --accent: #a7c080;
     --secondary: #343f44;
     --hover: #475258;
@@ -391,6 +438,7 @@
 .theme-everforest-light {
     --bg: #fdf6e3;
     --fg: #5c6a72;
+    --fg-dim: #939f91;
     --accent: #8da101;
     --secondary: #f4f0d9;
     --hover: #e6e2cc;
@@ -399,6 +447,7 @@
 .theme-rose-pine {
     --bg: #191724;
     --fg: #e0def4;
+    --fg-dim: #6e6a86;
     --accent: #ebbcba;
     --secondary: #1f1d2e;
     --hover: #26233a;
@@ -407,6 +456,7 @@
 .theme-rose-pine-moon {
     --bg: #232136;
     --fg: #e0def4;
+    --fg-dim: #6e6a86;
     --accent: #ea9a97;
     --secondary: #2a273f;
     --hover: #393552;
@@ -415,6 +465,7 @@
 .theme-rose-pine-dawn {
     --bg: #faf4ed;
     --fg: #575279;
+    --fg-dim: #9893a5;
     --accent: #d7827e;
     --secondary: #fffaf3;
     --hover: #f2e9e1;
@@ -423,6 +474,7 @@
 .theme-kanagawa {
     --bg: #1f1f28;
     --fg: #dcd7ba;
+    --fg-dim: #727169;
     --accent: #7e9cd8;
     --secondary: #16161d;
     --hover: #2a2a37;
@@ -431,6 +483,7 @@
 .theme-kanagawa-wave {
     --bg: #223249;
     --fg: #dcd7ba;
+    --fg-dim: #727169;
     --accent: #7fb4ca;
     --secondary: #2d4f67;
     --hover: #49443c;
@@ -439,6 +492,7 @@
 .theme-kanagawa-lotus {
     --bg: #f2ecbc;
     --fg: #545464;
+    --fg-dim: #8a8980;
     --accent: #8992a7;
     --secondary: #e7dba0;
     --hover: #d0ca97;
@@ -447,6 +501,7 @@
 .theme-github-dark {
     --bg: #0d1117;
     --fg: #c9d1d9;
+    --fg-dim: #8b949e;
     --accent: #58a6ff;
     --secondary: #21262d;
     --hover: #30363d;
@@ -455,6 +510,7 @@
 .theme-github-light {
     --bg: #ffffff;
     --fg: #24292f;
+    --fg-dim: #6e7781;
     --accent: #0969da;
     --secondary: #f6f8fa;
     --hover: #d1d9e0;
@@ -463,6 +519,7 @@
 .theme-vscode-dark {
     --bg: #1e1e1e;
     --fg: #cccccc;
+    --fg-dim: #6a6a6a;
     --accent: #007acc;
     --secondary: #2d2d30;
     --hover: #3e3e42;
@@ -471,6 +528,7 @@
 .theme-vscode-light {
     --bg: #ffffff;
     --fg: #000000;
+    --fg-dim: #6e6e6e;
     --accent: #005fb8;
     --secondary: #f3f3f3;
     --hover: #e5e5e5;
@@ -479,6 +537,7 @@
 .theme-atom-one-dark {
     --bg: #282c34;
     --fg: #abb2bf;
+    --fg-dim: #5c6370;
     --accent: #56b6c2;
     --secondary: #3e4451;
     --hover: #4b5263;
@@ -487,6 +546,7 @@
 .theme-atom-one-light {
     --bg: #fafafa;
     --fg: #383a42;
+    --fg-dim: #a0a1a7;
     --accent: #0184bc;
     --secondary: #f0f0f1;
     --hover: #e5e5e6;
@@ -495,6 +555,7 @@
 .theme-high-contrast-dark {
     --bg: #000000;
     --fg: #ffffff;
+    --fg-dim: #808080;
     --accent: #00ff00;
     --secondary: #1a1a1a;
     --hover: #333333;
@@ -503,6 +564,7 @@
 .theme-high-contrast-light {
     --bg: #ffffff;
     --fg: #000000;
+    --fg-dim: #707070;
     --accent: #0000ff;
     --secondary: #e6e6e6;
     --hover: #cccccc;
@@ -511,6 +573,7 @@
 .theme-paper {
     --bg: #f7f3e9;
     --fg: #444444;
+    --fg-dim: #9e9b96;
     --accent: #8b4513;
     --secondary: #f0ead6;
     --hover: #e8dcc0;
@@ -519,6 +582,7 @@
 .theme-sepia {
     --bg: #f4ecd8;
     --fg: #704214;
+    --fg-dim: #a89060;
     --accent: #8b4513;
     --secondary: #ede0c8;
     --hover: #e0d3b7;
@@ -527,6 +591,7 @@
 .theme-midnight {
     --bg: #0f0f23;
     --fg: #cccccc;
+    --fg-dim: #666a7e;
     --accent: #00cc00;
     --secondary: #1a1a2e;
     --hover: #16213e;
@@ -535,6 +600,7 @@
 .theme-forest {
     --bg: #1b2f1b;
     --fg: #c8e6c8;
+    --fg-dim: #6d8a6d;
     --accent: #90ee90;
     --secondary: #2d4a2d;
     --hover: #3d5a3d;
@@ -543,6 +609,7 @@
 .theme-ocean-deep {
     --bg: #001122;
     --fg: #b3d9ff;
+    --fg-dim: #5a7a99;
     --accent: #00ccff;
     --secondary: #002244;
     --hover: #003366;
@@ -551,6 +618,7 @@
 .theme-sunset {
     --bg: #2d1b0e;
     --fg: #ffcc99;
+    --fg-dim: #997854;
     --accent: #ff6600;
     --secondary: #4a2c1a;
     --hover: #5c3520;
@@ -559,6 +627,7 @@
 .theme-aurora {
     --bg: #0a1420;
     --fg: #a3c3e8;
+    --fg-dim: #526a84;
     --accent: #00ff7f;
     --secondary: #1a2536;
     --hover: #243447;
@@ -567,6 +636,7 @@
 .theme-neon {
     --bg: #0d001a;
     --fg: #ff80ff;
+    --fg-dim: #994099;
     --accent: #66ffff;
     --secondary: #1a0033;
     --hover: #330066;

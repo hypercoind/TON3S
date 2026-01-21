@@ -7,6 +7,7 @@ import { BaseComponent } from './BaseComponent.js';
 import { appState, StateEvents } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
 import { countWords, countCharacters } from '../utils/markdown.js';
+import { sanitizeHtml } from '../utils/sanitizer.js';
 
 export class Editor extends BaseComponent {
     constructor(container) {
@@ -49,9 +50,7 @@ export class Editor extends BaseComponent {
         this.editorElement.addEventListener('blur', this.handleEditorBlur.bind(this));
 
         // State subscriptions
-        this.subscribe(
-            appState.on(StateEvents.NOTE_SELECTED, this.loadNote.bind(this))
-        );
+        this.subscribe(appState.on(StateEvents.NOTE_SELECTED, this.loadNote.bind(this)));
 
         // Auto-focus when typing anywhere
         this.setupAutoFocus();
@@ -61,19 +60,32 @@ export class Editor extends BaseComponent {
      * Setup auto-focus: typing anywhere focuses the editor
      */
     setupAutoFocus() {
-        this.autoFocusHandler = (e) => {
+        this.autoFocusHandler = e => {
             // Skip if focused on interactive element
             const activeElement = document.activeElement;
             const interactiveElements = ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'];
-            if (interactiveElements.includes(activeElement?.tagName)) return;
-            if (activeElement?.hasAttribute('contenteditable') && activeElement !== this.editorElement) return;
-            if (activeElement?.closest('dialog')) return;
+            if (interactiveElements.includes(activeElement?.tagName)) {
+                return;
+            }
+            if (
+                activeElement?.hasAttribute('contenteditable') &&
+                activeElement !== this.editorElement
+            ) {
+                return;
+            }
+            if (activeElement?.closest('dialog')) {
+                return;
+            }
 
             // Skip if modifier keys held (preserve shortcuts)
-            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.metaKey || e.ctrlKey || e.altKey) {
+                return;
+            }
 
             // Only handle printable characters (single character keys)
-            if (e.key.length !== 1) return;
+            if (e.key.length !== 1) {
+                return;
+            }
 
             // Focus editor and move cursor to end
             this.editorElement.focus();
@@ -107,7 +119,8 @@ export class Editor extends BaseComponent {
             return;
         }
 
-        this.editorElement.innerHTML = note.content || '<p><br></p>';
+        // Sanitize HTML content to prevent XSS
+        this.editorElement.innerHTML = sanitizeHtml(note.content || '<p><br></p>');
         this.updateCounts();
     }
 
@@ -163,7 +176,9 @@ export class Editor extends BaseComponent {
      */
     insertParagraph() {
         const selection = window.getSelection();
-        if (!selection.rangeCount) return;
+        if (!selection.rangeCount) {
+            return;
+        }
 
         const newP = document.createElement('p');
         newP.innerHTML = '<br>';
@@ -175,7 +190,11 @@ export class Editor extends BaseComponent {
             currentBlock = currentBlock.parentElement;
         }
 
-        while (currentBlock && currentBlock !== this.editorElement && currentBlock.tagName !== 'P') {
+        while (
+            currentBlock &&
+            currentBlock !== this.editorElement &&
+            currentBlock.tagName !== 'P'
+        ) {
             currentBlock = currentBlock.parentElement;
         }
 
@@ -231,7 +250,9 @@ export class Editor extends BaseComponent {
 
         this.saveTimeout = setTimeout(async () => {
             const note = appState.currentNote;
-            if (!note) return;
+            if (!note) {
+                return;
+            }
 
             const content = this.editorElement.innerHTML;
             await storageService.updateNote(note.id, { content });
@@ -258,7 +279,9 @@ export class Editor extends BaseComponent {
      */
     startAutoZenTimer() {
         // Only start timer if one isn't already running
-        if (this.autoZenTimeout) return;
+        if (this.autoZenTimeout) {
+            return;
+        }
 
         // Start timer - enter zen mode after 3s of typing
         this.autoZenTimeout = setTimeout(() => {
@@ -289,9 +312,11 @@ export class Editor extends BaseComponent {
         const chars = countCharacters(text);
 
         // Emit event for status bar to update
-        document.dispatchEvent(new CustomEvent('editor:counts', {
-            detail: { words, chars }
-        }));
+        document.dispatchEvent(
+            new CustomEvent('editor:counts', {
+                detail: { words, chars }
+            })
+        );
     }
 
     /**
@@ -300,7 +325,9 @@ export class Editor extends BaseComponent {
      */
     autoScroll() {
         const selection = window.getSelection();
-        if (!selection.rangeCount) return;
+        if (!selection.rangeCount) {
+            return;
+        }
 
         const range = selection.getRangeAt(0);
         let cursorNode = range.startContainer;
@@ -323,10 +350,10 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Set content
+     * Set content (sanitized)
      */
     setContent(html) {
-        this.editorElement.innerHTML = html;
+        this.editorElement.innerHTML = sanitizeHtml(html);
         this.ensureParagraph();
     }
 

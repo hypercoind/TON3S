@@ -4,45 +4,80 @@
  */
 
 /**
- * Convert HTML content to Markdown
+ * Convert HTML content to Markdown (XSS-safe using DOMParser)
  */
 export function htmlToMarkdown(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
+    if (!html || typeof html !== 'string') {
+        return '';
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
 
     let markdown = '';
 
-    // Process each paragraph element
-    const blocks = tempDiv.querySelectorAll('p');
+    // Process all block elements (h1, h2, p)
+    const blocks = doc.body.querySelectorAll('h1, h2, p');
     blocks.forEach(block => {
         const text = block.textContent.trim();
-        if (!text) return;
-        markdown += text + '\n\n';
+        if (!text) {
+            return;
+        }
+
+        if (block.tagName === 'H1') {
+            markdown += `# ${text}\n\n`;
+        } else if (block.tagName === 'H2') {
+            markdown += `## ${text}\n\n`;
+        } else {
+            markdown += `${text}\n\n`;
+        }
     });
 
     return markdown.trim();
 }
 
 /**
- * Parse HTML content into blocks for PDF generation
+ * Parse HTML content into blocks for PDF generation (XSS-safe using DOMParser)
  */
 export function parseContentForPDF(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
+    if (!html || typeof html !== 'string') {
+        return [];
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
 
     const contentBlocks = [];
 
-    const blocks = tempDiv.querySelectorAll('p');
+    const blocks = doc.body.querySelectorAll('h1, h2, p');
     blocks.forEach(block => {
         const text = block.textContent.trim();
-        if (!text) return;
+        if (!text) {
+            return;
+        }
 
-        contentBlocks.push({
-            type: 'body',
-            text: text,
-            fontSize: 12,
-            fontStyle: 'normal'
-        });
+        if (block.tagName === 'H1') {
+            contentBlocks.push({
+                type: 'title',
+                text: text,
+                fontSize: 24,
+                fontStyle: 'bold'
+            });
+        } else if (block.tagName === 'H2') {
+            contentBlocks.push({
+                type: 'heading',
+                text: text,
+                fontSize: 18,
+                fontStyle: 'bold'
+            });
+        } else {
+            contentBlocks.push({
+                type: 'body',
+                text: text,
+                fontSize: 12,
+                fontStyle: 'normal'
+            });
+        }
     });
 
     return contentBlocks;
@@ -52,14 +87,14 @@ export function parseContentForPDF(html) {
  * Convert Markdown to HTML (basic)
  */
 export function markdownToHtml(markdown) {
-    if (!markdown) return '<p><br></p>';
+    if (!markdown) {
+        return '<p><br></p>';
+    }
 
     // Split into paragraphs
     const paragraphs = markdown.split(/\n\n+/);
 
-    return paragraphs
-        .map(p => `<p>${escapeHtml(p.trim())}</p>`)
-        .join('');
+    return paragraphs.map(p => `<p>${escapeHtml(p.trim())}</p>`).join('');
 }
 
 /**
@@ -75,9 +110,13 @@ function escapeHtml(text) {
  * Count words in text
  */
 export function countWords(text) {
-    if (!text || typeof text !== 'string') return 0;
+    if (!text || typeof text !== 'string') {
+        return 0;
+    }
     const trimmed = text.trim();
-    if (!trimmed) return 0;
+    if (!trimmed) {
+        return 0;
+    }
     return trimmed.split(/\s+/).length;
 }
 
@@ -85,7 +124,9 @@ export function countWords(text) {
  * Count characters in text
  */
 export function countCharacters(text) {
-    if (!text || typeof text !== 'string') return 0;
+    if (!text || typeof text !== 'string') {
+        return 0;
+    }
     return text.length;
 }
 

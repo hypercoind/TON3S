@@ -84,14 +84,14 @@ describe('NostrProxy', () => {
 
         it('should handle SEND message', () => {
             const sendSpy = vi.spyOn(proxy, 'sendToRelay');
-            const message = { type: 'EVENT' };
+            const message = ['EVENT', { type: 'test' }];
             proxy.handleClientMessage('client-1', JSON.stringify(['SEND', 'wss://relay.example.com', message]));
             expect(sendSpy).toHaveBeenCalledWith('client-1', 'wss://relay.example.com', message);
         });
 
         it('should handle BROADCAST message', () => {
             const broadcastSpy = vi.spyOn(proxy, 'broadcastToRelays');
-            const message = { type: 'EVENT' };
+            const message = ['EVENT', { type: 'test' }];
             proxy.handleClientMessage('client-1', JSON.stringify(['BROADCAST', message]));
             expect(broadcastSpy).toHaveBeenCalledWith('client-1', message);
         });
