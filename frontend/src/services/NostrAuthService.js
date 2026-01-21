@@ -28,7 +28,7 @@ class NostrAuthService {
             return true;
         }
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             const checkInterval = 100;
             let elapsed = 0;
 
@@ -69,7 +69,9 @@ class NostrAuthService {
             const extensionName = this.detectExtensionType();
 
             appState.setNostrConnected(this.pubkey, extensionName);
-            console.log(`[NOSTR] Connected with ${extensionName}, pubkey: ${this.pubkey.slice(0, 8)}...`);
+            console.log(
+                `[NOSTR] Connected with ${extensionName}, pubkey: ${this.pubkey.slice(0, 8)}...`
+            );
 
             return {
                 pubkey: this.pubkey,
@@ -94,10 +96,14 @@ class NostrAuthService {
      * Detect which NOSTR extension is installed
      */
     detectExtensionType() {
-        if (!window.nostr) return 'unknown';
+        if (!window.nostr) {
+            return 'unknown';
+        }
 
         // Check for Alby
-        if (window.alby) return 'Alby';
+        if (window.alby) {
+            return 'Alby';
+        }
 
         // Check for nos2x (typically just has the basic NIP-07 interface)
         if (window.nostr.getPublicKey && window.nostr.signEvent) {
@@ -112,7 +118,9 @@ class NostrAuthService {
      * Get the user's public key
      */
     async getPublicKey() {
-        if (this.pubkey) return this.pubkey;
+        if (this.pubkey) {
+            return this.pubkey;
+        }
 
         if (!this.hasExtension()) {
             throw new Error('No NOSTR extension available');
@@ -189,7 +197,9 @@ class NostrAuthService {
      * Get short pubkey for display
      */
     getShortPubkey() {
-        if (!this.pubkey) return null;
+        if (!this.pubkey) {
+            return null;
+        }
         return `${this.pubkey.slice(0, 8)}...${this.pubkey.slice(-8)}`;
     }
 }

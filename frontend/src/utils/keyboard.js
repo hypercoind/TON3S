@@ -16,7 +16,9 @@ class KeyboardManager {
      * Initialize keyboard shortcuts
      */
     init() {
-        if (this.initialized) return;
+        if (this.initialized) {
+            return;
+        }
 
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
         this.initialized = true;
@@ -50,12 +52,11 @@ class KeyboardManager {
         const cmdOrCtrl = this.isMac ? e.metaKey : e.ctrlKey;
 
         for (const [id, shortcut] of this.shortcuts) {
-            const matches = (
+            const matches =
                 e.key.toLowerCase() === shortcut.key.toLowerCase() &&
                 (shortcut.cmdOrCtrl ? cmdOrCtrl : !cmdOrCtrl) &&
                 (shortcut.shift ? e.shiftKey : !e.shiftKey) &&
-                (shortcut.alt ? e.altKey : !e.altKey)
-            );
+                (shortcut.alt ? e.altKey : !e.altKey);
 
             if (matches) {
                 e.preventDefault();
@@ -76,9 +77,15 @@ class KeyboardManager {
         const list = [];
         for (const [id, shortcut] of this.shortcuts) {
             const keys = [];
-            if (shortcut.cmdOrCtrl) keys.push(this.isMac ? '⌘' : 'Ctrl');
-            if (shortcut.shift) keys.push(this.isMac ? '⇧' : 'Shift');
-            if (shortcut.alt) keys.push(this.isMac ? '⌥' : 'Alt');
+            if (shortcut.cmdOrCtrl) {
+                keys.push(this.isMac ? '⌘' : 'Ctrl');
+            }
+            if (shortcut.shift) {
+                keys.push(this.isMac ? '⇧' : 'Shift');
+            }
+            if (shortcut.alt) {
+                keys.push(this.isMac ? '⌥' : 'Alt');
+            }
             keys.push(shortcut.key.toUpperCase());
 
             list.push({
@@ -159,12 +166,16 @@ class KeyboardManager {
                 <div class="help-modal-content">
                     <table class="shortcuts-table">
                         <tbody>
-                            ${shortcuts.map(shortcut => `
+                            ${shortcuts
+                                .map(
+                                    shortcut => `
                                 <tr>
                                     <td class="shortcut-keys"><kbd>${shortcut.keys}</kbd></td>
                                     <td class="shortcut-desc">${shortcut.description}</td>
                                 </tr>
-                            `).join('')}
+                            `
+                                )
+                                .join('')}
                         </tbody>
                     </table>
                 </div>
@@ -189,11 +200,13 @@ class KeyboardManager {
 
         closeBtn.addEventListener('click', closeModal);
 
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                closeModal();
+            }
         });
 
-        const handleKeyDown = (e) => {
+        const handleKeyDown = e => {
             if (e.key === 'Escape') {
                 closeModal();
                 document.removeEventListener('keydown', handleKeyDown);

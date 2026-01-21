@@ -41,7 +41,9 @@ class FaviconService {
         const styles = getComputedStyle(document.body);
         return {
             accent: styles.getPropertyValue('--accent').trim(),
-            secondary: styles.getPropertyValue('--secondary').trim() || styles.getPropertyValue('--fg-dim').trim(),
+            secondary:
+                styles.getPropertyValue('--secondary').trim() ||
+                styles.getPropertyValue('--fg-dim').trim(),
             bg: styles.getPropertyValue('--bg').trim(),
             fg: styles.getPropertyValue('--fg').trim()
         };
@@ -58,7 +60,10 @@ class FaviconService {
 
         // Handle 3-digit hex
         if (hex.length === 3) {
-            hex = hex.split('').map(c => c + c).join('');
+            hex = hex
+                .split('')
+                .map(c => c + c)
+                .join('');
         }
 
         const r = parseInt(hex.substring(0, 2), 16);
@@ -96,7 +101,9 @@ class FaviconService {
      * Convert SVG to data URI and apply to favicon
      */
     updateFavicon() {
-        if (!this.linkElement) return;
+        if (!this.linkElement) {
+            return;
+        }
 
         const svg = this.generateSVG();
         const dataUri = `data:image/svg+xml,${encodeURIComponent(svg)}`;

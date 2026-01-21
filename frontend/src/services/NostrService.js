@@ -38,7 +38,7 @@ class NostrService {
                     resolve();
                 };
 
-                this.socket.onmessage = (event) => {
+                this.socket.onmessage = event => {
                     this.handleMessage(event.data);
                 };
 
@@ -48,7 +48,7 @@ class NostrService {
                     this.attemptReconnect();
                 };
 
-                this.socket.onerror = (error) => {
+                this.socket.onerror = error => {
                     console.error('[NOSTR] Proxy error:', error);
                     reject(error);
                 };
@@ -99,7 +99,9 @@ class NostrService {
      * Connect to a specific relay
      */
     connectToRelay(relayUrl) {
-        if (!this.socket || !this.connected) return;
+        if (!this.socket || !this.connected) {
+            return;
+        }
         this.socket.send(JSON.stringify(['CONNECT', relayUrl]));
     }
 
@@ -107,7 +109,9 @@ class NostrService {
      * Disconnect from a relay
      */
     disconnectFromRelay(relayUrl) {
-        if (!this.socket || !this.connected) return;
+        if (!this.socket || !this.connected) {
+            return;
+        }
         this.socket.send(JSON.stringify(['DISCONNECT', relayUrl]));
     }
 
@@ -155,7 +159,7 @@ class NostrService {
         const [type, ...params] = message;
 
         switch (type) {
-            case 'OK':
+            case 'OK': {
                 // Event published successfully
                 const [eventId, success, reason] = params;
                 const handler = this.pendingPublishes.get(eventId);
@@ -169,6 +173,7 @@ class NostrService {
                 }
                 appState.emit(StateEvents.NOSTR_PUBLISHED, { eventId, relayUrl, success });
                 break;
+            }
 
             case 'NOTICE':
                 console.log(`[NOSTR] ${relayUrl} notice:`, params[0]);
