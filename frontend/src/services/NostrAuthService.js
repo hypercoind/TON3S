@@ -16,6 +16,8 @@ const AuthMethod = {
 
 // Session timeout configuration (15 minutes in milliseconds)
 const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
+// Warning before timeout (1 minute before)
+const SESSION_WARNING_MS = 14 * 60 * 1000;
 
 class NostrAuthService {
     constructor() {
@@ -25,6 +27,7 @@ class NostrAuthService {
         this._privateKeyHex = null;
         this._authMethod = null;
         this._idleTimer = null;
+        this._warningTimer = null;
         this._activityBound = false;
         this._visibilityBound = false;
         this._unloadBound = false;
@@ -47,10 +50,24 @@ class NostrAuthService {
     }
 
     /**
-     * Start the idle timeout timer
+     * Start the idle timeout timer (private key sessions only)
      */
     _startIdleTimer() {
         this._clearIdleTimer();
+        this._clearWarningTimer();
+
+        // Only apply timeout to private key sessions
+        if (this._authMethod !== AuthMethod.PRIVATE_KEY || !this._privateKeyHex) {
+            return;
+        }
+
+        // Warning timer fires 1 minute before timeout
+        this._warningTimer = setTimeout(() => {
+            console.log('[NOSTR] Session timeout warning');
+            appState.emit(StateEvents.NOSTR_SESSION_WARNING);
+        }, SESSION_WARNING_MS);
+
+        // Actual timeout disconnects the session
         this._idleTimer = setTimeout(() => {
             if (this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
                 console.log('[NOSTR] Session timeout - disconnecting for security');
@@ -71,7 +88,17 @@ class NostrAuthService {
     }
 
     /**
-     * Reset idle timer on user activity
+     * Clear the warning timer
+     */
+    _clearWarningTimer() {
+        if (this._warningTimer) {
+            clearTimeout(this._warningTimer);
+            this._warningTimer = null;
+        }
+    }
+
+    /**
+     * Reset idle timer on user activity (private key sessions only)
      */
     _handleActivity() {
         if (this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
@@ -80,7 +107,7 @@ class NostrAuthService {
     }
 
     /**
-     * Handle page visibility changes
+     * Handle page visibility changes (private key sessions only)
      */
     _handleVisibilityChange() {
         if (document.hidden && this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
@@ -326,8 +353,9 @@ class NostrAuthService {
      * Disconnect from NOSTR
      */
     disconnect() {
-        // Clear idle timer and event listeners
+        // Clear timers and event listeners
         this._clearIdleTimer();
+        this._clearWarningTimer();
         this._cleanupEventListeners();
 
         // Clear private key from memory

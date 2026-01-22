@@ -16,6 +16,7 @@ export class NostrPanel extends BaseComponent {
         this.publishing = false;
         this.showKeyInput = false;
         this._tabWasHidden = false;
+        this._warningTimeout = null;
     }
 
     render() {
@@ -186,7 +187,14 @@ export class NostrPanel extends BaseComponent {
 
         // Security event handlers
         this.subscribe(
+            appState.on(StateEvents.NOSTR_SESSION_WARNING, () => {
+                this._showSessionWarning();
+            })
+        );
+
+        this.subscribe(
             appState.on(StateEvents.NOSTR_SESSION_TIMEOUT, () => {
+                this._clearSessionWarning();
                 toast.warning(
                     'Session expired due to inactivity. Your private key has been cleared for security.'
                 );
@@ -247,6 +255,46 @@ export class NostrPanel extends BaseComponent {
                 toastEl.remove();
             }
         }, 10000);
+    }
+
+    /**
+     * Show warning when session is about to expire
+     */
+    _showSessionWarning() {
+        this._clearSessionWarning();
+
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast toast-warning session-warning';
+        toastEl.id = 'nostr-session-warning';
+        toastEl.innerHTML = `
+            <div class="session-warning-content">
+                <span>Your Nostr session will expire in 1 minute due to inactivity.</span>
+                <button class="session-warning-dismiss-btn">Keep Active</button>
+            </div>
+        `;
+
+        document.body.appendChild(toastEl);
+
+        toastEl.querySelector('.session-warning-dismiss-btn').addEventListener('click', () => {
+            this._clearSessionWarning();
+        });
+
+        // Auto-remove after 60 seconds (when timeout fires)
+        this._warningTimeout = setTimeout(() => this._clearSessionWarning(), 60000);
+    }
+
+    /**
+     * Clear the session warning toast
+     */
+    _clearSessionWarning() {
+        const existing = document.getElementById('nostr-session-warning');
+        if (existing) {
+            existing.remove();
+        }
+        if (this._warningTimeout) {
+            clearTimeout(this._warningTimeout);
+            this._warningTimeout = null;
+        }
     }
 
     showKeyInputUI() {

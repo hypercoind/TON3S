@@ -28,6 +28,7 @@ export const StateEvents = {
     NOSTR_DISCONNECTED: 'nostr:disconnected',
     NOSTR_PUBLISHED: 'nostr:published',
     NOSTR_ERROR: 'nostr:error',
+    NOSTR_SESSION_WARNING: 'nostr:sessionWarning',
     NOSTR_SESSION_TIMEOUT: 'nostr:sessionTimeout',
     NOSTR_TAB_HIDDEN: 'nostr:tabHidden',
     NOSTR_TAB_RETURNED: 'nostr:tabReturned',

@@ -1025,3 +1025,42 @@
 .tab-blur-dont-show-btn:hover {
     color: var(--fg);
 }
+
+/* Session warning toast */
+.session-warning {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20002;
+    max-width: 350px;
+    opacity: 1;
+    transform: none;
+    animation: slideIn 0.3s ease;
+}
+
+.session-warning-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.session-warning-content span {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.session-warning-dismiss-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    transition: opacity 0.2s ease;
+}
+
+.session-warning-dismiss-btn:hover {
+    opacity: 0.9;
+}
