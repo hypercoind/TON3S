@@ -63,7 +63,7 @@ export class Editor extends BaseComponent {
         this.autoFocusHandler = e => {
             // Skip if focused on interactive element
             const activeElement = document.activeElement;
-            const interactiveElements = ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'];
+            const interactiveElements = ['INPUT', 'TEXTAREA', 'SELECT'];
             if (interactiveElements.includes(activeElement?.tagName)) {
                 return;
             }
