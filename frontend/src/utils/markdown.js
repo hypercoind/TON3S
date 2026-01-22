@@ -85,16 +85,68 @@ export function parseContentForPDF(html) {
 
 /**
  * Convert Markdown to HTML (basic)
+ * Handles headings (#, ##) and paragraphs
  */
 export function markdownToHtml(markdown) {
     if (!markdown) {
         return '<p><br></p>';
     }
 
-    // Split into paragraphs
-    const paragraphs = markdown.split(/\n\n+/);
+    // Split into blocks (paragraphs/headings)
+    const blocks = markdown.split(/\n\n+/);
 
-    return paragraphs.map(p => `<p>${escapeHtml(p.trim())}</p>`).join('');
+    return (
+        blocks
+            .map(block => {
+                const trimmed = block.trim();
+                if (!trimmed) {
+                    return '';
+                }
+
+                // Check for headings
+                if (trimmed.startsWith('## ')) {
+                    const text = trimmed.substring(3).trim();
+                    return `<h2>${escapeHtml(text)}</h2>`;
+                }
+                if (trimmed.startsWith('# ')) {
+                    const text = trimmed.substring(2).trim();
+                    return `<h1>${escapeHtml(text)}</h1>`;
+                }
+
+                // Handle multi-line paragraphs (convert single newlines to spaces)
+                const lines = trimmed.split('\n');
+                const processedLines = lines.map(line => {
+                    const lineTrimmed = line.trim();
+                    // Check if line itself is a heading
+                    if (lineTrimmed.startsWith('## ')) {
+                        return `</p><h2>${escapeHtml(lineTrimmed.substring(3).trim())}</h2><p>`;
+                    }
+                    if (lineTrimmed.startsWith('# ')) {
+                        return `</p><h1>${escapeHtml(lineTrimmed.substring(2).trim())}</h1><p>`;
+                    }
+                    return escapeHtml(lineTrimmed);
+                });
+
+                const content = processedLines
+                    .join(' ')
+                    .replace(/<\/p><p>/g, '')
+                    .trim();
+
+                // Clean up empty paragraph tags
+                if (content === '' || content === '</p><p>') {
+                    return '';
+                }
+
+                // If content contains heading tags, don't wrap in p
+                if (content.includes('<h1>') || content.includes('<h2>')) {
+                    return content.replace(/^<\/p>|<p>$/g, '');
+                }
+
+                return `<p>${content}</p>`;
+            })
+            .filter(block => block)
+            .join('') || '<p><br></p>'
+    );
 }
 
 /**

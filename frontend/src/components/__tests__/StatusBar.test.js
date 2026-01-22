@@ -6,10 +6,8 @@ vi.mock('../../state/AppState.js', () => ({
         ui: {
             lastSaveTime: Date.now()
         },
+        currentNote: null,
         on: vi.fn().mockReturnValue(vi.fn())
-    },
-    StateEvents: {
-        SAVE_STATUS_CHANGED: 'ui:saveStatus'
     }
 }));
 
@@ -19,8 +17,24 @@ vi.mock('../../services/StorageService.js', () => ({
     }
 }));
 
+vi.mock('../../services/ExportService.js', () => ({
+    exportService: {
+        exportAllAsJSON: vi.fn().mockResolvedValue(undefined),
+        exportNoteAsJSON: vi.fn().mockResolvedValue(undefined),
+        exportNoteAsMarkdown: vi.fn().mockResolvedValue(undefined),
+        importFromFile: vi.fn().mockResolvedValue({ notesCount: 1 })
+    }
+}));
+
+vi.mock('../Toast.js', () => ({
+    toast: {
+        success: vi.fn(),
+        error: vi.fn(),
+        warning: vi.fn()
+    }
+}));
+
 const { StatusBar } = await import('../StatusBar.js');
-const { appState } = await import('../../state/AppState.js');
 
 describe('StatusBar', () => {
     let container;
@@ -90,53 +104,6 @@ describe('StatusBar', () => {
         });
     });
 
-    describe('updateSaveStatusText', () => {
-        it('should show "Saved just now" for recent saves', () => {
-            statusBar.render();
-            appState.ui.lastSaveTime = Date.now();
-
-            statusBar.updateSaveStatusText();
-
-            expect(container.querySelector('#save-status').textContent).toBe('Saved just now');
-        });
-
-        it('should show seconds ago', () => {
-            statusBar.render();
-            appState.ui.lastSaveTime = Date.now() - 30000; // 30 seconds ago
-
-            statusBar.updateSaveStatusText();
-
-            expect(container.querySelector('#save-status').textContent).toContain('s ago');
-        });
-
-        it('should show minutes ago', () => {
-            statusBar.render();
-            appState.ui.lastSaveTime = Date.now() - 120000; // 2 minutes ago
-
-            statusBar.updateSaveStatusText();
-
-            expect(container.querySelector('#save-status').textContent).toContain('m ago');
-        });
-
-        it('should show "Saved" for old saves', () => {
-            statusBar.render();
-            appState.ui.lastSaveTime = Date.now() - 7200000; // 2 hours ago
-
-            statusBar.updateSaveStatusText();
-
-            expect(container.querySelector('#save-status').textContent).toBe('Saved');
-        });
-
-        it('should show "Not saved" when no lastSaveTime', () => {
-            statusBar.render();
-            appState.ui.lastSaveTime = null;
-
-            statusBar.updateSaveStatusText();
-
-            expect(container.querySelector('#save-status').textContent).toBe('Not saved');
-        });
-    });
-
     describe('showPrivacyPopup', () => {
         it('should show privacy overlay', () => {
             statusBar.render();
@@ -184,14 +151,12 @@ describe('StatusBar', () => {
     });
 
     describe('destroy', () => {
-        it('should clear save status interval', () => {
-            statusBar.init();
+        it('should clean up without errors', () => {
+            statusBar.render();
+            statusBar.bindEvents();
 
-            expect(statusBar.saveStatusInterval).toBeTruthy();
-
-            statusBar.destroy();
-
-            // Interval should be cleared (we can't directly test this, but we can verify no errors)
+            // Should not throw
+            expect(() => statusBar.destroy()).not.toThrow();
         });
     });
 });

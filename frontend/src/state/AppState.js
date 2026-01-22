@@ -28,6 +28,9 @@ export const StateEvents = {
     NOSTR_DISCONNECTED: 'nostr:disconnected',
     NOSTR_PUBLISHED: 'nostr:published',
     NOSTR_ERROR: 'nostr:error',
+    NOSTR_SESSION_TIMEOUT: 'nostr:sessionTimeout',
+    NOSTR_TAB_HIDDEN: 'nostr:tabHidden',
+    NOSTR_TAB_RETURNED: 'nostr:tabReturned',
 
     // UI events
     SEARCH_CHANGED: 'ui:search',
@@ -59,7 +62,9 @@ class AppState extends StateEmitter {
                 enabled: false,
                 defaultRelays: ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'],
                 proxyUrl: '/ws/nostr'
-            }
+            },
+            // Security: dismiss tab blur warning preference
+            dismissTabBlurWarning: false
         };
 
         // NOSTR state
@@ -254,6 +259,10 @@ class AppState extends StateEmitter {
 
     loadSettings(settings) {
         this._settings = { ...this._settings, ...settings };
+    }
+
+    setDismissTabBlurWarning(dismissed) {
+        this._settings.dismissTabBlurWarning = dismissed;
     }
 
     // ==================

@@ -14,6 +14,8 @@ export class NostrPanel extends BaseComponent {
     constructor(container) {
         super(container);
         this.publishing = false;
+        this.showKeyInput = false;
+        this._tabWasHidden = false;
     }
 
     render() {
@@ -46,31 +48,78 @@ export class NostrPanel extends BaseComponent {
                         : ''
                 }
 
-                ${
-                    !connected
-                        ? `
-                    <button class="nostr-publish-btn connect-nostr-btn">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                        </svg>
-                        Connect NOSTR
-                    </button>
-                `
-                        : `
-                    <button class="nostr-publish-btn publish-nostr-btn" ${this.publishing ? 'disabled' : ''}>
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/>
-                        </svg>
-                        ${this.publishing ? 'Publishing...' : 'Publish to NOSTR'}
-                    </button>
-                    <button class="nostr-publish-btn disconnect-nostr-btn" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--secondary);">
-                        Disconnect
-                    </button>
-                `
-                }
+                ${this.renderConnectionUI(connected)}
 
                 ${this.getPublishStatus()}
             </div>
+        `;
+    }
+
+    renderConnectionUI(connected) {
+        if (connected) {
+            return `
+                <button class="nostr-publish-btn publish-nostr-btn" ${this.publishing ? 'disabled' : ''}>
+                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/>
+                    </svg>
+                    ${this.publishing ? 'Publishing...' : 'Publish to NOSTR'}
+                </button>
+                <button class="nostr-publish-btn disconnect-nostr-btn" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--secondary);">
+                    Disconnect
+                </button>
+            `;
+        }
+
+        if (this.showKeyInput) {
+            return `
+                <div class="nostr-key-section">
+                    <div class="nostr-key-warning">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                        </svg>
+                        <div>
+                            <strong>Security Warning</strong>
+                            <p class="nostr-warning-main">By entering your private key directly:</p>
+                            <ul class="nostr-warning-list">
+                                <li>Your key will be held in browser memory until you disconnect</li>
+                                <li>Anyone with access to this device/browser can use your key</li>
+                                <li>Malicious browser extensions may be able to access the key</li>
+                                <li>Session will auto-disconnect after 15 minutes of inactivity</li>
+                            </ul>
+                            <p class="nostr-warning-recommend">For maximum security, use a NIP-07 extension (nos2x, Alby) instead.</p>
+                            <p class="nostr-warning-caution"><strong>NEVER</strong> enter your key on public/shared computers or untrusted networks. Verify you are on the correct domain.</p>
+                        </div>
+                    </div>
+                    <input type="password"
+                           class="nostr-key-input"
+                           id="nostr-key-input"
+                           placeholder="nsec1... or hex key"
+                           autocomplete="off"
+                           spellcheck="false"
+                           autocapitalize="off"
+                           data-lpignore="true"
+                           data-1p-ignore="true">
+                    <div class="nostr-key-actions">
+                        <button class="nostr-publish-btn connect-key-btn">Connect</button>
+                        <button class="nostr-publish-btn cancel-key-btn" style="background: transparent; border: 1px solid var(--secondary);">Cancel</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <button class="nostr-publish-btn connect-nostr-btn">
+                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                Connect Extension
+            </button>
+            <button class="nostr-publish-btn use-key-btn" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--secondary);">
+                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                </svg>
+                Use Private Key
+            </button>
         `;
     }
 
@@ -104,6 +153,28 @@ export class NostrPanel extends BaseComponent {
             if (e.target.closest('.disconnect-nostr-btn')) {
                 this.disconnectFromNostr();
             }
+
+            if (e.target.closest('.use-key-btn')) {
+                this.showKeyInputUI();
+            }
+
+            if (e.target.closest('.cancel-key-btn')) {
+                this.hideKeyInputUI();
+            }
+
+            if (e.target.closest('.connect-key-btn')) {
+                await this.connectWithKey();
+            }
+        });
+
+        // Handle Enter key in key input
+        this.container.addEventListener('keydown', async e => {
+            if (e.target.id === 'nostr-key-input' && e.key === 'Enter') {
+                await this.connectWithKey();
+            }
+            if (e.target.id === 'nostr-key-input' && e.key === 'Escape') {
+                this.hideKeyInputUI();
+            }
         });
 
         // State subscriptions
@@ -112,6 +183,111 @@ export class NostrPanel extends BaseComponent {
         this.subscribe(appState.on(StateEvents.NOSTR_ERROR, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render()));
+
+        // Security event handlers
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_SESSION_TIMEOUT, () => {
+                toast.warning(
+                    'Session expired due to inactivity. Your private key has been cleared for security.'
+                );
+                this.render();
+            })
+        );
+
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_TAB_HIDDEN, () => {
+                this._tabWasHidden = true;
+            })
+        );
+
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_TAB_RETURNED, () => {
+                if (this._tabWasHidden && !appState.settings.dismissTabBlurWarning) {
+                    this._showTabReturnWarning();
+                }
+                this._tabWasHidden = false;
+            })
+        );
+    }
+
+    /**
+     * Show warning when user returns to tab after it was backgrounded
+     */
+    _showTabReturnWarning() {
+        // Create a dismissible toast with "Don't show again" option
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast toast-warning tab-blur-warning';
+        toastEl.innerHTML = `
+            <div class="tab-blur-warning-content">
+                <span>Your private key session was backgrounded while active.</span>
+                <div class="tab-blur-warning-actions">
+                    <button class="tab-blur-dismiss-btn">Dismiss</button>
+                    <button class="tab-blur-dont-show-btn">Don't show again</button>
+                </div>
+            </div>
+        `;
+
+        // Add to DOM
+        document.body.appendChild(toastEl);
+
+        // Handle dismiss
+        toastEl.querySelector('.tab-blur-dismiss-btn').addEventListener('click', () => {
+            toastEl.remove();
+        });
+
+        // Handle "Don't show again"
+        toastEl.querySelector('.tab-blur-dont-show-btn').addEventListener('click', () => {
+            appState.setDismissTabBlurWarning(true);
+            toastEl.remove();
+        });
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (toastEl.parentNode) {
+                toastEl.remove();
+            }
+        }, 10000);
+    }
+
+    showKeyInputUI() {
+        this.showKeyInput = true;
+        this.render();
+        // Focus the input
+        setTimeout(() => {
+            const input = document.getElementById('nostr-key-input');
+            input?.focus();
+        }, 50);
+    }
+
+    hideKeyInputUI() {
+        this.showKeyInput = false;
+        this.render();
+    }
+
+    async connectWithKey() {
+        const input = document.getElementById('nostr-key-input');
+        const key = input?.value?.trim();
+
+        // Clear input immediately after reading for security
+        if (input) {
+            input.value = '';
+        }
+
+        if (!key) {
+            toast.warning('Please enter a private key');
+            return;
+        }
+
+        try {
+            await nostrAuthService.connectWithPrivateKey(key);
+            await nostrService.connect();
+            toast.success('Connected to NOSTR');
+            this.showKeyInput = false;
+            this.render();
+        } catch (error) {
+            console.error('[NOSTR] Key connection failed:', error);
+            toast.error(`Connection failed: ${error.message}`);
+        }
     }
 
     async connectToNostr() {

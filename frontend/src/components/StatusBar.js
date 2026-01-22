@@ -4,13 +4,14 @@
  */
 
 import { BaseComponent } from './BaseComponent.js';
-import { appState, StateEvents } from '../state/AppState.js';
+import { appState } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
+import { exportService } from '../services/ExportService.js';
+import { toast } from './Toast.js';
 
 export class StatusBar extends BaseComponent {
     constructor(container) {
         super(container);
-        this.saveStatusInterval = null;
         this.previouslyFocusedElement = null;
     }
 
@@ -21,15 +22,13 @@ export class StatusBar extends BaseComponent {
                     <span id="char-count">0 characters</span>
                     <span id="word-count">0 words</span>
                 </div>
-                <div class="save-indicator" id="save-indicator" aria-live="polite" aria-atomic="true">
+                <div class="save-indicator" id="save-indicator" title="Saved" aria-live="polite" aria-atomic="true">
                     <svg class="save-icon-check" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                     </svg>
                     <svg class="save-icon-saving" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14" style="display:none;">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.5"/>
                     </svg>
-                    <span class="save-dot"></span>
-                    <span id="save-status">Saved just now</span>
                 </div>
                 <button class="privacy-btn" id="privacy-btn" aria-label="Privacy information">
                     <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
@@ -60,26 +59,33 @@ export class StatusBar extends BaseComponent {
                     <button class="privacy-close" id="privacy-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="privacy-content">
-                    <h4>Local Data Storage</h4>
-                    <p>This application stores your data locally in your browser:</p>
+                    <h4>Your Data</h4>
                     <ul>
-                        <li><strong>Notes:</strong> All your writing is saved in IndexedDB on your device.</li>
-                        <li><strong>Theme & font:</strong> Your preferences persist across sessions.</li>
-                        <li><strong>No cloud sync:</strong> Data never leaves your browser unless you explicitly publish to NOSTR.</li>
+                        <li><strong>Local storage:</strong> Notes and settings stored in browser's IndexedDB. Nothing sent to any server.</li>
+                        <li><strong>No tracking:</strong> No analytics, cookies, or user tracking.</li>
+                        <li><strong>NOSTR publishing:</strong> Optional. Content goes through our proxy to protect your IP.</li>
                     </ul>
 
-                    <h4><br>Privacy Protection</h4>
+                    <h4><br>Security Notes</h4>
                     <ul>
-                        <li><strong>Local only:</strong> All data stays on your device by default.</li>
-                        <li><strong>No tracking:</strong> We never track your usage or collect analytics.</li>
-                        <li><strong>NOSTR optional:</strong> Publishing to NOSTR is your choice, with IP privacy via proxy.</li>
+                        <li><strong>Shared computers:</strong> Other users can access your stored notes. Use private mode or clear data when finished.</li>
+                        <li><strong>Private keys:</strong> If using direct key entry, keys are held in memory only and cleared on disconnect.</li>
                     </ul>
-
-                    <h4><br>Shared Device Warning</h4>
-                    <p><strong>If using a shared computer, other users may see your stored content!</strong><br><br>
-                    Consider using private/incognito mode or clearing data when finished.</p>
 
                     <div class="privacy-actions">
+                        <div class="btn-wrapper export-wrapper">
+                            <button class="btn privacy-export" id="privacy-export">Export</button>
+                            <button class="btn-dropdown privacy-export-dropdown" id="privacy-export-dropdown" aria-label="Export options">
+                                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                            </button>
+                            <div class="dropdown-menu" id="export-dropdown-menu">
+                                <div class="dropdown-item" data-action="export-all-json">Export All (JSON)</div>
+                                <div class="dropdown-item" data-action="export-note-json">Export Current Note (JSON)</div>
+                                <div class="dropdown-item" data-action="export-note-md">Export Current Note (Markdown)</div>
+                            </div>
+                        </div>
+                        <button class="btn privacy-import" id="privacy-import">Import</button>
+                        <input type="file" id="import-file-input" accept=".json,.md" style="display: none;">
                         <button class="btn privacy-clear" id="privacy-clear">Clear All Data</button>
                         <a href="https://github.com/hypercoind/TON3S" target="_blank" rel="noopener noreferrer" class="btn privacy-verify">View Source</a>
                     </div>
@@ -113,25 +119,55 @@ export class StatusBar extends BaseComponent {
             this.showClearDataConfirm();
         });
 
+        // Export dropdown toggle
+        document.getElementById('privacy-export')?.addEventListener('click', () => {
+            this.toggleExportDropdown();
+        });
+        document.getElementById('privacy-export-dropdown')?.addEventListener('click', () => {
+            this.toggleExportDropdown();
+        });
+
+        // Export dropdown items
+        document.getElementById('export-dropdown-menu')?.addEventListener('click', async e => {
+            const action = e.target.dataset.action;
+            if (action) {
+                await this.handleExportAction(action);
+                this.closeExportDropdown();
+            }
+        });
+
+        // Import button
+        document.getElementById('privacy-import')?.addEventListener('click', () => {
+            document.getElementById('import-file-input')?.click();
+        });
+
+        // Import file input
+        document.getElementById('import-file-input')?.addEventListener('change', async e => {
+            const file = e.target.files?.[0];
+            if (file) {
+                await this.handleImport(file);
+                e.target.value = ''; // Reset input
+            }
+        });
+
+        // Close export dropdown when clicking outside
+        document.addEventListener('click', e => {
+            const exportWrapper = document.querySelector('.export-wrapper');
+            if (exportWrapper && !exportWrapper.contains(e.target)) {
+                this.closeExportDropdown();
+            }
+        });
+
         // Listen for editor count updates
         document.addEventListener('editor:counts', e => {
             this.updateCounts(e.detail);
         });
 
-        // State subscriptions
-        this.subscribe(
-            appState.on(StateEvents.SAVE_STATUS_CHANGED, this.updateSaveStatus.bind(this))
-        );
-
-        // Start save status update interval
-        this.saveStatusInterval = setInterval(() => {
-            this.updateSaveStatusText();
-        }, 10000);
-
         // Escape to close privacy popup and focus trap
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 this.hidePrivacyPopup();
+                this.closeExportDropdown();
             }
             // Handle focus trap for Tab key
             this.handleFocusTrap(e);
@@ -154,39 +190,66 @@ export class StatusBar extends BaseComponent {
     }
 
     /**
-     * Update save status
+     * Toggle export dropdown
      */
-    updateSaveStatus({ status: _status, time: _time }) {
-        this.updateSaveStatusText();
+    toggleExportDropdown() {
+        const dropdown = document.getElementById('export-dropdown-menu');
+        dropdown?.classList.toggle('show');
     }
 
     /**
-     * Update save status text based on elapsed time
+     * Close export dropdown
      */
-    updateSaveStatusText() {
-        const statusEl = this.$('#save-status');
-        if (!statusEl) {
-            return;
+    closeExportDropdown() {
+        const dropdown = document.getElementById('export-dropdown-menu');
+        dropdown?.classList.remove('show');
+    }
+
+    /**
+     * Handle export action
+     */
+    async handleExportAction(action) {
+        try {
+            switch (action) {
+                case 'export-all-json':
+                    await exportService.exportAllAsJSON();
+                    toast.success('All notes exported');
+                    break;
+                case 'export-note-json':
+                    if (!appState.currentNote) {
+                        toast.warning('No note selected');
+                        return;
+                    }
+                    await exportService.exportNoteAsJSON(appState.currentNote);
+                    toast.success('Note exported as JSON');
+                    break;
+                case 'export-note-md':
+                    if (!appState.currentNote) {
+                        toast.warning('No note selected');
+                        return;
+                    }
+                    await exportService.exportNoteAsMarkdown(appState.currentNote);
+                    toast.success('Note exported as Markdown');
+                    break;
+            }
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error(`Export failed: ${error.message}`);
         }
+    }
 
-        const lastSaveTime = appState.ui.lastSaveTime;
-        if (!lastSaveTime) {
-            statusEl.textContent = 'Not saved';
-            return;
-        }
-
-        const elapsed = Date.now() - lastSaveTime;
-
-        if (elapsed < 1000) {
-            statusEl.textContent = 'Saved just now';
-        } else if (elapsed < 60000) {
-            const seconds = Math.floor(elapsed / 1000);
-            statusEl.textContent = `Saved ${seconds}s ago`;
-        } else if (elapsed < 3600000) {
-            const minutes = Math.floor(elapsed / 60000);
-            statusEl.textContent = `Saved ${minutes}m ago`;
-        } else {
-            statusEl.textContent = 'Saved';
+    /**
+     * Handle import
+     */
+    async handleImport(file) {
+        try {
+            const result = await exportService.importFromFile(file);
+            toast.success(`Imported ${result.notesCount} note(s)`);
+            // Reload notes list
+            window.location.reload();
+        } catch (error) {
+            console.error('Import failed:', error);
+            toast.error(`Import failed: ${error.message}`);
         }
     }
 
@@ -345,9 +408,6 @@ export class StatusBar extends BaseComponent {
     }
 
     destroy() {
-        if (this.saveStatusInterval) {
-            clearInterval(this.saveStatusInterval);
-        }
         super.destroy();
     }
 }

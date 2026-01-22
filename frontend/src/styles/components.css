@@ -839,3 +839,189 @@
     color: #f87171;
     line-height: 1.4;
 }
+
+/* NOSTR private key input section */
+.nostr-key-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nostr-key-warning {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #fbbf24;
+    line-height: 1.4;
+}
+
+.nostr-key-warning svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.nostr-key-warning strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #fbbf24;
+}
+
+.nostr-key-warning p {
+    margin: 0;
+    color: var(--fg-dim);
+}
+
+.nostr-key-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--secondary);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: monospace;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+}
+
+.nostr-key-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.nostr-key-input::placeholder {
+    color: var(--fg-dim);
+}
+
+.nostr-key-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nostr-key-actions .nostr-publish-btn {
+    flex: 1;
+}
+
+/* Export dropdown in privacy popup */
+.export-wrapper {
+    position: relative;
+}
+
+.export-wrapper .dropdown-menu {
+    min-width: 200px;
+    left: auto;
+    right: 0;
+}
+
+.privacy-import {
+    background: var(--secondary);
+    color: var(--fg);
+}
+
+.privacy-import:hover {
+    background: var(--hover);
+}
+
+/* Enhanced NOSTR security warning styles */
+.nostr-warning-main {
+    margin: 0.5rem 0 0.25rem 0;
+    color: var(--fg-dim);
+}
+
+.nostr-warning-list {
+    margin: 0.25rem 0 0.5rem 0;
+    padding-left: 1rem;
+    color: var(--fg-dim);
+}
+
+.nostr-warning-list li {
+    margin-bottom: 0.2rem;
+    font-size: 0.7rem;
+}
+
+.nostr-warning-recommend {
+    margin: 0.5rem 0 0.25rem 0;
+    color: var(--accent);
+    font-size: 0.7rem;
+}
+
+.nostr-warning-caution {
+    margin: 0.25rem 0 0 0;
+    color: var(--fg-dim);
+    font-size: 0.65rem;
+}
+
+.nostr-warning-caution strong {
+    color: #f87171;
+}
+
+/* Tab blur warning toast */
+.tab-blur-warning {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20002;
+    max-width: 350px;
+    opacity: 1;
+    transform: none;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tab-blur-warning-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tab-blur-warning-content span {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.tab-blur-warning-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tab-blur-warning-actions button {
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-blur-dismiss-btn {
+    background: var(--hover);
+    color: var(--fg);
+}
+
+.tab-blur-dismiss-btn:hover {
+    background: var(--secondary);
+}
+
+.tab-blur-dont-show-btn {
+    background: transparent;
+    color: var(--fg-dim);
+    text-decoration: underline;
+}
+
+.tab-blur-dont-show-btn:hover {
+    color: var(--fg);
+}

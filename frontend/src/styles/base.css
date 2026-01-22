@@ -29,10 +29,11 @@ body {
     background: var(--bg);
     color: var(--fg);
     min-height: 100vh;
-    min-height: 100dvh;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     position: relative;
+    /* Safari-safe transitions: target specific properties instead of 'all' */
+    transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body::after {

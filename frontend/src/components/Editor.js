@@ -337,8 +337,13 @@ export class Editor extends BaseComponent {
         }
 
         // Scroll cursor into view with smooth behavior
+        // Safari fallback: older versions don't support options object
         if (cursorNode) {
-            cursorNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            try {
+                cursorNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } catch {
+                cursorNode.scrollIntoView(false);
+            }
         }
     }
 
