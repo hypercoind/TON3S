@@ -5,7 +5,7 @@
 
 /* Default panel width variables for zen mode centering */
 :root {
-    --sidebar-current-width: 280px;
+    --sidebar-current-width: 240px;
     --nostr-panel-width: 240px;
 }
 
@@ -28,6 +28,8 @@
     border-bottom: 1px solid var(--secondary);
     flex-wrap: wrap;
     gap: 1rem;
+    position: relative;
+    z-index: 200;
 }
 
 .logo {
@@ -43,6 +45,8 @@
     display: flex;
     gap: 1rem;
     align-items: center;
+    position: relative;
+    z-index: 201;
 }
 
 /* Main content area */
@@ -298,6 +302,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: 60px; /* Space for tag + trash buttons */
 }
 
 .note-item-meta {

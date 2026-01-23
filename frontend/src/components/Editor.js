@@ -87,9 +87,12 @@ export class Editor extends BaseComponent {
                 return;
             }
 
-            // Focus editor and move cursor to end
+            // Focus editor
             this.editorElement.focus();
-            this.moveCursorToEnd();
+            // Only move to end if empty
+            if (!this.editorElement.textContent?.trim()) {
+                this.moveCursorToEnd();
+            }
         };
 
         document.addEventListener('keydown', this.autoFocusHandler);
@@ -307,7 +310,8 @@ export class Editor extends BaseComponent {
      * Update word and character counts
      */
     updateCounts() {
-        const text = this.editorElement.textContent || '';
+        // Use innerText to preserve block-level boundaries (adds newlines between blocks)
+        const text = this.editorElement.innerText || '';
         const words = countWords(text);
         const chars = countCharacters(text);
 

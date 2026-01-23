@@ -18,10 +18,6 @@ export class StatusBar extends BaseComponent {
     render() {
         this.container.innerHTML = `
             <div class="status">
-                <div class="word-count" aria-live="polite" aria-atomic="true">
-                    <span id="char-count">0 characters</span>
-                    <span id="word-count">0 words</span>
-                </div>
                 <div class="save-indicator" id="save-indicator" title="Saved" aria-live="polite" aria-atomic="true">
                     <svg class="save-icon-check" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
@@ -29,6 +25,10 @@ export class StatusBar extends BaseComponent {
                     <svg class="save-icon-saving" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14" style="display:none;">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.5"/>
                     </svg>
+                </div>
+                <div class="word-count" aria-live="polite" aria-atomic="true">
+                    <span id="char-count">0 characters</span>
+                    <span id="word-count">0 words</span>
                 </div>
                 <button class="privacy-btn" id="privacy-btn" aria-label="Privacy information">
                     <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">

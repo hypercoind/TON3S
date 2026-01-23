@@ -253,7 +253,7 @@ export class Sidebar extends BaseComponent {
                      role="button"
                      tabindex="0"
                      aria-selected="${isActive}">
-                    <div class="note-item-title">${sanitizeInput(note.title || 'Untitled')}</div>
+                    <div class="note-item-title">${sanitizeInput((note.title || 'Untitled').split('\n')[0])}</div>
                     <div class="note-item-meta">${updatedAt}</div>
                     ${
                         tags.length > 0
