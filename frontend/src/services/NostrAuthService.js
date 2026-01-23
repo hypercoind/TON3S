@@ -4,7 +4,7 @@
  * Supports nos2x, Alby, and other NIP-07 compatible extensions
  */
 
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { schnorr } from '@noble/curves/secp256k1';
 import { bech32 } from '@scure/base';
 import { appState, StateEvents } from '../state/AppState.js';
 
@@ -336,14 +336,15 @@ class NostrAuthService {
 
     /**
      * Derive public key from private key hex
+     * Uses schnorr.getPublicKey for proper BIP-340 x-only pubkey derivation
      */
     derivePublicKey(privateKeyHex) {
         try {
             const privateKeyBytes = this.hexToBytes(privateKeyHex);
-            const publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes, true);
-            // Remove the prefix byte (02 or 03) for x-only pubkey
-            const pubkeyHex = this.bytesToHex(publicKeyBytes.slice(1));
-            return pubkeyHex;
+            // Use schnorr.getPublicKey for proper BIP-340 x-only pubkey derivation
+            // This handles Y-coordinate parity correctly, unlike ECDSA getPublicKey
+            const pubkeyBytes = schnorr.getPublicKey(privateKeyBytes);
+            return this.bytesToHex(pubkeyBytes);
         } catch {
             throw new Error('Failed to derive public key from private key');
         }
@@ -456,7 +457,7 @@ class NostrAuthService {
         const eventIdBytes = this.hexToBytes(eventId);
 
         try {
-            const signatureBytes = secp256k1.schnorr.sign(eventIdBytes, privateKeyBytes);
+            const signatureBytes = schnorr.sign(eventIdBytes, privateKeyBytes);
             event.sig = this.bytesToHex(signatureBytes);
             return event;
         } finally {
