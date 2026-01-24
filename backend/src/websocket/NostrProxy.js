@@ -131,7 +131,8 @@ export class NostrProxy {
             /^connection refused/i,
             /^connection timeout/i,
             /^relay disconnected/i,
-            /^already connected/i
+            /^already connected/i,
+            /^Unexpected server response: \d+/i // HTTP status errors (502, 503, etc.)
         ];
 
         for (const pattern of safePatterns) {

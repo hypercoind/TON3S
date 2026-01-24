@@ -15,6 +15,7 @@ class NostrService {
         this.reconnectDelay = 1000;
         this.messageHandlers = new Map();
         this.pendingPublishes = new Map();
+        this.connectedRelays = new Set();
     }
 
     /**
@@ -45,6 +46,7 @@ class NostrService {
                 this.socket.onclose = () => {
                     console.log('[NOSTR] Proxy disconnected');
                     this.connected = false;
+                    this.connectedRelays.clear();
                     this.attemptReconnect();
                 };
 
@@ -67,6 +69,7 @@ class NostrService {
             this.socket = null;
         }
         this.connected = false;
+        this.connectedRelays.clear();
     }
 
     /**
@@ -147,8 +150,15 @@ class NostrService {
     handleRelayStatus(relayUrl, status, errorMessage) {
         console.log(`[NOSTR] Relay ${relayUrl}: ${status}`);
 
-        if (status === 'error') {
-            appState.setNostrError(`Relay error: ${relayUrl} - ${errorMessage}`);
+        if (status === 'connected') {
+            this.connectedRelays.add(relayUrl);
+        } else if (status === 'disconnected' || status === 'error') {
+            this.connectedRelays.delete(relayUrl);
+
+            // Only show error if no other relays are connected
+            if (status === 'error' && this.connectedRelays.size === 0) {
+                appState.setNostrError(`Relay error: ${relayUrl} - ${errorMessage}`);
+            }
         }
     }
 
