@@ -14,6 +14,9 @@ coverage/
 .env.local
 .env.*.local
 
+# Local docker overrides
+docker-compose.override.yml
+
 # Logs
 *.log
 npm-debug.log*
