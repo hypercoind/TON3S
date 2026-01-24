@@ -267,7 +267,12 @@ docker compose down
 
 # View logs
 docker compose logs -f
+
+# Clean up old/dangling images after rebuilds
+docker image prune -f
 ```
+
+**Note**: Always run `docker image prune -f` after rebuilds to clean up old container images and prevent disk space accumulation.
 
 **Ports**:
 - Frontend: 3002 (mapped to nginx on 3000)

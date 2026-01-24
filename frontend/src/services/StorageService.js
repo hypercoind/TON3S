@@ -303,8 +303,23 @@ class StorageService {
      * Load all settings
      */
     async loadSettings() {
-        const settings = await this.getSetting('appSettings');
-        if (settings) {
+        const settings = (await this.getSetting('appSettings')) || {};
+
+        // Load granular settings that may have been saved separately
+        const themeState = await this.getSetting('themeState');
+        const fontState = await this.getSetting('fontState');
+
+        // Merge granular settings (they take precedence as they're more recent)
+        if (themeState) {
+            settings.theme = themeState;
+        }
+        if (fontState) {
+            settings.font = fontState;
+        }
+
+        // Note: zenMode is intentionally NOT loaded - it should always start as false
+
+        if (Object.keys(settings).length > 0) {
             appState.loadSettings(settings);
         }
         return settings;
