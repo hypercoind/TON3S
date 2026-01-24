@@ -63,7 +63,14 @@ class AppState extends StateEmitter {
             sidebarOpen: true,
             nostr: {
                 enabled: false,
-                defaultRelays: ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'],
+                defaultRelays: [
+                    'wss://relay.damus.io',
+                    'wss://nos.lol',
+                    'wss://relay.primal.net',
+                    'wss://relay.nostriches.org',
+                    'wss://nostr.mom',
+                    'wss://relay.nostr.band'
+                ],
                 proxyUrl: '/ws/nostr'
             },
             // Security: dismiss tab blur warning preference
