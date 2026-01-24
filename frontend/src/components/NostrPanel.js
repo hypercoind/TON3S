@@ -8,6 +8,7 @@ import { appState, StateEvents } from '../state/AppState.js';
 import { nostrAuthService } from '../services/NostrAuthService.js';
 import { nostrService } from '../services/NostrService.js';
 import { storageService } from '../services/StorageService.js';
+import { exportService } from '../services/ExportService.js';
 import { toast } from './Toast.js';
 
 export class NostrPanel extends BaseComponent {
@@ -15,12 +16,15 @@ export class NostrPanel extends BaseComponent {
         super(container);
         this.publishing = false;
         this.showKeyInput = false;
+        this.showExportDropdown = false;
         this._tabWasHidden = false;
         this._warningTimeout = null;
+        this._ephemeralWarningShown = false;
     }
 
     render() {
         const { connected, pubkey, extension, error } = appState.nostr;
+        const publishedNotes = appState.publishedNotes;
 
         this.container.innerHTML = `
             <div class="nostr-panel">
@@ -51,7 +55,50 @@ export class NostrPanel extends BaseComponent {
 
                 ${this.renderConnectionUI(connected)}
 
-                ${this.getPublishStatus()}
+                ${connected ? this.renderPublishedList(publishedNotes) : ''}
+            </div>
+        `;
+    }
+
+    renderPublishedList(publishedNotes) {
+        if (!publishedNotes || publishedNotes.length === 0) {
+            return '';
+        }
+
+        const items = publishedNotes
+            .map(note => {
+                const time = new Date(note.publishedAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `
+                <a href="https://njump.me/${note.eventId}" target="_blank" rel="noopener noreferrer" class="published-note-item">
+                    <span class="published-note-title">${note.title || 'Untitled'}</span>
+                    <span class="published-note-time">${time}</span>
+                </a>
+            `;
+            })
+            .join('');
+
+        return `
+            <div class="published-notes-section">
+                <div class="published-notes-header">
+                    <span>Published this session (${publishedNotes.length})</span>
+                    <div class="published-notes-export-wrapper">
+                        <button class="published-notes-export-btn" title="Export published notes">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                        </button>
+                        <div class="published-notes-dropdown ${this.showExportDropdown ? 'show' : ''}">
+                            <button class="published-notes-dropdown-item export-json-btn">Export as JSON</button>
+                            <button class="published-notes-dropdown-item export-md-btn">Export as Markdown</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="published-notes-list">
+                    ${items}
+                </div>
             </div>
         `;
     }
@@ -106,22 +153,6 @@ export class NostrPanel extends BaseComponent {
         `;
     }
 
-    getPublishStatus() {
-        const note = appState.currentNote;
-        if (!note || !note.nostr?.published) {
-            return '';
-        }
-
-        const publishedAt = new Date(note.nostr.publishedAt).toLocaleString();
-        return `
-            <div class="nostr-published-info" style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--fg-dim);">
-                <span style="color: var(--accent);">Published</span>
-                <br>${publishedAt}
-                ${note.nostr.eventId ? `<br><code style="font-size: 0.65rem;">${note.nostr.eventId.slice(0, 16)}...</code>` : ''}
-            </div>
-        `;
-    }
-
     bindEvents() {
         // Connect button
         this.container.addEventListener('click', async e => {
@@ -134,7 +165,7 @@ export class NostrPanel extends BaseComponent {
             }
 
             if (e.target.closest('.disconnect-nostr-btn')) {
-                this.disconnectFromNostr();
+                this.handleDisconnect();
             }
 
             if (e.target.closest('.use-key-btn')) {
@@ -147,6 +178,34 @@ export class NostrPanel extends BaseComponent {
 
             if (e.target.closest('.connect-key-btn')) {
                 await this.connectWithKey();
+            }
+
+            // Export dropdown toggle
+            if (e.target.closest('.published-notes-export-btn')) {
+                this.showExportDropdown = !this.showExportDropdown;
+                this.render();
+            }
+
+            // Export as JSON
+            if (e.target.closest('.export-json-btn')) {
+                exportService.exportPublishedNotesAsJSON(appState.publishedNotes);
+                this.showExportDropdown = false;
+                this.render();
+            }
+
+            // Export as Markdown
+            if (e.target.closest('.export-md-btn')) {
+                exportService.exportPublishedNotesAsMarkdown(appState.publishedNotes);
+                this.showExportDropdown = false;
+                this.render();
+            }
+        });
+
+        // Close export dropdown when clicking outside
+        document.addEventListener('click', e => {
+            if (this.showExportDropdown && !e.target.closest('.published-notes-export-wrapper')) {
+                this.showExportDropdown = false;
+                this.render();
             }
         });
 
@@ -162,10 +221,16 @@ export class NostrPanel extends BaseComponent {
 
         // State subscriptions
         this.subscribe(appState.on(StateEvents.NOSTR_CONNECTED, () => this.render()));
-        this.subscribe(appState.on(StateEvents.NOSTR_DISCONNECTED, () => this.render()));
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_DISCONNECTED, () => {
+                this._ephemeralWarningShown = false;
+                this.render();
+            })
+        );
         this.subscribe(appState.on(StateEvents.NOSTR_ERROR, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, () => this.render()));
-        this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED_NOTE_ADDED, () => this.render()));
+        this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED_NOTES_CLEARED, () => this.render()));
 
         // Security event handlers
         this.subscribe(
@@ -428,6 +493,7 @@ export class NostrPanel extends BaseComponent {
             this.showKeyInput = false;
             this.removeKeyModal();
             this.render();
+            this._showEphemeralWarning();
         } catch (error) {
             console.error('[NOSTR] Key connection failed:', error);
             toast.error(`Connection failed: ${error.message}`);
@@ -440,13 +506,129 @@ export class NostrPanel extends BaseComponent {
             await nostrService.connect();
             toast.success('Connected to NOSTR');
             this.render();
+            this._showEphemeralWarning();
         } catch (error) {
             console.error('[NOSTR] Connection failed:', error);
             toast.error(`NOSTR connection failed: ${error.message}`);
         }
     }
 
-    disconnectFromNostr() {
+    /**
+     * Show ephemeral publishing warning modal
+     */
+    _showEphemeralWarning() {
+        if (this._ephemeralWarningShown) {
+            return;
+        }
+        this._ephemeralWarningShown = true;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'ephemeral-warning-overlay';
+        overlay.id = 'ephemeral-warning-overlay';
+        overlay.innerHTML = `
+            <div class="ephemeral-warning-modal">
+                <div class="ephemeral-warning-icon">
+                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="32" height="32">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                </div>
+                <h4>Ephemeral Publishing Mode</h4>
+                <div class="ephemeral-warning-content">
+                    <p><strong>Important:</strong> Published notes are immediately deleted from local storage.</p>
+                    <ul>
+                        <li>Notes exist only on Nostr relays after publishing</li>
+                        <li>Published list clears on disconnect or page refresh</li>
+                        <li>Export your published notes before disconnecting</li>
+                    </ul>
+                </div>
+                <button class="ephemeral-warning-dismiss-btn">I Understand</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(() => overlay.classList.add('show'));
+
+        const dismissBtn = overlay.querySelector('.ephemeral-warning-dismiss-btn');
+        dismissBtn.addEventListener('click', () => {
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.remove(), 200);
+        });
+
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.remove(), 200);
+            }
+        });
+    }
+
+    /**
+     * Handle disconnect with warning if published notes exist
+     */
+    handleDisconnect() {
+        const publishedNotes = appState.publishedNotes;
+
+        if (publishedNotes.length > 0) {
+            this._showDisconnectWarning(publishedNotes.length);
+        } else {
+            this._performDisconnect();
+        }
+    }
+
+    /**
+     * Show disconnect warning modal
+     */
+    _showDisconnectWarning(count) {
+        const overlay = document.createElement('div');
+        overlay.className = 'disconnect-warning-overlay';
+        overlay.id = 'disconnect-warning-overlay';
+        overlay.innerHTML = `
+            <div class="disconnect-warning-modal">
+                <h4>Export Before Disconnecting?</h4>
+                <p>You have <strong>${count}</strong> published note${count > 1 ? 's' : ''} this session. This list will be cleared when you disconnect.</p>
+                <div class="disconnect-warning-actions">
+                    <button class="disconnect-export-btn">Export & Disconnect</button>
+                    <button class="disconnect-now-btn">Disconnect</button>
+                    <button class="disconnect-cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(() => overlay.classList.add('show'));
+
+        const closeOverlay = () => {
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.remove(), 200);
+        };
+
+        overlay.querySelector('.disconnect-export-btn').addEventListener('click', () => {
+            exportService.exportPublishedNotesAsJSON(appState.publishedNotes);
+            this._performDisconnect();
+            closeOverlay();
+        });
+
+        overlay.querySelector('.disconnect-now-btn').addEventListener('click', () => {
+            this._performDisconnect();
+            closeOverlay();
+        });
+
+        overlay.querySelector('.disconnect-cancel-btn').addEventListener('click', closeOverlay);
+
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                closeOverlay();
+            }
+        });
+    }
+
+    /**
+     * Perform the actual disconnect
+     */
+    _performDisconnect() {
+        appState.clearPublishedNotes();
         nostrAuthService.disconnect();
         nostrService.disconnect();
         toast.info('Disconnected from NOSTR');
@@ -469,6 +651,9 @@ export class NostrPanel extends BaseComponent {
             return;
         }
 
+        const noteId = note.id;
+        const noteTitle = note.title || 'Untitled';
+
         this.publishing = true;
         this.render();
 
@@ -476,10 +661,32 @@ export class NostrPanel extends BaseComponent {
             const result = await nostrService.publishNote(note);
             console.log('[NOSTR] Published:', result);
 
-            // Update note with publish info
-            await storageService.markAsPublished(note.id, result.eventId);
+            // Add to ephemeral published notes store
+            appState.addPublishedNote({
+                eventId: result.eventId,
+                title: noteTitle,
+                publishedAt: Date.now(),
+                relayUrl: result.relayUrl || 'relay.damus.io',
+                kind: 1
+            });
 
-            toast.success('Note published to NOSTR!');
+            // Delete from persistent storage
+            await storageService.deleteNote(noteId);
+
+            // Select next note or create new one
+            if (appState.notes.length > 0) {
+                appState.selectNote(appState.notes[0].id);
+            } else {
+                const newNote = await storageService.createNote({
+                    title: 'Untitled',
+                    content: '<p><br></p>',
+                    plainText: '',
+                    tags: []
+                });
+                appState.selectNote(newNote.id);
+            }
+
+            toast.success('Published! Note removed from local storage.');
         } catch (error) {
             console.error('[NOSTR] Publish failed:', error);
             toast.error(`Publish failed: ${error.message}`);

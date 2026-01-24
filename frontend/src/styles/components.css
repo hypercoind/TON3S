@@ -1141,3 +1141,317 @@
 .session-warning-dismiss-btn:hover {
     opacity: 0.9;
 }
+
+/* Published notes section */
+.published-notes-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--secondary);
+}
+
+.published-notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--fg-dim);
+}
+
+.published-notes-export-wrapper {
+    position: relative;
+}
+
+.published-notes-export-btn {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.published-notes-export-btn:hover {
+    background: var(--secondary);
+    color: var(--fg);
+}
+
+.published-notes-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--secondary);
+    border: 1px solid var(--hover);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+    min-width: 140px;
+    margin-top: 0.25rem;
+}
+
+.published-notes-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.published-notes-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    font-size: 0.75rem;
+    font-family: var(--font);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
+
+.published-notes-dropdown-item:hover {
+    background: var(--hover);
+}
+
+.published-notes-dropdown-item:first-child {
+    border-radius: 6px 6px 0 0;
+}
+
+.published-notes-dropdown-item:last-child {
+    border-radius: 0 0 6px 6px;
+}
+
+.published-notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.published-note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--secondary);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.published-note-item:hover {
+    background: var(--hover);
+}
+
+.published-note-title {
+    color: var(--fg);
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+}
+
+.published-note-time {
+    color: var(--fg-dim);
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+/* Ephemeral warning modal */
+.ephemeral-warning-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.ephemeral-warning-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ephemeral-warning-modal {
+    background: var(--bg);
+    border: 1px solid var(--secondary);
+    border-radius: 12px;
+    max-width: 380px;
+    width: 90%;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(-20px);
+    transition: transform 0.2s ease;
+    text-align: center;
+}
+
+.ephemeral-warning-overlay.show .ephemeral-warning-modal {
+    transform: translateY(0);
+}
+
+.ephemeral-warning-icon {
+    color: #fbbf24;
+    margin-bottom: 1rem;
+}
+
+.ephemeral-warning-modal h4 {
+    margin: 0 0 1rem 0;
+    color: var(--fg);
+    font-size: 1.1rem;
+}
+
+.ephemeral-warning-content {
+    text-align: left;
+    margin-bottom: 1.5rem;
+}
+
+.ephemeral-warning-content p {
+    margin: 0 0 0.75rem 0;
+    color: var(--fg);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.ephemeral-warning-content strong {
+    color: #fbbf24;
+}
+
+.ephemeral-warning-content ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--fg-dim);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+.ephemeral-warning-content li {
+    margin-bottom: 0.25rem;
+}
+
+.ephemeral-warning-dismiss-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.ephemeral-warning-dismiss-btn:hover {
+    opacity: 0.9;
+}
+
+/* Disconnect warning modal */
+.disconnect-warning-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.disconnect-warning-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.disconnect-warning-modal {
+    background: var(--bg);
+    border: 1px solid var(--secondary);
+    border-radius: 12px;
+    max-width: 380px;
+    width: 90%;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(-20px);
+    transition: transform 0.2s ease;
+}
+
+.disconnect-warning-overlay.show .disconnect-warning-modal {
+    transform: translateY(0);
+}
+
+.disconnect-warning-modal h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--fg);
+    font-size: 1rem;
+}
+
+.disconnect-warning-modal p {
+    margin: 0 0 1.25rem 0;
+    color: var(--fg-dim);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.disconnect-warning-modal strong {
+    color: var(--accent);
+}
+
+.disconnect-warning-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.disconnect-warning-actions button {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.disconnect-export-btn {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.disconnect-export-btn:hover {
+    opacity: 0.9;
+}
+
+.disconnect-now-btn {
+    background: var(--secondary);
+    color: var(--fg);
+}
+
+.disconnect-now-btn:hover {
+    background: var(--hover);
+}
+
+.disconnect-cancel-btn {
+    background: transparent;
+    color: var(--fg-dim);
+    border: 1px solid var(--secondary) !important;
+}
+
+.disconnect-cancel-btn:hover {
+    background: var(--secondary);
+    color: var(--fg);
+}

@@ -283,6 +283,54 @@ class ExportService {
     escapeYamlString(str) {
         return str.replace(/"/g, '\\"');
     }
+
+    /**
+     * Export published notes metadata as JSON
+     * @param {Array} publishedNotes - Array of published note metadata
+     */
+    exportPublishedNotesAsJSON(publishedNotes) {
+        const data = {
+            exportedAt: new Date().toISOString(),
+            notes: publishedNotes.map(note => ({
+                eventId: note.eventId,
+                title: note.title,
+                publishedAt: new Date(note.publishedAt).toISOString(),
+                relayUrl: note.relayUrl,
+                kind: note.kind,
+                njumpUrl: `https://njump.me/${note.eventId}`
+            }))
+        };
+        const filename = `ton3s-published-${this.formatDate(new Date())}.json`;
+        this.downloadFile(JSON.stringify(data, null, 2), filename, 'application/json');
+    }
+
+    /**
+     * Export published notes metadata as Markdown
+     * @param {Array} publishedNotes - Array of published note metadata
+     */
+    exportPublishedNotesAsMarkdown(publishedNotes) {
+        const lines = [
+            '# TON3S Published Notes',
+            '',
+            `Exported: ${new Date().toLocaleString()}`,
+            '',
+            '---',
+            ''
+        ];
+
+        for (const note of publishedNotes) {
+            const time = new Date(note.publishedAt).toLocaleString();
+            const kindLabel = note.kind === 30023 ? 'Article' : 'Note';
+            lines.push(
+                `- [${note.title || 'Untitled'}](https://njump.me/${note.eventId}) - ${time} (${kindLabel})`
+            );
+        }
+
+        lines.push('');
+        const content = lines.join('\n');
+        const filename = `ton3s-published-${this.formatDate(new Date())}.md`;
+        this.downloadFile(content, filename, 'text/markdown');
+    }
 }
 
 // Singleton instance

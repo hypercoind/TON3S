@@ -32,6 +32,8 @@ export const StateEvents = {
     NOSTR_SESSION_TIMEOUT: 'nostr:sessionTimeout',
     NOSTR_TAB_HIDDEN: 'nostr:tabHidden',
     NOSTR_TAB_RETURNED: 'nostr:tabReturned',
+    NOSTR_PUBLISHED_NOTE_ADDED: 'nostr:publishedNoteAdded',
+    NOSTR_PUBLISHED_NOTES_CLEARED: 'nostr:publishedNotesCleared',
 
     // UI events
     SEARCH_CHANGED: 'ui:search',
@@ -75,6 +77,9 @@ class AppState extends StateEmitter {
             extension: null,
             error: null
         };
+
+        // Ephemeral published notes (cleared on disconnect/refresh)
+        this._publishedNotes = [];
 
         // UI state
         this._ui = {
@@ -292,6 +297,25 @@ class AppState extends StateEmitter {
     setNostrError(error) {
         this._nostr.error = error;
         this.emit(StateEvents.NOSTR_ERROR, error);
+    }
+
+    // ==================
+    // Published notes accessors (ephemeral)
+    // ==================
+
+    get publishedNotes() {
+        return this._publishedNotes;
+    }
+
+    addPublishedNote({ eventId, title, publishedAt, relayUrl, kind }) {
+        const note = { eventId, title, publishedAt, relayUrl, kind };
+        this._publishedNotes.push(note);
+        this.emit(StateEvents.NOSTR_PUBLISHED_NOTE_ADDED, note);
+    }
+
+    clearPublishedNotes() {
+        this._publishedNotes = [];
+        this.emit(StateEvents.NOSTR_PUBLISHED_NOTES_CLEARED);
     }
 
     // ==================

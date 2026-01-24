@@ -258,21 +258,6 @@ class StorageService {
         return await this.db.notes.where('tags').equals(tag).toArray();
     }
 
-    /**
-     * Mark note as published to NOSTR
-     */
-    async markAsPublished(id, eventId) {
-        const updates = {
-            nostr: {
-                published: true,
-                eventId,
-                publishedAt: Date.now()
-            }
-        };
-        await this.db.notes.update(id, updates);
-        appState.updateNote(id, updates);
-    }
-
     // ==================
     // Settings operations
     // ==================
