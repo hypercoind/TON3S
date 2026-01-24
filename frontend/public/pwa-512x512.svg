@@ -1,9 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- TON3S PWA Icon - Catppuccin Mocha Theme -->
-  <rect width="472" height="472" x="20" y="20" rx="82" fill="#1e1e2e" stroke="#313244" stroke-width="16"/>
-  <rect x="230" y="180" width="52" height="205" rx="10" fill="#89b4fa"/>
-  <rect x="128" y="128" width="256" height="52" rx="10" fill="#89b4fa"/>
-  <circle cx="112" cy="360" r="31" fill="#89b4fa" opacity="0.7"/>
-  <circle cx="400" cy="360" r="31" fill="#89b4fa" opacity="0.7"/>
-  <circle cx="400" cy="112" r="20" fill="#89b4fa" opacity="0.7"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <!-- TON3S PWA Icon 512x512 - Catppuccin Mocha Theme -->
+  <!-- Background -->
+  <rect x="12.8" y="12.8" width="486.4" height="486.4" rx="89.6" fill="#1e1e2e"/>
+  <!-- Rounded square border -->
+  <rect x="12.8" y="12.8" width="486.4" height="486.4" rx="89.6" stroke="#313244" stroke-width="12.8" fill="none"/>
+  <!-- Horizontal lines -->
+  <rect x="64" y="166.4" width="384" height="6.4" rx="3.2" fill="#89b4fa"/>
+  <rect x="64" y="243.2" width="384" height="6.4" rx="3.2" fill="#313244"/>
+  <rect x="64" y="320" width="384" height="6.4" rx="3.2" fill="#313244"/>
+  <!-- Vertical bar -->
+  <rect x="134.4" y="166.4" width="19.2" height="192" rx="9.6" fill="#89b4fa"/>
+  <!-- Decorative circles -->
+  <circle cx="307.2" cy="166.4" r="25.6" fill="#89b4fa" opacity="0.7"/>
+  <circle cx="358.4" cy="243.2" r="25.6" fill="#89b4fa" opacity="0.7"/>
+  <circle cx="307.2" cy="320" r="25.6" fill="#89b4fa" opacity="0.7"/>
 </svg>
