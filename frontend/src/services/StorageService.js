@@ -5,6 +5,7 @@
 
 import Dexie from 'dexie';
 import { appState } from '../state/AppState.js';
+import { htmlToPlainText } from '../utils/markdown.js';
 
 // Database schema
 class TON3SDatabase extends Dexie {
@@ -126,12 +127,10 @@ class StorageService {
     }
 
     /**
-     * Extract plain text from HTML content
+     * Extract plain text from HTML content with preserved newlines
      */
     extractPlainText(html) {
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        return div.textContent || div.innerText || '';
+        return htmlToPlainText(html);
     }
 
     /**

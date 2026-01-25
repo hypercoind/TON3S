@@ -159,6 +159,30 @@ function escapeHtml(text) {
 }
 
 /**
+ * Convert HTML content to plain text with preserved newlines between blocks
+ * Used for Nostr publishing where block structure should be maintained
+ * Empty paragraphs (<p><br></p>) are preserved as blank lines
+ */
+export function htmlToPlainText(html) {
+    if (!html || typeof html !== 'string') {
+        return '';
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const lines = [];
+    const blocks = doc.body.querySelectorAll('h1, h2, p');
+
+    blocks.forEach(block => {
+        // Trim text content - empty blocks become empty strings (blank lines)
+        lines.push(block.textContent.trim());
+    });
+
+    return lines.join('\n').trim();
+}
+
+/**
  * Count words in text
  */
 export function countWords(text) {
@@ -184,6 +208,7 @@ export function countCharacters(text) {
 
 export default {
     htmlToMarkdown,
+    htmlToPlainText,
     parseContentForPDF,
     markdownToHtml,
     countWords,
