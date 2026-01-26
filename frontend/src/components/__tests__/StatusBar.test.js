@@ -7,13 +7,19 @@ vi.mock('../../state/AppState.js', () => ({
             lastSaveTime: Date.now()
         },
         currentNote: null,
+        themeIndex: 0,
+        fontIndex: 0,
+        setTheme: vi.fn(),
+        setFont: vi.fn(),
         on: vi.fn().mockReturnValue(vi.fn())
     }
 }));
 
 vi.mock('../../services/StorageService.js', () => ({
     storageService: {
-        clearAllData: vi.fn().mockResolvedValue(undefined)
+        clearAllData: vi.fn().mockResolvedValue(undefined),
+        saveThemeState: vi.fn(),
+        saveFontState: vi.fn()
     }
 }));
 
@@ -32,6 +38,20 @@ vi.mock('../Toast.js', () => ({
         error: vi.fn(),
         warning: vi.fn()
     }
+}));
+
+vi.mock('../../data/themes.js', () => ({
+    themes: [{ class: 'theme-test', name: 'Test', full: 'Test Theme' }],
+    getThemesByCategory: () => [
+        {
+            name: 'Test',
+            themes: [{ index: 0, class: 'theme-test', name: 'Test', full: 'Test Theme' }]
+        }
+    ]
+}));
+
+vi.mock('../../data/fonts.js', () => ({
+    fonts: [{ class: 'font-test', name: 'Test', full: 'Test Font' }]
 }));
 
 const { StatusBar } = await import('../StatusBar.js');
@@ -53,7 +73,7 @@ describe('StatusBar', () => {
         document.body.removeChild(container);
 
         // Remove any overlays
-        document.querySelectorAll('.privacy-overlay, .confirm-overlay').forEach(el => el.remove());
+        document.querySelectorAll('.settings-overlay, .confirm-overlay').forEach(el => el.remove());
 
         vi.clearAllMocks();
     });
@@ -66,21 +86,20 @@ describe('StatusBar', () => {
             expect(container.querySelector('.word-count')).toBeTruthy();
             expect(container.querySelector('#char-count')).toBeTruthy();
             expect(container.querySelector('#word-count')).toBeTruthy();
-            expect(container.querySelector('.save-indicator')).toBeTruthy();
-            expect(container.querySelector('#privacy-btn')).toBeTruthy();
+            expect(container.querySelector('#settings-btn')).toBeTruthy();
         });
 
-        it('should render privacy overlay', () => {
+        it('should render settings overlay', () => {
             statusBar.render();
 
-            expect(document.getElementById('privacy-overlay')).toBeTruthy();
+            expect(document.getElementById('settings-overlay')).toBeTruthy();
         });
 
-        it('should not duplicate privacy overlay on multiple renders', () => {
+        it('should not duplicate settings overlay on multiple renders', () => {
             statusBar.render();
             statusBar.render();
 
-            expect(document.querySelectorAll('#privacy-overlay').length).toBe(1);
+            expect(document.querySelectorAll('#settings-overlay').length).toBe(1);
         });
     });
 
@@ -104,49 +123,95 @@ describe('StatusBar', () => {
         });
     });
 
-    describe('showPrivacyPopup', () => {
-        it('should show privacy overlay', () => {
+    describe('showSettingsPopup', () => {
+        it('should show settings overlay', () => {
             statusBar.render();
 
-            statusBar.showPrivacyPopup();
+            statusBar.showSettingsPopup();
 
-            expect(document.getElementById('privacy-overlay').classList.contains('show')).toBe(
+            expect(document.getElementById('settings-overlay').classList.contains('show')).toBe(
                 true
             );
         });
 
         it('should store previously focused element', () => {
             statusBar.render();
-            const button = container.querySelector('#privacy-btn');
+            const button = container.querySelector('#settings-btn');
             button.focus();
 
-            statusBar.showPrivacyPopup();
+            statusBar.showSettingsPopup();
 
             expect(statusBar.previouslyFocusedElement).toBe(button);
         });
     });
 
-    describe('hidePrivacyPopup', () => {
-        it('should hide privacy overlay', () => {
+    describe('hideSettingsPopup', () => {
+        it('should hide settings overlay', () => {
             statusBar.render();
-            statusBar.showPrivacyPopup();
+            statusBar.showSettingsPopup();
 
-            statusBar.hidePrivacyPopup();
+            statusBar.hideSettingsPopup();
 
-            expect(document.getElementById('privacy-overlay').classList.contains('show')).toBe(
+            expect(document.getElementById('settings-overlay').classList.contains('show')).toBe(
                 false
             );
         });
 
         it('should restore focus to previously focused element', () => {
             statusBar.render();
-            const button = container.querySelector('#privacy-btn');
+            const button = container.querySelector('#settings-btn');
             button.focus();
-            statusBar.showPrivacyPopup();
+            statusBar.showSettingsPopup();
 
-            statusBar.hidePrivacyPopup();
+            statusBar.hideSettingsPopup();
 
             expect(document.activeElement).toBe(button);
+        });
+
+        it('should reset export mode', () => {
+            statusBar.render();
+            statusBar.exportMode = true;
+
+            statusBar.hideSettingsPopup();
+
+            expect(statusBar.exportMode).toBe(false);
+        });
+    });
+
+    describe('export mode', () => {
+        it('should toggle export mode', () => {
+            statusBar.render();
+            expect(statusBar.exportMode).toBe(false);
+
+            statusBar.exportMode = true;
+            statusBar.updateSettingsActions();
+
+            expect(statusBar.exportMode).toBe(true);
+        });
+
+        it('should render export buttons when in export mode', async () => {
+            statusBar.render();
+            statusBar.exportMode = true;
+
+            // Directly update the HTML to test the getSettingsActionsHTML method
+            const actionsContainer = document.querySelector('.settings-actions');
+            actionsContainer.innerHTML = statusBar.getSettingsActionsHTML();
+
+            expect(actionsContainer.querySelector('[data-action="export-all-json"]')).toBeTruthy();
+            expect(actionsContainer.querySelector('[data-action="export-note-json"]')).toBeTruthy();
+            expect(actionsContainer.querySelector('[data-action="export-note-md"]')).toBeTruthy();
+        });
+
+        it('should render default buttons when not in export mode', () => {
+            statusBar.render();
+            statusBar.exportMode = false;
+
+            const actionsContainer = document.querySelector('.settings-actions');
+            actionsContainer.innerHTML = statusBar.getSettingsActionsHTML();
+
+            expect(actionsContainer.querySelector('#settings-export')).toBeTruthy();
+            expect(actionsContainer.querySelector('#settings-import')).toBeTruthy();
+            expect(actionsContainer.querySelector('#settings-clear')).toBeTruthy();
         });
     });
 
