@@ -19,7 +19,6 @@ export class NostrPanel extends BaseComponent {
         this.showExportDropdown = false;
         this._tabWasHidden = false;
         this._warningTimeout = null;
-        this._ephemeralWarningShown = false;
     }
 
     render() {
@@ -28,34 +27,44 @@ export class NostrPanel extends BaseComponent {
 
         this.container.innerHTML = `
             <div class="nostr-panel">
-                <div class="nostr-status">
-                    <span class="nostr-status-indicator ${connected ? 'connected' : ''}"></span>
-                    <span class="nostr-status-text">
-                        ${connected ? `Connected via ${extension}` : 'Not connected'}
-                    </span>
-                </div>
-
-                ${
-                    connected && pubkey
-                        ? `
-                    <div class="nostr-pubkey" title="${pubkey}">
-                        ${nostrAuthService.getShortPubkey()}
+                <div class="nostr-icon-strip">
+                    <div class="nostr-icon-strip-icon" title="Nostr">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
                     </div>
-                `
-                        : ''
-                }
+                    <div class="nostr-connection-dot ${connected ? 'connected' : ''}" title="${connected ? 'Connected' : 'Not connected'}"></div>
+                </div>
+                <div class="nostr-panel-content">
+                    <div class="nostr-status">
+                        <span class="nostr-status-indicator ${connected ? 'connected' : ''}"></span>
+                        <span class="nostr-status-text">
+                            ${connected ? `Connected via ${extension}` : 'Not connected'}
+                        </span>
+                    </div>
 
-                ${
-                    error
-                        ? `
-                    <div class="nostr-error">${error}</div>
-                `
-                        : ''
-                }
+                    ${
+                        connected && pubkey
+                            ? `
+                        <div class="nostr-pubkey" title="${pubkey}">
+                            ${nostrAuthService.getShortPubkey()}
+                        </div>
+                    `
+                            : ''
+                    }
 
-                ${this.renderConnectionUI(connected)}
+                    ${
+                        error
+                            ? `
+                        <div class="nostr-error">${error}</div>
+                    `
+                            : ''
+                    }
 
-                ${connected ? this.renderPublishedList(publishedNotes) : ''}
+                    ${this.renderConnectionUI(connected)}
+
+                    ${connected ? this.renderPublishedList(publishedNotes) : ''}
+                </div>
             </div>
         `;
     }
@@ -221,12 +230,7 @@ export class NostrPanel extends BaseComponent {
 
         // State subscriptions
         this.subscribe(appState.on(StateEvents.NOSTR_CONNECTED, () => this.render()));
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_DISCONNECTED, () => {
-                this._ephemeralWarningShown = false;
-                this.render();
-            })
-        );
+        this.subscribe(appState.on(StateEvents.NOSTR_DISCONNECTED, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOSTR_ERROR, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED_NOTE_ADDED, () => this.render()));
@@ -493,7 +497,6 @@ export class NostrPanel extends BaseComponent {
             this.showKeyInput = false;
             this.removeKeyModal();
             this.render();
-            this._showEphemeralWarning();
         } catch (error) {
             console.error('[NOSTR] Key connection failed:', error);
             toast.error(`Connection failed: ${error.message}`);
@@ -506,61 +509,10 @@ export class NostrPanel extends BaseComponent {
             await nostrService.connect();
             toast.success('Connected to NOSTR');
             this.render();
-            this._showEphemeralWarning();
         } catch (error) {
             console.error('[NOSTR] Connection failed:', error);
             toast.error(`NOSTR connection failed: ${error.message}`);
         }
-    }
-
-    /**
-     * Show ephemeral publishing warning modal
-     */
-    _showEphemeralWarning() {
-        if (this._ephemeralWarningShown) {
-            return;
-        }
-        this._ephemeralWarningShown = true;
-
-        const overlay = document.createElement('div');
-        overlay.className = 'ephemeral-warning-overlay';
-        overlay.id = 'ephemeral-warning-overlay';
-        overlay.innerHTML = `
-            <div class="ephemeral-warning-modal">
-                <div class="ephemeral-warning-icon">
-                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="32" height="32">
-                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                    </svg>
-                </div>
-                <h4>Ephemeral Publishing Mode</h4>
-                <div class="ephemeral-warning-content">
-                    <p><strong>Important:</strong> Published notes are immediately deleted from local storage.</p>
-                    <ul>
-                        <li>Notes exist only on Nostr relays after publishing</li>
-                        <li>Published list clears on disconnect or page refresh</li>
-                        <li>Export your published notes before disconnecting</li>
-                    </ul>
-                </div>
-                <button class="ephemeral-warning-dismiss-btn">I Understand</button>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        requestAnimationFrame(() => overlay.classList.add('show'));
-
-        const dismissBtn = overlay.querySelector('.ephemeral-warning-dismiss-btn');
-        dismissBtn.addEventListener('click', () => {
-            overlay.classList.remove('show');
-            setTimeout(() => overlay.remove(), 200);
-        });
-
-        overlay.addEventListener('click', e => {
-            if (e.target === overlay) {
-                overlay.classList.remove('show');
-                setTimeout(() => overlay.remove(), 200);
-            }
-        });
     }
 
     /**

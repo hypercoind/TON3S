@@ -1,6 +1,6 @@
 /**
  * TON3S Status Bar Component
- * Word count, save status, and privacy controls
+ * Word count, save status, and settings controls
  */
 
 import { BaseComponent } from './BaseComponent.js';
@@ -8,136 +8,257 @@ import { appState } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
 import { exportService } from '../services/ExportService.js';
 import { toast } from './Toast.js';
+import { themes, getThemesByCategory } from '../data/themes.js';
+import { fonts } from '../data/fonts.js';
 
 export class StatusBar extends BaseComponent {
     constructor(container) {
         super(container);
         this.previouslyFocusedElement = null;
+        this.exportMode = false;
     }
 
     render() {
         this.container.innerHTML = `
             <div class="status">
-                <div class="save-indicator" id="save-indicator" title="Saved" aria-live="polite" aria-atomic="true">
-                    <svg class="save-icon-check" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                    <svg class="save-icon-saving" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="14" height="14" style="display:none;">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.5"/>
-                    </svg>
-                </div>
                 <div class="word-count" aria-live="polite" aria-atomic="true">
                     <span id="char-count">0 characters</span>
                     <span id="word-count">0 words</span>
                 </div>
-                <button class="privacy-btn" id="privacy-btn" aria-label="Privacy information">
+                <button class="settings-btn" id="settings-btn" aria-label="Settings">
                     <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5C15.4,11.9 16,12.4 16,13.5V16.5C16,17.6 15.6,18 14.5,18H9.5C8.4,18 8,17.6 8,16.5V13.5C8,12.4 8.6,11.9 9.2,11.5V10C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,10V11.5H13.5V10C13.5,8.7 12.8,8.2 12,8.2Z"/>
+                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                     </svg>
                 </button>
             </div>
         `;
 
-        this.renderPrivacyOverlay();
+        this.renderSettingsOverlay();
     }
 
-    renderPrivacyOverlay() {
+    renderSettingsOverlay() {
         // Check if overlay already exists
-        if (document.getElementById('privacy-overlay')) {
+        if (document.getElementById('settings-overlay')) {
             return;
         }
 
         const overlay = document.createElement('div');
-        overlay.className = 'privacy-overlay';
-        overlay.id = 'privacy-overlay';
+        overlay.className = 'settings-overlay';
+        overlay.id = 'settings-overlay';
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
-        overlay.innerHTML = `
-            <div class="privacy-popup">
-                <div class="privacy-header">
-                    <h3>Privacy Information</h3>
-                    <button class="privacy-close" id="privacy-close" aria-label="Close">&times;</button>
-                </div>
-                <div class="privacy-content">
-                    <h4>Your Data</h4>
-                    <ul>
-                        <li><strong>Local storage:</strong> Notes and settings stored in browser's IndexedDB. Nothing sent to any server.</li>
-                        <li><strong>No tracking:</strong> No analytics, cookies, or user tracking.</li>
-                        <li><strong>NOSTR publishing:</strong> Optional. Content goes through our proxy to protect your IP.</li>
-                    </ul>
 
-                    <h4><br>Security Notes</h4>
-                    <ul>
-                        <li><strong>Shared computers:</strong> Other users can access your stored notes. Use private mode or clear data when finished.</li>
-                        <li><strong>Private keys:</strong> If using direct key entry, keys are held in memory only and cleared on disconnect.</li>
-                    </ul>
-
-                    <div class="privacy-actions">
-                        <div class="btn-wrapper export-wrapper">
-                            <button class="btn privacy-export" id="privacy-export">Export</button>
-                            <button class="btn-dropdown privacy-export-dropdown" id="privacy-export-dropdown" aria-label="Export options">
-                                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-                            </button>
-                            <div class="dropdown-menu" id="export-dropdown-menu">
-                                <div class="dropdown-item" data-action="export-all-json">Export All (JSON)</div>
-                                <div class="dropdown-item" data-action="export-note-json">Export Current Note (JSON)</div>
-                                <div class="dropdown-item" data-action="export-note-md">Export Current Note (Markdown)</div>
-                            </div>
-                        </div>
-                        <button class="btn privacy-import" id="privacy-import">Import</button>
-                        <input type="file" id="import-file-input" accept=".json,.md" style="display: none;">
-                        <button class="btn privacy-clear" id="privacy-clear">Clear All Data</button>
-                        <a href="https://github.com/hypercoind/TON3S" target="_blank" rel="noopener noreferrer" class="btn privacy-verify">View Source</a>
-                    </div>
-                </div>
-            </div>
-        `;
+        overlay.innerHTML = this.getSettingsPopupHTML();
 
         document.body.appendChild(overlay);
     }
 
+    getSettingsPopupHTML() {
+        const currentThemeIndex = appState.themeIndex;
+        const currentFontIndex = appState.fontIndex;
+        const groupedThemes = getThemesByCategory();
+
+        return `
+            <div class="settings-popup">
+                <div class="settings-header">
+                    <h3>Settings</h3>
+                    <button class="settings-close" id="settings-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h4>Theme</h4>
+                        <div class="theme-grid">
+                            ${groupedThemes
+                                .map(
+                                    category => `
+                                <div class="theme-category">
+                                    <span class="theme-category-label">${category.name}</span>
+                                    <div class="theme-category-items">
+                                        ${category.themes
+                                            .map(
+                                                theme => `
+                                            <button class="theme-swatch ${theme.index === currentThemeIndex ? 'active' : ''}"
+                                                    data-theme-index="${theme.index}"
+                                                    title="${theme.full}"
+                                                    aria-label="${theme.full}">
+                                                <span class="theme-swatch-name">${theme.name.charAt(0)}</span>
+                                            </button>
+                                        `
+                                            )
+                                            .join('')}
+                                    </div>
+                                </div>
+                            `
+                                )
+                                .join('')}
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Font</h4>
+                        <div class="font-list">
+                            ${fonts
+                                .map(
+                                    (font, index) => `
+                                <button class="font-option ${index === currentFontIndex ? 'active' : ''}"
+                                        data-font-index="${index}"
+                                        title="${font.full}">
+                                    ${font.full}
+                                </button>
+                            `
+                                )
+                                .join('')}
+                        </div>
+                    </div>
+
+                    <details class="settings-section settings-privacy">
+                        <summary><h4>Privacy & Data</h4></summary>
+                        <div class="privacy-details">
+                            <ul>
+                                <li><strong>Local storage:</strong> Notes stored in browser's IndexedDB. Nothing sent to any server.</li>
+                                <li><strong>No tracking:</strong> No analytics, cookies, or user tracking.</li>
+                                <li><strong>NOSTR publishing:</strong> Optional. Content goes through proxy to protect your IP.</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <div class="settings-actions">
+                        ${this.getSettingsActionsHTML()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getSettingsActionsHTML() {
+        if (this.exportMode) {
+            return `
+                <button class="btn settings-action-btn disabled" id="settings-export">Export</button>
+                <button class="btn settings-action-btn" data-action="export-all-json">All (JSON)</button>
+                <button class="btn settings-action-btn" data-action="export-note-json">Note (JSON)</button>
+                <button class="btn settings-action-btn" data-action="export-note-md">Note (MD)</button>
+            `;
+        }
+        return `
+            <button class="btn settings-action-btn" id="settings-export">Export</button>
+            <button class="btn settings-action-btn" id="settings-import">Import</button>
+            <input type="file" id="import-file-input" accept=".json,.md" style="display: none;">
+            <button class="btn settings-action-btn settings-clear" id="settings-clear">Clear All Data</button>
+            <a href="https://github.com/hypercoind/TON3S" target="_blank" rel="noopener noreferrer" class="btn settings-action-btn settings-verify">View Source</a>
+        `;
+    }
+
+    updateSettingsActions() {
+        const actionsContainer = document.querySelector('.settings-actions');
+        if (!actionsContainer) {
+            return;
+        }
+
+        // Add transitioning class to fade out
+        actionsContainer.classList.add('transitioning');
+
+        // Wait for fade-out, then swap content and fade in
+        setTimeout(() => {
+            actionsContainer.innerHTML = this.getSettingsActionsHTML();
+            this.bindSettingsEvents();
+
+            // Force reflow, then remove transitioning class to fade in
+            actionsContainer.offsetHeight;
+            actionsContainer.classList.remove('transitioning');
+        }, 150);
+    }
+
+    updateSettingsPopup() {
+        const overlay = document.getElementById('settings-overlay');
+        if (overlay) {
+            overlay.innerHTML = this.getSettingsPopupHTML();
+            this.bindSettingsEvents();
+        }
+    }
+
     bindEvents() {
-        // Privacy button
-        this.$('#privacy-btn')?.addEventListener('click', () => {
-            this.showPrivacyPopup();
+        // Settings button
+        this.$('#settings-btn')?.addEventListener('click', () => {
+            this.showSettingsPopup();
         });
 
-        // Privacy popup close
-        document.getElementById('privacy-close')?.addEventListener('click', () => {
-            this.hidePrivacyPopup();
+        // Bind settings popup events
+        this.bindSettingsEvents();
+
+        // Listen for editor count updates
+        document.addEventListener('editor:counts', e => {
+            this.updateCounts(e.detail);
         });
 
-        // Privacy overlay click to close
-        document.getElementById('privacy-overlay')?.addEventListener('click', e => {
-            if (e.target.id === 'privacy-overlay') {
-                this.hidePrivacyPopup();
+        // Escape to close settings popup, exit export mode, and focus trap
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (this.exportMode) {
+                    this.exportMode = false;
+                    this.updateSettingsActions();
+                } else {
+                    this.hideSettingsPopup();
+                }
             }
+            // Handle focus trap for Tab key
+            this.handleFocusTrap(e);
+        });
+    }
+
+    bindSettingsEvents() {
+        // Settings popup close
+        document.getElementById('settings-close')?.addEventListener('click', () => {
+            this.hideSettingsPopup();
+        });
+
+        // Settings overlay click to close
+        document.getElementById('settings-overlay')?.addEventListener('click', e => {
+            if (e.target.id === 'settings-overlay') {
+                this.hideSettingsPopup();
+            }
+        });
+
+        // Theme swatches
+        document.querySelectorAll('.theme-swatch').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const index = parseInt(swatch.dataset.themeIndex);
+                this.setTheme(index);
+            });
+        });
+
+        // Font options
+        document.querySelectorAll('.font-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const index = parseInt(option.dataset.fontIndex);
+                this.setFont(index);
+            });
         });
 
         // Clear data button
-        document.getElementById('privacy-clear')?.addEventListener('click', () => {
+        document.getElementById('settings-clear')?.addEventListener('click', () => {
             this.showClearDataConfirm();
         });
 
-        // Export dropdown toggle
-        document.getElementById('privacy-export')?.addEventListener('click', () => {
-            this.toggleExportDropdown();
-        });
-        document.getElementById('privacy-export-dropdown')?.addEventListener('click', () => {
-            this.toggleExportDropdown();
+        // Export button - toggle export mode or exit export mode
+        document.getElementById('settings-export')?.addEventListener('click', () => {
+            this.exportMode = !this.exportMode;
+            this.updateSettingsActions();
         });
 
-        // Export dropdown items
-        document.getElementById('export-dropdown-menu')?.addEventListener('click', async e => {
-            const action = e.target.dataset.action;
-            if (action) {
-                await this.handleExportAction(action);
-                this.closeExportDropdown();
-            }
+        // Export action buttons (when in export mode)
+        document.querySelectorAll('.settings-action-btn[data-action]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const action = btn.dataset.action;
+                if (action) {
+                    await this.handleExportAction(action);
+                    this.exportMode = false;
+                    this.updateSettingsActions();
+                }
+            });
         });
 
         // Import button
-        document.getElementById('privacy-import')?.addEventListener('click', () => {
+        document.getElementById('settings-import')?.addEventListener('click', () => {
             document.getElementById('import-file-input')?.click();
         });
 
@@ -149,28 +270,39 @@ export class StatusBar extends BaseComponent {
                 e.target.value = ''; // Reset input
             }
         });
+    }
 
-        // Close export dropdown when clicking outside
-        document.addEventListener('click', e => {
-            const exportWrapper = document.querySelector('.export-wrapper');
-            if (exportWrapper && !exportWrapper.contains(e.target)) {
-                this.closeExportDropdown();
-            }
+    setTheme(index) {
+        appState.setTheme(index);
+
+        // Remove all theme classes and add new one
+        themes.forEach(theme => {
+            document.body.classList.remove(theme.class);
         });
+        document.body.classList.add(themes[index].class);
 
-        // Listen for editor count updates
-        document.addEventListener('editor:counts', e => {
-            this.updateCounts(e.detail);
+        storageService.saveThemeState();
+
+        // Update active state in popup
+        document.querySelectorAll('.theme-swatch').forEach(swatch => {
+            swatch.classList.toggle('active', parseInt(swatch.dataset.themeIndex) === index);
         });
+    }
 
-        // Escape to close privacy popup and focus trap
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                this.hidePrivacyPopup();
-                this.closeExportDropdown();
-            }
-            // Handle focus trap for Tab key
-            this.handleFocusTrap(e);
+    setFont(index) {
+        appState.setFont(index);
+
+        // Remove all font classes and add new one
+        fonts.forEach(font => {
+            document.body.classList.remove(font.class);
+        });
+        document.body.classList.add(fonts[index].class);
+
+        storageService.saveFontState();
+
+        // Update active state in popup
+        document.querySelectorAll('.font-option').forEach(option => {
+            option.classList.toggle('active', parseInt(option.dataset.fontIndex) === index);
         });
     }
 
@@ -187,22 +319,6 @@ export class StatusBar extends BaseComponent {
         if (wordEl) {
             wordEl.textContent = `${words} word${words !== 1 ? 's' : ''}`;
         }
-    }
-
-    /**
-     * Toggle export dropdown
-     */
-    toggleExportDropdown() {
-        const dropdown = document.getElementById('export-dropdown-menu');
-        dropdown?.classList.toggle('show');
-    }
-
-    /**
-     * Close export dropdown
-     */
-    closeExportDropdown() {
-        const dropdown = document.getElementById('export-dropdown-menu');
-        dropdown?.classList.remove('show');
     }
 
     /**
@@ -254,27 +370,30 @@ export class StatusBar extends BaseComponent {
     }
 
     /**
-     * Show privacy popup
+     * Show settings popup
      */
-    showPrivacyPopup() {
+    showSettingsPopup() {
         // Store currently focused element to restore later
         this.previouslyFocusedElement = document.activeElement;
 
-        const overlay = document.getElementById('privacy-overlay');
+        const overlay = document.getElementById('settings-overlay');
         overlay?.classList.add('show');
 
         // Focus the close button when modal opens
         setTimeout(() => {
-            const closeBtn = document.getElementById('privacy-close');
+            const closeBtn = document.getElementById('settings-close');
             closeBtn?.focus();
         }, 100);
     }
 
     /**
-     * Hide privacy popup
+     * Hide settings popup
      */
-    hidePrivacyPopup() {
-        document.getElementById('privacy-overlay')?.classList.remove('show');
+    hideSettingsPopup() {
+        document.getElementById('settings-overlay')?.classList.remove('show');
+
+        // Reset export mode
+        this.exportMode = false;
 
         // Restore focus to previously focused element
         if (
@@ -334,7 +453,7 @@ export class StatusBar extends BaseComponent {
 
         confirmBtn.addEventListener('click', async () => {
             closeModal();
-            this.hidePrivacyPopup();
+            this.hideSettingsPopup();
             await storageService.clearAllData();
             window.location.reload();
         });
@@ -368,10 +487,10 @@ export class StatusBar extends BaseComponent {
     }
 
     /**
-     * Handle focus trap within privacy modal
+     * Handle focus trap within settings modal
      */
     handleFocusTrap(e) {
-        const overlay = document.getElementById('privacy-overlay');
+        const overlay = document.getElementById('settings-overlay');
         if (!overlay?.classList.contains('show')) {
             return;
         }
@@ -380,7 +499,7 @@ export class StatusBar extends BaseComponent {
             return;
         }
 
-        const popup = overlay.querySelector('.privacy-popup');
+        const popup = overlay.querySelector('.settings-popup');
         const focusableElements = popup.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );

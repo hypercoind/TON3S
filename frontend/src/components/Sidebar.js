@@ -20,32 +20,49 @@ export class Sidebar extends BaseComponent {
     }
 
     render() {
+        const noteCount = appState.notes?.length || 0;
+
         this.container.innerHTML = `
             <div class="sidebar">
-                <div class="sidebar-header">
-                    <span class="sidebar-title">Notes</span>
-                </div>
-                <div class="search-container">
-                    <input
-                        type="text"
-                        class="search-input"
-                        placeholder="Search notes..."
-                        aria-label="Search notes"
-                    />
-                    <button class="search-clear-btn" aria-label="Clear search" style="display: none;">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                <div class="sidebar-icon-strip">
+                    <button class="sidebar-icon-strip-btn" aria-label="Notes" title="Notes">
+                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                         </svg>
                     </button>
-                </div>
-                <div class="note-list" aria-live="polite"></div>
-                <div class="sidebar-actions">
-                    <button class="new-note-btn" aria-label="Create new note">
+                    <button class="sidebar-icon-strip-btn new-note-icon-btn" aria-label="New note" title="New note">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                         </svg>
-                        New Note
                     </button>
+                    ${noteCount > 0 ? `<span class="sidebar-note-count">${noteCount}</span>` : ''}
+                </div>
+                <div class="sidebar-content">
+                    <div class="sidebar-header">
+                        <span class="sidebar-title">Notes</span>
+                    </div>
+                    <div class="search-container">
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Search notes..."
+                            aria-label="Search notes"
+                        />
+                        <button class="search-clear-btn" aria-label="Clear search" style="display: none;">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="note-list" aria-live="polite"></div>
+                    <div class="sidebar-actions">
+                        <button class="new-note-btn" aria-label="Create new note">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                            New Note
+                        </button>
+                    </div>
                 </div>
                 <div class="sidebar-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="0"></div>
             </div>
@@ -57,8 +74,13 @@ export class Sidebar extends BaseComponent {
     }
 
     bindEvents() {
-        // New note button
+        // New note button (in expanded sidebar)
         this.$('.new-note-btn')?.addEventListener('click', () => {
+            this.createNewNote();
+        });
+
+        // New note button (in icon strip)
+        this.$('.new-note-icon-btn')?.addEventListener('click', () => {
             this.createNewNote();
         });
 
