@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Start for AI Sessions
+
+**Before analyzing or modifying code, read [`docs/CHECKPOINT.md`](docs/CHECKPOINT.md)** for:
+- Complete dependency list with versions
+- All modules, services, and components with purposes
+- State structure and 43 event types
+- API endpoints and WebSocket protocol
+- Critical paths (note lifecycle, NOSTR publish flow)
+- Environment variables and configuration
+- Common patterns and gotchas
+
+The checkpoint file provides comprehensive context that reduces the need to explore the codebase manually.
+
 ## Project Overview
 
 TON3S is a minimalist, privacy-focused writing application with a modular frontend/backend architecture. Version 2.0 introduces multi-note support, Nostr integration for decentralized publishing, and Docker deployment.
@@ -67,6 +80,7 @@ TON3S/
 │   └── package.json             # v2.0.0, Fastify + WebSocket
 │
 ├── docs/                        # Documentation
+│   ├── CHECKPOINT.md            # AI session quick-reference (read first)
 │   ├── getting-started.md
 │   ├── user-guide.md
 │   ├── nostr-guide.md
