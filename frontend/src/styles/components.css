@@ -492,8 +492,7 @@
     transition: width 0.3s ease;
 }
 
-.nostr-panel:hover,
-.nostr-panel:focus-within {
+.nostr-panel.nostr-panel-open {
     width: var(--nostr-panel-width);
 }
 
@@ -509,8 +508,7 @@
     box-sizing: border-box;
 }
 
-.nostr-panel:hover .nostr-panel-content,
-.nostr-panel:focus-within .nostr-panel-content {
+.nostr-panel.nostr-panel-open .nostr-panel-content {
     opacity: 1;
 }
 
@@ -531,22 +529,37 @@
     z-index: 1;
 }
 
-.nostr-panel:hover .nostr-icon-strip,
-.nostr-panel:focus-within .nostr-icon-strip {
+.nostr-panel.nostr-panel-open .nostr-icon-strip {
     opacity: 0;
     pointer-events: none;
 }
 
-.nostr-icon-strip-icon {
+.nostr-icon-strip-btn {
     width: 28px;
     height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
     color: var(--fg-dim);
 }
 
-.nostr-icon-strip-icon svg {
+.nostr-icon-strip-btn:hover {
+    background: var(--secondary);
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.nostr-icon-strip-btn:active {
+    transform: scale(0.95);
+}
+
+.nostr-icon-strip-btn svg {
     width: 18px;
     height: 18px;
 }
@@ -560,6 +573,37 @@
 
 .nostr-connection-dot.connected {
     background: #4ade80;
+}
+
+.nostr-panel-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.nostr-collapse-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--fg-dim);
+}
+
+.nostr-collapse-btn:hover {
+    background: var(--secondary);
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.nostr-collapse-btn:active {
+    transform: scale(0.95);
 }
 
 .nostr-status {

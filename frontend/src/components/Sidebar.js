@@ -21,11 +21,12 @@ export class Sidebar extends BaseComponent {
 
     render() {
         const noteCount = appState.notes?.length || 0;
+        const sidebarOpen = appState.settings.sidebarOpen;
 
         this.container.innerHTML = `
-            <div class="sidebar">
+            <div class="sidebar${sidebarOpen ? ' sidebar-open' : ''}">
                 <div class="sidebar-icon-strip">
-                    <button class="sidebar-icon-strip-btn" aria-label="Notes" title="Notes">
+                    <button class="sidebar-icon-strip-btn sidebar-toggle-btn" aria-label="Toggle notes sidebar" title="Toggle notes sidebar">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                         </svg>
@@ -40,6 +41,11 @@ export class Sidebar extends BaseComponent {
                 <div class="sidebar-content">
                     <div class="sidebar-header">
                         <span class="sidebar-title">Notes</span>
+                        <button class="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="search-container">
                         <input
@@ -74,6 +80,16 @@ export class Sidebar extends BaseComponent {
     }
 
     bindEvents() {
+        // Toggle sidebar button (in icon strip - opens sidebar)
+        this.$('.sidebar-toggle-btn')?.addEventListener('click', () => {
+            appState.toggleSidebar();
+        });
+
+        // Collapse sidebar button (in sidebar content - closes sidebar)
+        this.$('.sidebar-collapse-btn')?.addEventListener('click', () => {
+            appState.setSidebarOpen(false);
+        });
+
         // New note button (in expanded sidebar)
         this.$('.new-note-btn')?.addEventListener('click', () => {
             this.createNewNote();
@@ -126,6 +142,10 @@ export class Sidebar extends BaseComponent {
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this)));
         // Close tag popup before zen mode transition starts
         this.subscribe(appState.on(StateEvents.PRE_ZEN_MODE, this.closeTagEditorPopup.bind(this)));
+        // Handle sidebar toggle
+        this.subscribe(
+            appState.on(StateEvents.SIDEBAR_TOGGLED, this.updateSidebarState.bind(this))
+        );
 
         // Sidebar resize handle
         this.initResizeHandle();
@@ -351,6 +371,16 @@ export class Sidebar extends BaseComponent {
             item.classList.toggle('active', isActive);
             item.setAttribute('aria-selected', isActive);
         });
+    }
+
+    /**
+     * Update sidebar open/closed state
+     */
+    updateSidebarState(isOpen) {
+        const sidebar = this.$('.sidebar');
+        if (sidebar) {
+            sidebar.classList.toggle('sidebar-open', isOpen);
+        }
     }
 
     /**

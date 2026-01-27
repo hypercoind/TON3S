@@ -24,18 +24,26 @@ export class NostrPanel extends BaseComponent {
     render() {
         const { connected, pubkey, extension, error } = appState.nostr;
         const publishedNotes = appState.publishedNotes;
+        const panelOpen = appState.settings.nostrPanelOpen;
 
         this.container.innerHTML = `
-            <div class="nostr-panel">
+            <div class="nostr-panel${panelOpen ? ' nostr-panel-open' : ''}">
                 <div class="nostr-icon-strip">
-                    <div class="nostr-icon-strip-icon" title="Nostr">
+                    <button class="nostr-icon-strip-btn nostr-toggle-btn" aria-label="Toggle NOSTR panel" title="Toggle NOSTR panel">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                         </svg>
-                    </div>
+                    </button>
                     <div class="nostr-connection-dot ${connected ? 'connected' : ''}" title="${connected ? 'Connected' : 'Not connected'}"></div>
                 </div>
                 <div class="nostr-panel-content">
+                    <div class="nostr-panel-header">
+                        <button class="nostr-collapse-btn" aria-label="Collapse panel" title="Collapse panel">
+                            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="nostr-status">
                         <span class="nostr-status-indicator ${connected ? 'connected' : ''}"></span>
                         <span class="nostr-status-text">
@@ -165,6 +173,18 @@ export class NostrPanel extends BaseComponent {
     bindEvents() {
         // Connect button
         this.container.addEventListener('click', async e => {
+            // Toggle panel button (in icon strip - opens panel)
+            if (e.target.closest('.nostr-toggle-btn')) {
+                appState.toggleNostrPanel();
+                return;
+            }
+
+            // Collapse panel button (in panel content - closes panel)
+            if (e.target.closest('.nostr-collapse-btn')) {
+                appState.setNostrPanelOpen(false);
+                return;
+            }
+
             if (e.target.closest('.connect-nostr-btn')) {
                 await this.connectToNostr();
             }
@@ -235,6 +255,9 @@ export class NostrPanel extends BaseComponent {
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED_NOTE_ADDED, () => this.render()));
         this.subscribe(appState.on(StateEvents.NOSTR_PUBLISHED_NOTES_CLEARED, () => this.render()));
+        this.subscribe(
+            appState.on(StateEvents.NOSTR_PANEL_TOGGLED, isOpen => this.updatePanelState(isOpen))
+        );
 
         // Security event handlers
         this.subscribe(
@@ -267,6 +290,16 @@ export class NostrPanel extends BaseComponent {
                 this._tabWasHidden = false;
             })
         );
+    }
+
+    /**
+     * Update panel open/closed state
+     */
+    updatePanelState(isOpen) {
+        const panel = this.container.querySelector('.nostr-panel');
+        if (panel) {
+            panel.classList.toggle('nostr-panel-open', isOpen);
+        }
     }
 
     /**

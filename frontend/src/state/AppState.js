@@ -22,6 +22,7 @@ export const StateEvents = {
     PRE_ZEN_MODE: 'settings:preZenMode',
     ZEN_MODE_TOGGLED: 'settings:zenMode',
     SIDEBAR_TOGGLED: 'settings:sidebar',
+    NOSTR_PANEL_TOGGLED: 'settings:nostrPanel',
 
     // NOSTR events
     NOSTR_CONNECTED: 'nostr:connected',
@@ -60,7 +61,8 @@ class AppState extends StateEmitter {
                 unusedIndices: [...Array(fonts.length).keys()]
             },
             zenMode: false,
-            sidebarOpen: true,
+            sidebarOpen: false,
+            nostrPanelOpen: false,
             nostr: {
                 enabled: false,
                 defaultRelays: [
@@ -267,6 +269,30 @@ class AppState extends StateEmitter {
 
             this._settings.zenMode = enabled;
             this.emit(StateEvents.ZEN_MODE_TOGGLED, enabled);
+        }
+    }
+
+    toggleSidebar() {
+        this._settings.sidebarOpen = !this._settings.sidebarOpen;
+        this.emit(StateEvents.SIDEBAR_TOGGLED, this._settings.sidebarOpen);
+    }
+
+    setSidebarOpen(open) {
+        if (this._settings.sidebarOpen !== open) {
+            this._settings.sidebarOpen = open;
+            this.emit(StateEvents.SIDEBAR_TOGGLED, open);
+        }
+    }
+
+    toggleNostrPanel() {
+        this._settings.nostrPanelOpen = !this._settings.nostrPanelOpen;
+        this.emit(StateEvents.NOSTR_PANEL_TOGGLED, this._settings.nostrPanelOpen);
+    }
+
+    setNostrPanelOpen(open) {
+        if (this._settings.nostrPanelOpen !== open) {
+            this._settings.nostrPanelOpen = open;
+            this.emit(StateEvents.NOSTR_PANEL_TOGGLED, open);
         }
     }
 
