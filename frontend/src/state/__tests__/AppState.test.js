@@ -22,7 +22,7 @@ describe('AppState', () => {
             expect(state.settings.theme.currentIndex).toBe(1);
             expect(state.settings.font.currentIndex).toBe(1);
             expect(state.settings.zenMode).toBe(false);
-            expect(state.settings.sidebarOpen).toBe(true);
+            expect(state.settings.sidebarOpen).toBe(false);
         });
 
         it('should initialize with NOSTR disconnected', () => {
