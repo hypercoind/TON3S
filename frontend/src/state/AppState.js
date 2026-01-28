@@ -69,7 +69,7 @@ class AppState extends StateEmitter {
                     'wss://relay.damus.io',
                     'wss://nos.lol',
                     'wss://relay.primal.net',
-                    'wss://relay.nostriches.org',
+                    'wss://relay.snort.social',
                     'wss://nostr.mom',
                     'wss://relay.nostr.band'
                 ],

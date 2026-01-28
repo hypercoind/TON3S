@@ -16,6 +16,7 @@ class NostrService {
         this.messageHandlers = new Map();
         this.pendingPublishes = new Map();
         this.connectedRelays = new Set();
+        this.pendingRelays = new Set();
     }
 
     /**
@@ -70,6 +71,7 @@ class NostrService {
         }
         this.connected = false;
         this.connectedRelays.clear();
+        this.pendingRelays.clear();
     }
 
     /**
@@ -93,6 +95,7 @@ class NostrService {
      */
     connectToDefaultRelays() {
         const relays = appState.settings.nostr.defaultRelays;
+        this.pendingRelays = new Set(relays);
         for (const relay of relays) {
             this.connectToRelay(relay);
         }
@@ -150,13 +153,19 @@ class NostrService {
     handleRelayStatus(relayUrl, status, errorMessage) {
         console.log(`[NOSTR] Relay ${relayUrl}: ${status}`);
 
+        this.pendingRelays.delete(relayUrl);
+
         if (status === 'connected') {
             this.connectedRelays.add(relayUrl);
         } else if (status === 'disconnected' || status === 'error') {
             this.connectedRelays.delete(relayUrl);
 
-            // Only show error if no other relays are connected
-            if (status === 'error' && this.connectedRelays.size === 0) {
+            // Only show error if all relays have resolved and none connected
+            if (
+                status === 'error' &&
+                this.connectedRelays.size === 0 &&
+                this.pendingRelays.size === 0
+            ) {
                 appState.setNostrError(`Relay error: ${relayUrl} - ${errorMessage}`);
             }
         }
