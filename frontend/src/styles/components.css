@@ -1310,6 +1310,27 @@
     display: inline;
 }
 
+/* Session warning banner in Nostr panel */
+.nostr-session-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+    line-height: 1.4;
+}
+
+.nostr-session-warning svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #fbbf24;
+}
+
 /* Tab blur warning toast */
 .tab-blur-warning {
     position: fixed;

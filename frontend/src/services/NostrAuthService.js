@@ -124,9 +124,18 @@ class NostrAuthService {
     }
 
     /**
-     * Handle page unload - clear private key
+     * Handle page unload - warn user about losing Nostr session
      */
-    _handleBeforeUnload() {
+    _handleBeforeUnload(event) {
+        // Check if user has active Nostr session (extension or private key)
+        if (this.pubkey) {
+            // Show browser's native confirmation dialog
+            event.preventDefault();
+            event.returnValue = true; // Required for Chrome/Safari
+            return true; // Required for Firefox
+        }
+
+        // Clear private key if present (security) - runs if user confirms leave
         if (this._privateKeyHex) {
             this._privateKeyHex = null;
         }
@@ -247,6 +256,9 @@ class NostrAuthService {
 
             // Detect extension type
             const extensionName = this.detectExtensionType();
+
+            // Setup beforeunload handler for session protection
+            this._setupUnloadHandler();
 
             appState.setNostrConnected(this.pubkey, extensionName);
             console.log(
