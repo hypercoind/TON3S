@@ -431,7 +431,7 @@
 
 /* Status bar */
 .status {
-    padding: 0.5rem 3rem;
+    padding: 0.5rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -442,9 +442,22 @@
     position: relative;
 }
 
+.status-left,
+.status-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .word-count {
     display: flex;
     gap: 1.5rem;
+}
+
+/* Active state for header nav buttons */
+.notes-btn.active,
+.nostr-btn.active {
+    color: var(--accent);
 }
 
 /* Search bar */

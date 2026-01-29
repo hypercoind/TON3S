@@ -39,7 +39,8 @@ export const StateEvents = {
     // UI events
     SEARCH_CHANGED: 'ui:search',
     SAVE_STATUS_CHANGED: 'ui:saveStatus',
-    LOADING_CHANGED: 'ui:loading'
+    LOADING_CHANGED: 'ui:loading',
+    ACTIVE_PAGE_CHANGED: 'ui:activePage'
 };
 
 class AppState extends StateEmitter {
@@ -95,7 +96,8 @@ class AppState extends StateEmitter {
             searchQuery: '',
             saveStatus: 'saved',
             lastSaveTime: null,
-            loading: false
+            loading: false,
+            activeMobilePage: 'editor'
         };
     }
 
@@ -380,6 +382,13 @@ class AppState extends StateEmitter {
     setLoading(loading) {
         this._ui.loading = loading;
         this.emit(StateEvents.LOADING_CHANGED, loading);
+    }
+
+    setActiveMobilePage(page) {
+        if (this._ui.activeMobilePage !== page) {
+            this._ui.activeMobilePage = page;
+            this.emit(StateEvents.ACTIVE_PAGE_CHANGED, page);
+        }
     }
 }
 

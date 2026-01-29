@@ -332,6 +332,10 @@ export class Sidebar extends BaseComponent {
                 }
                 const id = parseInt(item.dataset.id);
                 appState.selectNote(id);
+                // On mobile, return to editor after selecting a note
+                if (window.innerWidth <= 1024) {
+                    appState.setActiveMobilePage('editor');
+                }
             });
 
             // Context menu for delete

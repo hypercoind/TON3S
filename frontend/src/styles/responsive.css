@@ -5,28 +5,76 @@
 
 /* Tablet and smaller */
 @media (max-width: 1024px) {
-    .sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
+    /* Default: editor page - hide sidebar and nostr */
+    .sidebar,
     .nostr-panel {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        transform: translateX(100%);
-        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+        display: none;
     }
 
-    .nostr-panel.open {
-        transform: translateX(0);
+    /* Notes page: show sidebar as full-page, hide editor */
+    body.mobile-page-notes .sidebar {
+        display: flex;
+        position: relative;
+        width: 100%;
+        flex: 1;
+    }
+
+    body.mobile-page-notes .sidebar .sidebar-content {
+        opacity: 1;
+    }
+
+    body.mobile-page-notes .sidebar .sidebar-icon-strip {
+        display: none;
+    }
+
+    body.mobile-page-notes .main-content > .container {
+        display: none;
+    }
+
+    /* Nostr page: show nostr panel as full-page, hide editor */
+    body.mobile-page-nostr .nostr-panel {
+        display: flex;
+        position: relative;
+        width: 100%;
+        flex: 1;
+    }
+
+    body.mobile-page-nostr .nostr-panel .nostr-panel-content {
+        opacity: 1;
+    }
+
+    body.mobile-page-nostr .nostr-panel .nostr-icon-strip {
+        display: none;
+    }
+
+    body.mobile-page-nostr .main-content > .container {
+        display: none;
+    }
+
+    /* Editor page: hide panels (default above) */
+    body.mobile-page-editor .sidebar,
+    body.mobile-page-editor .nostr-panel {
+        display: none;
+    }
+
+    /* Hide panel collapse buttons on mobile (header buttons control navigation) */
+    .sidebar-collapse-btn,
+    .nostr-collapse-btn {
+        display: none;
+    }
+
+    /* Fixed settings button pinned to bottom-right */
+    .settings-btn {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 1000;
+        background: var(--bg);
+        opacity: 1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
     }
 }
 

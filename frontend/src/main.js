@@ -47,6 +47,9 @@ class TON3SApp {
             // Initialize favicon service (after theme is applied)
             faviconService.init();
 
+            // Initialize mobile page navigation
+            this.initMobilePageNav();
+
             // Initialize UI components
             this.initComponents();
 
@@ -111,6 +114,18 @@ class TON3SApp {
                 location.reload();
             });
         }
+    }
+
+    initMobilePageNav() {
+        // Set initial mobile page class
+        document.body.classList.add('mobile-page-editor');
+
+        // Listen for page changes
+        this.activePageHandler = (page) => {
+            document.body.classList.remove('mobile-page-editor', 'mobile-page-notes', 'mobile-page-nostr');
+            document.body.classList.add(`mobile-page-${page}`);
+        };
+        appState.on(StateEvents.ACTIVE_PAGE_CHANGED, this.activePageHandler);
     }
 
     initComponents() {
@@ -320,6 +335,9 @@ class TON3SApp {
         }
         if (this.zenModeHandler) {
             appState.off(StateEvents.ZEN_MODE_TOGGLED, this.zenModeHandler);
+        }
+        if (this.activePageHandler) {
+            appState.off(StateEvents.ACTIVE_PAGE_CHANGED, this.activePageHandler);
         }
         if (this.zenEscapeHandler) {
             document.removeEventListener('keydown', this.zenEscapeHandler);
