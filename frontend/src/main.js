@@ -248,17 +248,25 @@ class TON3SApp {
                 if (distance > MOVEMENT_THRESHOLD) {
                     appState.setZenMode(false);
                 }
-
-                // Update last position
-                lastX = e.clientX;
-                lastY = e.clientY;
             } else {
                 // Always track position when not in zen mode
                 lastX = e.clientX;
                 lastY = e.clientY;
+                // Suppress zen entry while mouse is active
+                if (this.components.editor) {
+                    this.components.editor.clearAutoZenTimer();
+                }
             }
         };
         document.addEventListener('mousemove', this.mouseMoveHandler);
+
+        // Escape key exits zen mode
+        this.zenEscapeHandler = e => {
+            if (e.key === 'Escape' && appState.settings.zenMode) {
+                appState.setZenMode(false);
+            }
+        };
+        document.addEventListener('keydown', this.zenEscapeHandler);
     }
 
     initSecurity() {
@@ -312,6 +320,9 @@ class TON3SApp {
         }
         if (this.zenModeHandler) {
             appState.off(StateEvents.ZEN_MODE_TOGGLED, this.zenModeHandler);
+        }
+        if (this.zenEscapeHandler) {
+            document.removeEventListener('keydown', this.zenEscapeHandler);
         }
 
         // Cleanup keyboard manager

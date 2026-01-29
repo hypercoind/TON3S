@@ -262,9 +262,16 @@ class AppState extends StateEmitter {
 
     setZenMode(enabled) {
         if (this._settings.zenMode !== enabled) {
+            // Block re-entry for 5 seconds after any zen exit
+            if (enabled && this._zenExitTime && Date.now() - this._zenExitTime < 5000) {
+                return;
+            }
+
             // Emit PRE_ZEN_MODE before any changes so components can close popups
             if (enabled) {
                 this.emit(StateEvents.PRE_ZEN_MODE);
+            } else {
+                this._zenExitTime = Date.now();
             }
 
             this._settings.zenMode = enabled;
