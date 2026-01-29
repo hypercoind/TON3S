@@ -57,6 +57,12 @@
         display: none;
     }
 
+    /* Show header nav buttons on mobile */
+    .btn-icon-circle.notes-btn,
+    .btn-icon-circle.nostr-btn {
+        display: inline-flex;
+    }
+
     /* Hide panel collapse buttons on mobile (header buttons control navigation) */
     .sidebar-collapse-btn,
     .nostr-collapse-btn {

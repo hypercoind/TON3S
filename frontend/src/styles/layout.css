@@ -454,7 +454,12 @@
     gap: 1.5rem;
 }
 
-/* Active state for header nav buttons */
+/* Header nav buttons: mobile only */
+.btn-icon-circle.notes-btn,
+.btn-icon-circle.nostr-btn {
+    display: none;
+}
+
 .notes-btn.active,
 .nostr-btn.active {
     color: var(--accent);
