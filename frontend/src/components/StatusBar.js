@@ -6,7 +6,6 @@
 import { BaseComponent } from './BaseComponent.js';
 import { appState } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
-import { StateEvents } from '../state/AppState.js';
 import { exportService } from '../services/ExportService.js';
 import { toast } from './Toast.js';
 import { themes, getThemesByCategory } from '../data/themes.js';

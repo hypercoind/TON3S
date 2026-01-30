@@ -13,9 +13,6 @@ export class Sidebar extends BaseComponent {
         super(container);
         this.searchInput = null;
         this.searchDebounceTimer = null;
-        this.isResizing = false;
-        this.minWidth = 200;
-        this.maxWidth = 500;
         this.activeTagPopup = null;
     }
 
@@ -70,7 +67,7 @@ export class Sidebar extends BaseComponent {
                         </button>
                     </div>
                 </div>
-                <div class="sidebar-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="0"></div>
+
             </div>
         `;
 
@@ -146,96 +143,6 @@ export class Sidebar extends BaseComponent {
         this.subscribe(
             appState.on(StateEvents.SIDEBAR_TOGGLED, this.updateSidebarState.bind(this))
         );
-
-        // Sidebar resize handle
-        this.initResizeHandle();
-    }
-
-    /**
-     * Initialize sidebar resize functionality
-     */
-    initResizeHandle() {
-        const handle = this.$('.sidebar-resize-handle');
-        const sidebar = this.$('.sidebar');
-        if (!handle || !sidebar) {
-            return;
-        }
-
-        const startResize = e => {
-            e.preventDefault();
-            this.isResizing = true;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-
-            document.addEventListener('mousemove', doResize);
-            document.addEventListener('mouseup', stopResize);
-        };
-
-        const doResize = e => {
-            if (!this.isResizing) {
-                return;
-            }
-
-            const newWidth = Math.min(this.maxWidth, Math.max(this.minWidth, e.clientX));
-            sidebar.style.width = `${newWidth}px`;
-            sidebar.style.minWidth = `${newWidth}px`;
-            // Update CSS variable for zen mode centering
-            document.documentElement.style.setProperty('--sidebar-current-width', `${newWidth}px`);
-        };
-
-        const stopResize = () => {
-            this.isResizing = false;
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-
-            document.removeEventListener('mousemove', doResize);
-            document.removeEventListener('mouseup', stopResize);
-
-            // Save the width preference
-            const width = parseInt(sidebar.style.width);
-            if (width) {
-                localStorage.setItem('ton3s-sidebar-width', width);
-            }
-        };
-
-        handle.addEventListener('mousedown', startResize);
-
-        // Keyboard resizing support
-        handle.addEventListener('keydown', e => {
-            const currentWidth = sidebar.offsetWidth;
-            let newWidth = currentWidth;
-
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                newWidth = Math.max(this.minWidth, currentWidth - 20);
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                newWidth = Math.min(this.maxWidth, currentWidth + 20);
-            }
-
-            if (newWidth !== currentWidth) {
-                sidebar.style.width = `${newWidth}px`;
-                sidebar.style.minWidth = `${newWidth}px`;
-                localStorage.setItem('ton3s-sidebar-width', newWidth);
-                // Update CSS variable for zen mode centering
-                document.documentElement.style.setProperty(
-                    '--sidebar-current-width',
-                    `${newWidth}px`
-                );
-            }
-        });
-
-        // Restore saved width
-        const savedWidth = localStorage.getItem('ton3s-sidebar-width');
-        if (savedWidth) {
-            const width = parseInt(savedWidth);
-            if (width >= this.minWidth && width <= this.maxWidth) {
-                sidebar.style.width = `${width}px`;
-                sidebar.style.minWidth = `${width}px`;
-                // Update CSS variable for zen mode centering
-                document.documentElement.style.setProperty('--sidebar-current-width', `${width}px`);
-            }
-        }
     }
 
     /**

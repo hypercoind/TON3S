@@ -1012,29 +1012,6 @@
     font-size: 0.85rem;
 }
 
-/* Sidebar resize handle */
-.sidebar-resize-handle {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: transparent;
-    cursor: col-resize;
-    transition: background-color 0.2s ease;
-    z-index: 10;
-}
-
-.sidebar-resize-handle:hover,
-.sidebar-resize-handle:active {
-    background: var(--accent);
-}
-
-.sidebar-resize-handle:focus-visible {
-    background: var(--accent);
-    outline: none;
-}
-
 /* Toast notifications */
 .toast-container {
     position: fixed;
