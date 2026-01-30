@@ -76,10 +76,12 @@ export class Header extends BaseComponent {
         });
 
         // Highlight active button on mobile page change
-        this.subscribe(appState.on(StateEvents.ACTIVE_PAGE_CHANGED, (page) => {
-            this.$('#notes-btn')?.classList.toggle('active', page === 'notes');
-            this.$('#nostr-btn')?.classList.toggle('active', page === 'nostr');
-        }));
+        this.subscribe(
+            appState.on(StateEvents.ACTIVE_PAGE_CHANGED, page => {
+                this.$('#notes-btn')?.classList.toggle('active', page === 'notes');
+                this.$('#nostr-btn')?.classList.toggle('active', page === 'nostr');
+            })
+        );
     }
 
     isMobile() {

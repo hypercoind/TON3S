@@ -121,8 +121,12 @@ class TON3SApp {
         document.body.classList.add('mobile-page-editor');
 
         // Listen for page changes
-        this.activePageHandler = (page) => {
-            document.body.classList.remove('mobile-page-editor', 'mobile-page-notes', 'mobile-page-nostr');
+        this.activePageHandler = page => {
+            document.body.classList.remove(
+                'mobile-page-editor',
+                'mobile-page-notes',
+                'mobile-page-nostr'
+            );
             document.body.classList.add(`mobile-page-${page}`);
         };
         appState.on(StateEvents.ACTIVE_PAGE_CHANGED, this.activePageHandler);
