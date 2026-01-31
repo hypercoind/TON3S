@@ -17,6 +17,7 @@ import { Sidebar } from './components/Sidebar.js';
 import { Editor } from './components/Editor.js';
 import { StatusBar } from './components/StatusBar.js';
 import { NostrPanel } from './components/NostrPanel.js';
+import { nostrAuthService } from './services/NostrAuthService.js';
 
 // Initialization state (using window to persist across module re-evaluations)
 window.__TON3S_APP__ = window.__TON3S_APP__ || { instance: null, initialized: false };
@@ -33,6 +34,9 @@ class TON3SApp {
 
     async init() {
         try {
+            // Initialize WASM signing module (non-blocking)
+            nostrAuthService.initializeWasm().catch(() => {});
+
             // Initialize storage and migrate data
             await storageService.init();
 
