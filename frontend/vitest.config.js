@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '../../wasm/pkg/ton3s_signer.js': new URL('./src/services/__mocks__/wasm-signer-stub.js', import.meta.url).pathname
+    }
+  },
   test: {
     environment: 'happy-dom',
     include: ['src/**/*.test.js', 'src/**/__tests__/*.js'],
