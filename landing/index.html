@@ -19,16 +19,23 @@ body {
     background-color: var(--bg);
     color: var(--fg);
     font-family: var(--font, 'JetBrains Mono', monospace);
-    transition: background-color 0.8s ease, color 0.8s ease, font-family 0.3s ease;
+    transition: font-family 0.3s ease;
 }
 
 .text {
-    font-size: clamp(2rem, 6vw, 4.5rem);
+    margin-top: -48px;
+    max-width: 580px;
+    width: 100%;
+    min-height: 300px;
+    padding: 2rem 3rem;
+    border: 1px solid var(--fg-dim);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(1rem, 2.5vw, 1.8rem);
     font-weight: 700;
     letter-spacing: 0.02em;
     user-select: none;
-    opacity: 1;
-    transition: opacity 0.4s ease;
 }
 
 .text.fading { opacity: 0; }
@@ -207,8 +214,24 @@ body {
         currentFont = f;
     }
 
-    setInterval(applyTheme, 3000);
-    setInterval(applyFont, 5000);
+    const textEl = document.querySelector('.text');
+    const texts = ['Coming Soon.', 'TON3S.com'];
+    let themeCount = 0;
+    let textIndex = 0;
+
+    function rotate() {
+        applyTheme();
+        themeCount++;
+        if (themeCount % 30 === 0) {
+            applyFont();
+        }
+        if (themeCount % 10 === 0) {
+            textIndex = 1 - textIndex;
+            textEl.textContent = texts[textIndex];
+        }
+    }
+
+    setInterval(rotate, 1000);
 })();
 </script>
 </body>
