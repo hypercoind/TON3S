@@ -4,9 +4,9 @@
  * Supports nos2x, Alby, and other NIP-07 compatible extensions
  */
 
-import { schnorr } from '@noble/curves/secp256k1';
 import { bech32 } from '@scure/base';
-import { appState, StateEvents } from '../state/AppState.js';
+import { appState } from '../state/AppState.js';
+import { loadWasmModule, getWasmModule, isWasmAvailable } from './wasm-loader.js';
 
 // Auth method types
 const AuthMethod = {
@@ -14,27 +14,16 @@ const AuthMethod = {
     PRIVATE_KEY: 'private_key'
 };
 
-// Session timeout configuration (15 minutes in milliseconds)
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
-// Warning before timeout (1 minute before)
-const SESSION_WARNING_MS = 14 * 60 * 1000;
-
 class NostrAuthService {
     constructor() {
         this.extension = null;
         this.pubkey = null;
         this.checkTimeout = null;
-        this._privateKeyHex = null;
         this._authMethod = null;
-        this._idleTimer = null;
-        this._warningTimer = null;
-        this._activityBound = false;
-        this._visibilityBound = false;
         this._unloadBound = false;
+        this._wasmReady = false;
 
         // Bind methods for event listeners
-        this._handleActivity = this._handleActivity.bind(this);
-        this._handleVisibilityChange = this._handleVisibilityChange.bind(this);
         this._handleBeforeUnload = this._handleBeforeUnload.bind(this);
     }
 
@@ -50,76 +39,16 @@ class NostrAuthService {
     }
 
     /**
-     * Start the idle timeout timer (private key sessions only)
+     * Check if a private key is available (either JS or WASM)
      */
-    _startIdleTimer() {
-        this._clearIdleTimer();
-        this._clearWarningTimer();
-
-        // Only apply timeout to private key sessions
-        if (this._authMethod !== AuthMethod.PRIVATE_KEY || !this._privateKeyHex) {
-            return;
+    _hasPrivateKey() {
+        if (!isWasmAvailable()) {
+            return false;
         }
-
-        // Warning timer fires 1 minute before timeout
-        this._warningTimer = setTimeout(() => {
-            console.log('[NOSTR] Session timeout warning');
-            appState.emit(StateEvents.NOSTR_SESSION_WARNING);
-        }, SESSION_WARNING_MS);
-
-        // Actual timeout disconnects the session
-        this._idleTimer = setTimeout(() => {
-            if (this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
-                console.log('[NOSTR] Session timeout - disconnecting for security');
-                this.disconnect();
-                appState.emit(StateEvents.NOSTR_SESSION_TIMEOUT);
-            }
-        }, SESSION_TIMEOUT_MS);
-    }
-
-    /**
-     * Clear the idle timeout timer
-     */
-    _clearIdleTimer() {
-        if (this._idleTimer) {
-            clearTimeout(this._idleTimer);
-            this._idleTimer = null;
-        }
-    }
-
-    /**
-     * Clear the warning timer
-     */
-    _clearWarningTimer() {
-        if (this._warningTimer) {
-            clearTimeout(this._warningTimer);
-            this._warningTimer = null;
-        }
-    }
-
-    /**
-     * Reset idle timer on user activity (private key sessions only)
-     */
-    _handleActivity() {
-        if (this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
-            this._startIdleTimer();
-        }
-    }
-
-    /**
-     * Handle page visibility changes (private key sessions only)
-     */
-    _handleVisibilityChange() {
-        if (document.hidden && this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
-            // Tab went to background - emit event so UI can track
-            appState.emit(StateEvents.NOSTR_TAB_HIDDEN);
-        } else if (
-            !document.hidden &&
-            this._authMethod === AuthMethod.PRIVATE_KEY &&
-            this._privateKeyHex
-        ) {
-            // Tab returned from background
-            appState.emit(StateEvents.NOSTR_TAB_RETURNED);
+        try {
+            return getWasmModule()?.is_key_loaded() ?? false;
+        } catch {
+            return false;
         }
     }
 
@@ -135,38 +64,14 @@ class NostrAuthService {
             return true; // Required for Firefox
         }
 
-        // Clear private key if present (security) - runs if user confirms leave
-        if (this._privateKeyHex) {
-            this._privateKeyHex = null;
+        // Clear private key from WASM memory
+        if (isWasmAvailable()) {
+            try {
+                getWasmModule()?.clear_key();
+            } catch {
+                /* ignore */
+            }
         }
-    }
-
-    /**
-     * Setup activity monitoring for idle timeout
-     */
-    _setupActivityMonitoring() {
-        if (this._activityBound) {
-            return;
-        }
-
-        // Reset timer on user activity
-        document.addEventListener('keydown', this._handleActivity);
-        document.addEventListener('click', this._handleActivity);
-        document.addEventListener('mousemove', this._handleActivity);
-        document.addEventListener('scroll', this._handleActivity);
-        this._activityBound = true;
-    }
-
-    /**
-     * Setup visibility change monitoring
-     */
-    _setupVisibilityMonitoring() {
-        if (this._visibilityBound) {
-            return;
-        }
-
-        document.addEventListener('visibilitychange', this._handleVisibilityChange);
-        this._visibilityBound = true;
     }
 
     /**
@@ -185,20 +90,22 @@ class NostrAuthService {
      * Cleanup all event listeners
      */
     _cleanupEventListeners() {
-        if (this._activityBound) {
-            document.removeEventListener('keydown', this._handleActivity);
-            document.removeEventListener('click', this._handleActivity);
-            document.removeEventListener('mousemove', this._handleActivity);
-            document.removeEventListener('scroll', this._handleActivity);
-            this._activityBound = false;
-        }
+        // beforeunload is kept for browser close protection / WASM key cleanup
+    }
 
-        if (this._visibilityBound) {
-            document.removeEventListener('visibilitychange', this._handleVisibilityChange);
-            this._visibilityBound = false;
+    /**
+     * Initialize the WASM signing module (non-blocking)
+     */
+    async initializeWasm() {
+        try {
+            const mod = await loadWasmModule();
+            if (mod) {
+                this._wasmReady = true;
+                console.log('[NOSTR] WASM signing module available');
+            }
+        } catch (error) {
+            console.warn('[NOSTR] WASM init failed:', error.message);
         }
-
-        // Don't remove beforeunload - keep it for browser close protection
     }
 
     /**
@@ -280,32 +187,38 @@ class NostrAuthService {
      */
     async connectWithPrivateKey(keyInput) {
         try {
+            if (!this._wasmReady || !isWasmAvailable()) {
+                throw new Error('WASM signing module not available. Cannot use private key.');
+            }
+
             // Parse and validate the private key
             const privateKeyHex = this.parsePrivateKey(keyInput);
 
-            // Derive public key
-            const pubkeyHex = this.derivePublicKey(privateKeyHex);
+            // Key bytes go into WASM memory, never stored in JS
+            const keyBytes = this.hexToBytes(privateKeyHex);
+            const wasm = getWasmModule();
+            wasm.import_key(keyBytes);
+            // Zero the JS copy immediately
+            this.secureZero(keyBytes);
 
-            // Store in memory only
-            this._privateKeyHex = privateKeyHex;
+            const pubkeyBytes = wasm.derive_pubkey();
+            const pubkeyHex = this.bytesToHex(pubkeyBytes);
+
             this._authMethod = AuthMethod.PRIVATE_KEY;
             this.pubkey = pubkeyHex;
             this.extension = null;
 
-            // Setup security monitoring for private key sessions
-            this._setupActivityMonitoring();
-            this._setupVisibilityMonitoring();
+            // Setup unload handler for WASM key cleanup
             this._setupUnloadHandler();
-            this._startIdleTimer();
 
-            appState.setNostrConnected(this.pubkey, 'Private Key');
+            appState.setNostrConnected(this.pubkey, 'Private Key (WASM)');
             console.log(
-                `[NOSTR] Connected with private key, pubkey: ${this.pubkey.slice(0, 8)}...`
+                `[NOSTR] Connected with Private Key (WASM), pubkey: ${this.pubkey.slice(0, 8)}...`
             );
 
             return {
                 pubkey: this.pubkey,
-                extension: 'Private Key'
+                extension: 'Private Key (WASM)'
             };
         } catch (error) {
             appState.setNostrError(error.message);
@@ -347,33 +260,36 @@ class NostrAuthService {
     }
 
     /**
-     * Derive public key from private key hex
-     * Uses schnorr.getPublicKey for proper BIP-340 x-only pubkey derivation
+     * Derive public key from WASM-stored private key
      */
-    derivePublicKey(privateKeyHex) {
-        try {
-            const privateKeyBytes = this.hexToBytes(privateKeyHex);
-            // Use schnorr.getPublicKey for proper BIP-340 x-only pubkey derivation
-            // This handles Y-coordinate parity correctly, unlike ECDSA getPublicKey
-            const pubkeyBytes = schnorr.getPublicKey(privateKeyBytes);
-            return this.bytesToHex(pubkeyBytes);
-        } catch {
-            throw new Error('Failed to derive public key from private key');
+    derivePublicKey() {
+        if (!isWasmAvailable()) {
+            throw new Error('WASM signing module not available');
         }
+        const wasm = getWasmModule();
+        if (!wasm.is_key_loaded()) {
+            throw new Error('No private key loaded in WASM');
+        }
+        const pubkeyBytes = wasm.derive_pubkey();
+        return this.bytesToHex(pubkeyBytes);
     }
 
     /**
      * Disconnect from NOSTR
      */
     disconnect() {
-        // Clear timers and event listeners
-        this._clearIdleTimer();
-        this._clearWarningTimer();
         this._cleanupEventListeners();
 
-        // Clear private key from memory
-        if (this._privateKeyHex) {
-            this._privateKeyHex = null;
+        // Clear private key from WASM memory
+        if (isWasmAvailable()) {
+            try {
+                const wasm = getWasmModule();
+                if (wasm?.is_key_loaded()) {
+                    wasm.clear_key();
+                }
+            } catch {
+                // Ignore cleanup errors
+            }
         }
         this._authMethod = null;
         this.pubkey = null;
@@ -411,8 +327,8 @@ class NostrAuthService {
             return this.pubkey;
         }
 
-        if (this._authMethod === AuthMethod.PRIVATE_KEY && this._privateKeyHex) {
-            this.pubkey = this.derivePublicKey(this._privateKeyHex);
+        if (this._authMethod === AuthMethod.PRIVATE_KEY && this._hasPrivateKey()) {
+            this.pubkey = this.derivePublicKey();
             return this.pubkey;
         }
 
@@ -443,12 +359,9 @@ class NostrAuthService {
      * Sign an event directly with the stored private key
      */
     async signEventDirect(event) {
-        if (!this._privateKeyHex) {
+        if (!this._hasPrivateKey()) {
             throw new Error('No private key available');
         }
-
-        // Reset idle timer on signing activity
-        this._startIdleTimer();
 
         // Ensure pubkey is set
         if (!event.pubkey) {
@@ -464,19 +377,11 @@ class NostrAuthService {
         const eventId = await this.calculateEventId(event);
         event.id = eventId;
 
-        // Sign with Schnorr signature (BIP-340)
-        const privateKeyBytes = this.hexToBytes(this._privateKeyHex);
+        // Sign via WASM: pass hash, get signature back
         const eventIdBytes = this.hexToBytes(eventId);
-
-        try {
-            const signatureBytes = schnorr.sign(eventIdBytes, privateKeyBytes);
-            event.sig = this.bytesToHex(signatureBytes);
-            return event;
-        } finally {
-            // Zero out sensitive byte arrays after use
-            this.secureZero(privateKeyBytes);
-            this.secureZero(eventIdBytes);
-        }
+        const signatureBytes = getWasmModule().sign_hash(eventIdBytes);
+        event.sig = this.bytesToHex(signatureBytes);
+        return event;
     }
 
     /**

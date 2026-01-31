@@ -29,10 +29,6 @@ export const StateEvents = {
     NOSTR_DISCONNECTED: 'nostr:disconnected',
     NOSTR_PUBLISHED: 'nostr:published',
     NOSTR_ERROR: 'nostr:error',
-    NOSTR_SESSION_WARNING: 'nostr:sessionWarning',
-    NOSTR_SESSION_TIMEOUT: 'nostr:sessionTimeout',
-    NOSTR_TAB_HIDDEN: 'nostr:tabHidden',
-    NOSTR_TAB_RETURNED: 'nostr:tabReturned',
     NOSTR_PUBLISHED_NOTE_ADDED: 'nostr:publishedNoteAdded',
     NOSTR_PUBLISHED_NOTES_CLEARED: 'nostr:publishedNotesCleared',
 
@@ -75,9 +71,7 @@ class AppState extends StateEmitter {
                     'wss://relay.nostr.band'
                 ],
                 proxyUrl: '/ws/nostr'
-            },
-            // Security: dismiss tab blur warning preference
-            dismissTabBlurWarning: false
+            }
         };
 
         // NOSTR state
@@ -307,10 +301,6 @@ class AppState extends StateEmitter {
 
     loadSettings(settings) {
         this._settings = { ...this._settings, ...settings };
-    }
-
-    setDismissTabBlurWarning(dismissed) {
-        this._settings.dismissTabBlurWarning = dismissed;
     }
 
     // ==================

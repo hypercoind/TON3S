@@ -17,8 +17,6 @@ export class NostrPanel extends BaseComponent {
         this.publishing = false;
         this.showKeyInput = false;
         this.showExportDropdown = false;
-        this._tabWasHidden = false;
-        this._warningTimeout = null;
     }
 
     render() {
@@ -132,12 +130,6 @@ export class NostrPanel extends BaseComponent {
                 <button class="nostr-publish-btn disconnect-nostr-btn" style="margin-top: 0.5rem; background: transparent; border: 1px solid var(--secondary);">
                     Disconnect
                 </button>
-                <div class="nostr-session-warning">
-                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="12" height="12">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                    </svg>
-                    <span>Keys and published notes are session-only. Reloading will clear ALL nostr data.</span>
-                </div>
             `;
         }
 
@@ -264,38 +256,6 @@ export class NostrPanel extends BaseComponent {
         this.subscribe(
             appState.on(StateEvents.NOSTR_PANEL_TOGGLED, isOpen => this.updatePanelState(isOpen))
         );
-
-        // Security event handlers
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_SESSION_WARNING, () => {
-                this._showSessionWarning();
-            })
-        );
-
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_SESSION_TIMEOUT, () => {
-                this._clearSessionWarning();
-                toast.warning(
-                    'Session expired due to inactivity. Your private key has been cleared for security.'
-                );
-                this.render();
-            })
-        );
-
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_TAB_HIDDEN, () => {
-                this._tabWasHidden = true;
-            })
-        );
-
-        this.subscribe(
-            appState.on(StateEvents.NOSTR_TAB_RETURNED, () => {
-                if (this._tabWasHidden && !appState.settings.dismissTabBlurWarning) {
-                    this._showTabReturnWarning();
-                }
-                this._tabWasHidden = false;
-            })
-        );
     }
 
     /**
@@ -305,85 +265,6 @@ export class NostrPanel extends BaseComponent {
         const panel = this.container.querySelector('.nostr-panel');
         if (panel) {
             panel.classList.toggle('nostr-panel-open', isOpen);
-        }
-    }
-
-    /**
-     * Show warning when user returns to tab after it was backgrounded
-     */
-    _showTabReturnWarning() {
-        // Create a dismissible toast with "Don't show again" option
-        const toastEl = document.createElement('div');
-        toastEl.className = 'toast toast-warning tab-blur-warning';
-        toastEl.innerHTML = `
-            <div class="tab-blur-warning-content">
-                <span>Your private key session was backgrounded while active.</span>
-                <div class="tab-blur-warning-actions">
-                    <button class="tab-blur-dismiss-btn">Dismiss</button>
-                    <button class="tab-blur-dont-show-btn">Don't show again</button>
-                </div>
-            </div>
-        `;
-
-        // Add to DOM
-        document.body.appendChild(toastEl);
-
-        // Handle dismiss
-        toastEl.querySelector('.tab-blur-dismiss-btn').addEventListener('click', () => {
-            toastEl.remove();
-        });
-
-        // Handle "Don't show again"
-        toastEl.querySelector('.tab-blur-dont-show-btn').addEventListener('click', () => {
-            appState.setDismissTabBlurWarning(true);
-            toastEl.remove();
-        });
-
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            if (toastEl.parentNode) {
-                toastEl.remove();
-            }
-        }, 10000);
-    }
-
-    /**
-     * Show warning when session is about to expire
-     */
-    _showSessionWarning() {
-        this._clearSessionWarning();
-
-        const toastEl = document.createElement('div');
-        toastEl.className = 'toast toast-warning session-warning';
-        toastEl.id = 'nostr-session-warning';
-        toastEl.innerHTML = `
-            <div class="session-warning-content">
-                <span>Your Nostr session will expire in 1 minute due to inactivity.</span>
-                <button class="session-warning-dismiss-btn">Keep Active</button>
-            </div>
-        `;
-
-        document.body.appendChild(toastEl);
-
-        toastEl.querySelector('.session-warning-dismiss-btn').addEventListener('click', () => {
-            this._clearSessionWarning();
-        });
-
-        // Auto-remove after 60 seconds (when timeout fires)
-        this._warningTimeout = setTimeout(() => this._clearSessionWarning(), 60000);
-    }
-
-    /**
-     * Clear the session warning toast
-     */
-    _clearSessionWarning() {
-        const existing = document.getElementById('nostr-session-warning');
-        if (existing) {
-            existing.remove();
-        }
-        if (this._warningTimeout) {
-            clearTimeout(this._warningTimeout);
-            this._warningTimeout = null;
         }
     }
 
@@ -409,23 +290,6 @@ export class NostrPanel extends BaseComponent {
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                         </svg>
                     </button>
-                </div>
-                <div class="nostr-key-warning">
-                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                    </svg>
-                    <div>
-                        <strong>Security Warning</strong>
-                        <p class="nostr-warning-main">By entering your private key directly:</p>
-                        <ul class="nostr-warning-list">
-                            <li>Your key will be held in browser memory until you disconnect</li>
-                            <li>Anyone with access to this device/browser can use your key</li>
-                            <li>Malicious browser extensions may be able to access the key</li>
-                            <li>Session will auto-disconnect after 15 minutes of inactivity</li>
-                        </ul>
-                        <p class="nostr-warning-recommend">For maximum security, use a NIP-07 extension (nos2x, Alby) instead.</p>
-                        <p class="nostr-warning-caution"><strong>NEVER</strong> enter your key on public/shared computers or untrusted networks. Verify you are on the correct domain.</p>
-                    </div>
                 </div>
                 <input type="password"
                        class="nostr-key-input"

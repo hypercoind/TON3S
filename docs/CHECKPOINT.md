@@ -44,7 +44,7 @@ TON3S/
 │   │   │   ├── FaviconService.js    # Dynamic favicon
 │   │   │   └── index.js
 │   │   ├── state/               # Reactive state management
-│   │   │   ├── AppState.js      # Singleton with 43 event types
+│   │   │   ├── AppState.js      # Singleton with 39 event types
 │   │   │   └── StateEmitter.js  # Event emitter base class
 │   │   ├── utils/               # Utility functions
 │   │   │   ├── markdown.js      # HTML↔Markdown, word count
@@ -174,7 +174,7 @@ Centralized reactive state via `AppState` singleton:
 }
 ```
 
-**43 event types** for granular state subscriptions.
+**39 event types** for granular state subscriptions.
 
 ### Data Flow
 
@@ -228,7 +228,7 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 |---------|------|---------|
 | StorageService | `StorageService.js` | Dexie wrapper, CRUD notes, 100ms throttle, 1MB max |
 | NostrService | `NostrService.js` | WebSocket to `/ws/nostr`, reconnect logic, relay management |
-| NostrAuthService | `NostrAuthService.js` | NIP-07 detection, 15-min session timeout, schnorr signing |
+| NostrAuthService | `NostrAuthService.js` | NIP-07 detection, WASM schnorr signing |
 | ExportService | `ExportService.js` | JSON/Markdown/PDF export, YAML frontmatter |
 | FaviconService | `FaviconService.js` | Dynamic favicon from theme --accent color |
 
@@ -243,7 +243,7 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 
 | Module | File | Purpose |
 |--------|------|---------|
-| AppState | `AppState.js` | Reactive singleton, 43 event types, persistence |
+| AppState | `AppState.js` | Reactive singleton, 39 event types, persistence |
 | StateEmitter | `StateEmitter.js` | Event emitter base: on/off/emit/once |
 
 ---
@@ -254,7 +254,6 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| @noble/curves | ^1.4.0 | Cryptography for NOSTR signing (schnorr) |
 | @scure/base | ^1.1.1 | Bech32 encoding for NOSTR keys |
 | dexie | ^4.0.10 | IndexedDB wrapper for note storage |
 
@@ -323,7 +322,6 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 | Font | JetBrains Mono (index 1) | AppState.js |
 | NOSTR Proxy | `/ws/nostr` | AppState.js |
 | Auto-save throttle | 100ms | StorageService.js |
-| Session timeout | 15 minutes | NostrAuthService.js |
 | Max content size | 1MB | StorageService.js |
 
 ### Default NOSTR Relays
@@ -550,6 +548,5 @@ backend/src/websocket/__tests__/
 
 - Auto-save has 100ms throttle - don't expect immediate persistence
 - Zen mode needs `preZenMode` state to restore settings
-- NOSTR session expires after 15 minutes of inactivity
 - IndexedDB max content size is 1MB per note
 - Toast notifications auto-dismiss (3s default, 5s errors)
