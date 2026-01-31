@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON3S</title>
+<meta name="description" content="TON3S - A minimalist, privacy-focused writing application. Coming Soon.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Fira+Code:wght@400;700&family=Source+Code+Pro:wght@400;700&family=IBM+Plex+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&family=Inconsolata:wght@400;700&family=Cousine:wght@400;700&family=Overpass+Mono:wght@400;700&family=Red+Hat+Mono:wght@400;700&family=PT+Mono&family=Oxygen+Mono&family=Noto+Sans+Mono:wght@400;700&family=Recursive:wght@400;700&family=Cutive+Mono&family=Nova+Mono&family=Martian+Mono:wght@400;700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font, 'JetBrains Mono', monospace);
+    transition: background-color 0.8s ease, color 0.8s ease, font-family 0.3s ease;
+}
+
+.text {
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    user-select: none;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.text.fading { opacity: 0; }
+
+/* Themes */
+.theme-ton3s { --bg: #fafaf8; --fg: #3a3632; --accent: #d95532; --fg-dim: #8a8479; }
+.theme-catppuccin-mocha { --bg: #1e1e2e; --fg: #cdd6f4; --fg-dim: #6c7086; --accent: #89b4fa; }
+.theme-catppuccin-macchiato { --bg: #24273a; --fg: #cad3f5; --fg-dim: #6e738d; --accent: #8aadf4; }
+.theme-catppuccin-frappe { --bg: #303446; --fg: #c6d0f5; --fg-dim: #737994; --accent: #8caaee; }
+.theme-catppuccin-latte { --bg: #eff1f5; --fg: #4c4f69; --fg-dim: #8c8fa1; --accent: #1e66f5; }
+.theme-dracula { --bg: #282a36; --fg: #f8f8f2; --fg-dim: #6272a4; --accent: #bd93f9; }
+.theme-dracula-soft { --bg: #282a36; --fg: #f8f8f2; --fg-dim: #6272a4; --accent: #8be9fd; }
+.theme-gruvbox-dark { --bg: #282828; --fg: #ebdbb2; --fg-dim: #928374; --accent: #fb4934; }
+.theme-gruvbox-light { --bg: #fbf1c7; --fg: #3c3836; --fg-dim: #7c6f64; --accent: #cc241d; }
+.theme-gruvbox-material { --bg: #1d2021; --fg: #fbf1c7; --fg-dim: #928374; --accent: #fabd2f; }
+.theme-tokyo-night { --bg: #1a1b26; --fg: #a9b1d6; --fg-dim: #565f89; --accent: #7aa2f7; }
+.theme-tokyo-night-storm { --bg: #24283b; --fg: #a9b1d6; --fg-dim: #565f89; --accent: #7aa2f7; }
+.theme-tokyo-night-light { --bg: #d5d6db; --fg: #565a6e; --fg-dim: #9699a3; --accent: #34548a; }
+.theme-nord { --bg: #2e3440; --fg: #eceff4; --fg-dim: #81899c; --accent: #88c0d0; }
+.theme-nord-aurora { --bg: #2e3440; --fg: #eceff4; --fg-dim: #81899c; --accent: #bf616a; }
+.theme-solarized-dark { --bg: #002b36; --fg: #839496; --fg-dim: #586e75; --accent: #268bd2; }
+.theme-solarized-light { --bg: #fdf6e3; --fg: #657b83; --fg-dim: #93a1a1; --accent: #268bd2; }
+.theme-monokai { --bg: #272822; --fg: #f8f8f2; --fg-dim: #75715e; --accent: #66d9ef; }
+.theme-monokai-pro { --bg: #2d2a2e; --fg: #fcfcfa; --fg-dim: #939293; --accent: #ff6188; }
+.theme-monokai-ristretto { --bg: #2c2525; --fg: #fff1f3; --fg-dim: #948b8c; --accent: #fd6a85; }
+.theme-one-dark { --bg: #282c34; --fg: #abb2bf; --fg-dim: #5c6370; --accent: #61afef; }
+.theme-one-light { --bg: #fafafa; --fg: #383a42; --fg-dim: #a0a1a7; --accent: #4078f2; }
+.theme-one-dark-pro { --bg: #282c34; --fg: #abb2bf; --fg-dim: #5c6370; --accent: #c678dd; }
+.theme-ayu-dark { --bg: #0a0e14; --fg: #b3b1ad; --fg-dim: #5c6773; --accent: #39bae6; }
+.theme-ayu-mirage { --bg: #1f2430; --fg: #cbccc6; --fg-dim: #707a8c; --accent: #5ccfe6; }
+.theme-ayu-light { --bg: #fafafa; --fg: #575f66; --fg-dim: #abb0b6; --accent: #55b4d4; }
+.theme-material-darker { --bg: #212121; --fg: #eeffff; --fg-dim: #717cb4; --accent: #82aaff; }
+.theme-material-ocean { --bg: #0f111a; --fg: #8f93a2; --fg-dim: #464b5d; --accent: #84ffff; }
+.theme-material-palenight { --bg: #292d3e; --fg: #a6accd; --fg-dim: #676e95; --accent: #c3e88d; }
+.theme-material-lighter { --bg: #fafafa; --fg: #90a4ae; --fg-dim: #ccd7dc; --accent: #00bcd4; }
+.theme-tomorrow-night { --bg: #1d1f21; --fg: #c5c8c6; --fg-dim: #969896; --accent: #81a2be; }
+.theme-tomorrow-night-bright { --bg: #000000; --fg: #eaeaea; --fg-dim: #969896; --accent: #7aa6da; }
+.theme-tomorrow-night-blue { --bg: #002451; --fg: #ffffff; --fg-dim: #7285b7; --accent: #7285b7; }
+.theme-base16-ocean { --bg: #2b303b; --fg: #c0c5ce; --fg-dim: #65737e; --accent: #8fa1b3; }
+.theme-base16-tomorrow { --bg: #1d1f21; --fg: #c5c8c6; --fg-dim: #969896; --accent: #81a2be; }
+.theme-base16-onedark { --bg: #282c34; --fg: #abb2bf; --fg-dim: #5c6370; --accent: #61afef; }
+.theme-base16-atelier { --bg: #1b181b; --fg: #8b8792; --fg-dim: #5e5a65; --accent: #955ae7; }
+.theme-zenburn { --bg: #3f3f3f; --fg: #dcdccc; --fg-dim: #7f9f7f; --accent: #93e0e3; }
+.theme-apprentice { --bg: #262626; --fg: #bcbcbc; --fg-dim: #6c6c6c; --accent: #5f8787; }
+.theme-horizon-dark { --bg: #1c1e26; --fg: #e0e0e0; --fg-dim: #6c6f93; --accent: #ee64ac; }
+.theme-horizon-bright { --bg: #fdf0ed; --fg: #16161c; --fg-dim: #6c6f93; --accent: #e95678; }
+.theme-synthwave-84 { --bg: #262335; --fg: #ffffff; --fg-dim: #848bbd; --accent: #ff7edb; }
+.theme-cyberpunk { --bg: #000b1a; --fg: #6dffb8; --fg-dim: #3d8a6d; --accent: #ff4d7a; }
+.theme-night-owl { --bg: #011627; --fg: #d6deeb; --fg-dim: #637777; --accent: #82aaff; }
+.theme-light-owl { --bg: #fbfbfb; --fg: #403f53; --fg-dim: #90a7b2; --accent: #0c969b; }
+.theme-cobalt2 { --bg: #193549; --fg: #ffffff; --fg-dim: #6b8a94; --accent: #ffc600; }
+.theme-palenight { --bg: #292d3e; --fg: #a6accd; --fg-dim: #676e95; --accent: #82aaff; }
+.theme-everforest-dark { --bg: #2d353b; --fg: #d3c6aa; --fg-dim: #859289; --accent: #a7c080; }
+.theme-everforest-light { --bg: #fdf6e3; --fg: #5c6a72; --fg-dim: #939f91; --accent: #8da101; }
+.theme-rose-pine { --bg: #191724; --fg: #e0def4; --fg-dim: #6e6a86; --accent: #ebbcba; }
+.theme-rose-pine-moon { --bg: #232136; --fg: #e0def4; --fg-dim: #6e6a86; --accent: #ea9a97; }
+.theme-rose-pine-dawn { --bg: #faf4ed; --fg: #575279; --fg-dim: #9893a5; --accent: #d7827e; }
+.theme-kanagawa { --bg: #1f1f28; --fg: #dcd7ba; --fg-dim: #727169; --accent: #7e9cd8; }
+.theme-kanagawa-wave { --bg: #223249; --fg: #dcd7ba; --fg-dim: #727169; --accent: #7fb4ca; }
+.theme-kanagawa-lotus { --bg: #f2ecbc; --fg: #545464; --fg-dim: #8a8980; --accent: #8992a7; }
+.theme-github-dark { --bg: #0d1117; --fg: #c9d1d9; --fg-dim: #8b949e; --accent: #58a6ff; }
+.theme-github-light { --bg: #ffffff; --fg: #24292f; --fg-dim: #6e7781; --accent: #0969da; }
+.theme-vscode-dark { --bg: #1e1e1e; --fg: #cccccc; --fg-dim: #6a6a6a; --accent: #007acc; }
+.theme-vscode-light { --bg: #ffffff; --fg: #000000; --fg-dim: #6e6e6e; --accent: #005fb8; }
+.theme-atom-one-dark { --bg: #282c34; --fg: #abb2bf; --fg-dim: #5c6370; --accent: #56b6c2; }
+.theme-atom-one-light { --bg: #fafafa; --fg: #383a42; --fg-dim: #a0a1a7; --accent: #0184bc; }
+.theme-high-contrast-dark { --bg: #000000; --fg: #ffffff; --fg-dim: #808080; --accent: #00ff00; }
+.theme-high-contrast-light { --bg: #ffffff; --fg: #000000; --fg-dim: #707070; --accent: #0000ff; }
+.theme-paper { --bg: #f7f3e9; --fg: #444444; --fg-dim: #9e9b96; --accent: #8b4513; }
+.theme-sepia { --bg: #f4ecd8; --fg: #704214; --fg-dim: #a89060; --accent: #8b4513; }
+.theme-midnight { --bg: #0f0f23; --fg: #cccccc; --fg-dim: #666a7e; --accent: #00cc00; }
+.theme-forest { --bg: #1b2f1b; --fg: #c8e6c8; --fg-dim: #6d8a6d; --accent: #90ee90; }
+.theme-ocean-deep { --bg: #001122; --fg: #b3d9ff; --fg-dim: #5a7a99; --accent: #00ccff; }
+.theme-sunset { --bg: #2d1b0e; --fg: #ffcc99; --fg-dim: #997854; --accent: #ff6600; }
+.theme-aurora { --bg: #0a1420; --fg: #a3c3e8; --fg-dim: #526a84; --accent: #00ff7f; }
+.theme-neon { --bg: #0d001a; --fg: #ff80ff; --fg-dim: #994099; --accent: #66ffff; }
+
+/* Fonts */
+.font-jetbrains { --font: 'JetBrains Mono', monospace; }
+.font-fira { --font: 'Fira Code', monospace; }
+.font-source { --font: 'Source Code Pro', monospace; }
+.font-ibm { --font: 'IBM Plex Mono', monospace; }
+.font-roboto { --font: 'Roboto Mono', monospace; }
+.font-space { --font: 'Space Mono', monospace; }
+.font-ubuntu { --font: 'Ubuntu Mono', monospace; }
+.font-inconsolata { --font: 'Inconsolata', monospace; }
+.font-cousine { --font: 'Cousine', monospace; }
+.font-overpass { --font: 'Overpass Mono', monospace; }
+.font-redhat { --font: 'Red Hat Mono', monospace; }
+.font-monaco { --font: 'Monaco', 'Courier New', monospace; }
+.font-menlo { --font: 'Menlo', 'Courier New', monospace; }
+.font-consolas { --font: 'Consolas', 'Courier New', monospace; }
+.font-cascadia { --font: 'Cascadia Code', 'Consolas', monospace; }
+.font-sf-mono { --font: 'SF Mono', 'Monaco', monospace; }
+.font-dejavu { --font: 'DejaVu Sans Mono', 'Courier New', monospace; }
+.font-liberation { --font: 'Liberation Mono', 'Courier New', monospace; }
+.font-pt-mono { --font: 'PT Mono', 'Courier New', monospace; }
+.font-oxygen { --font: 'Oxygen Mono', 'Courier New', monospace; }
+.font-noto { --font: 'Noto Sans Mono', 'Courier New', monospace; }
+.font-recursive { --font: 'Recursive', 'Monaco', monospace; }
+.font-cutive { --font: 'Cutive Mono', 'Courier New', monospace; }
+.font-nova { --font: 'Nova Mono', 'Courier New', monospace; }
+.font-martian { --font: 'Martian Mono', 'Monaco', monospace; }
+.font-b612 { --font: 'B612 Mono', 'Monaco', monospace; }
+.font-times { --font: 'Times New Roman', 'Times', serif; }
+</style>
+</head>
+<body class="theme-ton3s font-jetbrains">
+<div class="text">Coming Soon.</div>
+<script>
+(function() {
+    const themes = [
+        'theme-ton3s','theme-catppuccin-mocha','theme-dracula','theme-nord',
+        'theme-gruvbox-dark','theme-tokyo-night','theme-one-dark','theme-rose-pine',
+        'theme-catppuccin-macchiato','theme-catppuccin-frappe','theme-dracula-soft',
+        'theme-gruvbox-material','theme-tokyo-night-storm','theme-nord-aurora',
+        'theme-solarized-dark','theme-monokai','theme-monokai-pro','theme-monokai-ristretto',
+        'theme-one-dark-pro','theme-ayu-dark','theme-ayu-mirage','theme-material-darker',
+        'theme-material-ocean','theme-material-palenight','theme-tomorrow-night',
+        'theme-tomorrow-night-bright','theme-tomorrow-night-blue','theme-base16-ocean',
+        'theme-base16-tomorrow','theme-base16-onedark','theme-base16-atelier',
+        'theme-zenburn','theme-apprentice','theme-horizon-dark','theme-synthwave-84',
+        'theme-cyberpunk','theme-night-owl','theme-cobalt2','theme-palenight',
+        'theme-everforest-dark','theme-rose-pine-moon','theme-kanagawa','theme-kanagawa-wave',
+        'theme-github-dark','theme-vscode-dark','theme-atom-one-dark','theme-midnight',
+        'theme-forest','theme-ocean-deep','theme-aurora','theme-neon',
+        'theme-catppuccin-latte','theme-gruvbox-light','theme-tokyo-night-light',
+        'theme-solarized-light','theme-one-light','theme-ayu-light','theme-material-lighter',
+        'theme-horizon-bright','theme-light-owl','theme-everforest-light',
+        'theme-rose-pine-dawn','theme-kanagawa-lotus','theme-github-light',
+        'theme-vscode-light','theme-atom-one-light','theme-paper','theme-sepia',
+        'theme-sunset','theme-high-contrast-dark','theme-high-contrast-light'
+    ];
+
+    const fonts = [
+        'font-times','font-jetbrains','font-fira','font-source','font-ibm',
+        'font-roboto','font-space','font-ubuntu','font-inconsolata','font-cousine',
+        'font-overpass','font-redhat','font-monaco','font-menlo','font-consolas',
+        'font-cascadia','font-sf-mono','font-dejavu','font-liberation','font-pt-mono',
+        'font-oxygen','font-noto','font-recursive','font-cutive','font-nova',
+        'font-martian','font-b612'
+    ];
+
+    function createShuffler(arr) {
+        let unused = [];
+        return function next() {
+            if (unused.length === 0) {
+                unused = arr.map((_, i) => i);
+                for (let i = unused.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [unused[i], unused[j]] = [unused[j], unused[i]];
+                }
+            }
+            return arr[unused.pop()];
+        };
+    }
+
+    const nextTheme = createShuffler(themes);
+    const nextFont = createShuffler(fonts);
+    const body = document.body;
+
+    let currentTheme = 'theme-ton3s';
+    let currentFont = 'font-jetbrains';
+
+    function applyTheme() {
+        const t = nextTheme();
+        body.classList.remove(currentTheme);
+        body.classList.add(t);
+        currentTheme = t;
+    }
+
+    function applyFont() {
+        const f = nextFont();
+        body.classList.remove(currentFont);
+        body.classList.add(f);
+        currentFont = f;
+    }
+
+    setInterval(applyTheme, 3000);
+    setInterval(applyFont, 5000);
+})();
+</script>
+</body>
+</html>
