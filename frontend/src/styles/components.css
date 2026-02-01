@@ -271,95 +271,35 @@
     font-weight: 600;
 }
 
-/* Theme grid */
-.theme-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.theme-category {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.theme-category-label {
-    font-size: 0.7rem;
-    color: var(--fg-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.theme-category-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-
-.theme-swatch {
-    width: 28px;
-    height: 28px;
-    padding: 0;
+/* Settings select dropdowns */
+.settings-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--secondary);
     border-radius: 6px;
-    background: var(--secondary);
-    border: 2px solid transparent;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: border-color 0.2s ease;
+    appearance: auto;
 }
 
-.theme-swatch:hover {
-    border-color: var(--fg-dim);
-    background: var(--hover);
-}
-
-.theme-swatch.active {
+.settings-select:focus {
+    outline: none;
     border-color: var(--accent);
-    background: var(--hover);
 }
 
-.theme-swatch-name {
-    font-size: 0.65rem;
+.settings-select optgroup {
     font-weight: 600;
     color: var(--fg-dim);
-    text-transform: uppercase;
 }
 
-.theme-swatch.active .theme-swatch-name {
-    color: var(--accent);
-}
-
-/* Font list */
-.font-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    max-height: 150px;
-    overflow-y: auto;
-}
-
-.font-option {
-    padding: 0.35rem 0.6rem;
-    border-radius: 4px;
-    background: var(--secondary);
-    border: 2px solid transparent;
+.settings-select option {
+    background: var(--bg);
     color: var(--fg);
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.font-option:hover {
-    background: var(--hover);
-}
-
-.font-option.active {
-    border-color: var(--accent);
-    background: var(--hover);
+    padding: 0.25rem;
 }
 
 /* Privacy details section */

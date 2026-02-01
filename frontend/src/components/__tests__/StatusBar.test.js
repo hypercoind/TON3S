@@ -2,13 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies
 vi.mock('../../state/AppState.js', () => ({
+    StateEvents: {
+        THEME_CHANGED: 'settings:theme',
+        FONT_CHANGED: 'settings:font'
+    },
     appState: {
         ui: {
             lastSaveTime: Date.now()
         },
         currentNote: null,
-        themeIndex: 0,
-        fontIndex: 0,
+        settings: {
+            theme: { currentIndex: 0 },
+            font: { currentIndex: 0 }
+        },
         setTheme: vi.fn(),
         setFont: vi.fn(),
         on: vi.fn().mockReturnValue(vi.fn())

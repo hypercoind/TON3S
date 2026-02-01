@@ -4,7 +4,7 @@
  */
 
 import { BaseComponent } from './BaseComponent.js';
-import { appState } from '../state/AppState.js';
+import { appState, StateEvents } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
 import { exportService } from '../services/ExportService.js';
 import { toast } from './Toast.js';
@@ -58,8 +58,8 @@ export class StatusBar extends BaseComponent {
     }
 
     getSettingsPopupHTML() {
-        const currentThemeIndex = appState.themeIndex;
-        const currentFontIndex = appState.fontIndex;
+        const currentThemeIndex = appState.settings.theme.currentIndex;
+        const currentFontIndex = appState.settings.font.currentIndex;
         const groupedThemes = getThemesByCategory();
 
         return `
@@ -71,48 +71,36 @@ export class StatusBar extends BaseComponent {
                 <div class="settings-content">
                     <div class="settings-section">
                         <h4>Theme</h4>
-                        <div class="theme-grid">
+                        <select id="theme-select" class="settings-select" aria-label="Theme">
                             ${groupedThemes
                                 .map(
                                     category => `
-                                <div class="theme-category">
-                                    <span class="theme-category-label">${category.name}</span>
-                                    <div class="theme-category-items">
-                                        ${category.themes
-                                            .map(
-                                                theme => `
-                                            <button class="theme-swatch ${theme.index === currentThemeIndex ? 'active' : ''}"
-                                                    data-theme-index="${theme.index}"
-                                                    title="${theme.full}"
-                                                    aria-label="${theme.full}">
-                                                <span class="theme-swatch-name">${theme.name.charAt(0)}</span>
-                                            </button>
-                                        `
-                                            )
-                                            .join('')}
-                                    </div>
-                                </div>
+                                <optgroup label="${category.name}">
+                                    ${category.themes
+                                        .map(
+                                            theme => `
+                                        <option value="${theme.index}" ${theme.index === currentThemeIndex ? 'selected' : ''}>${theme.full}</option>
+                                    `
+                                        )
+                                        .join('')}
+                                </optgroup>
                             `
                                 )
                                 .join('')}
-                        </div>
+                        </select>
                     </div>
 
                     <div class="settings-section">
                         <h4>Font</h4>
-                        <div class="font-list">
+                        <select id="font-select" class="settings-select" aria-label="Font">
                             ${fonts
                                 .map(
                                     (font, index) => `
-                                <button class="font-option ${index === currentFontIndex ? 'active' : ''}"
-                                        data-font-index="${index}"
-                                        title="${font.full}">
-                                    ${font.full}
-                                </button>
+                                <option value="${index}" ${index === currentFontIndex ? 'selected' : ''}>${font.full}</option>
                             `
                                 )
                                 .join('')}
-                        </div>
+                        </select>
                     </div>
 
                     <details class="settings-section settings-privacy">
@@ -189,6 +177,25 @@ export class StatusBar extends BaseComponent {
         // Bind settings popup events
         this.bindSettingsEvents();
 
+        // Sync dropdowns when theme/font changed externally (e.g. Header rotate buttons)
+        this.subscribe(
+            appState.on(StateEvents.THEME_CHANGED, () => {
+                const sel = document.getElementById('theme-select');
+                if (sel) {
+                    sel.value = appState.settings.theme.currentIndex;
+                }
+            })
+        );
+
+        this.subscribe(
+            appState.on(StateEvents.FONT_CHANGED, () => {
+                const sel = document.getElementById('font-select');
+                if (sel) {
+                    sel.value = appState.settings.font.currentIndex;
+                }
+            })
+        );
+
         // Listen for editor count updates
         document.addEventListener('editor:counts', e => {
             this.updateCounts(e.detail);
@@ -222,20 +229,14 @@ export class StatusBar extends BaseComponent {
             }
         });
 
-        // Theme swatches
-        document.querySelectorAll('.theme-swatch').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                const index = parseInt(swatch.dataset.themeIndex);
-                this.setTheme(index);
-            });
+        // Theme select
+        document.getElementById('theme-select')?.addEventListener('change', e => {
+            this.setTheme(parseInt(e.target.value));
         });
 
-        // Font options
-        document.querySelectorAll('.font-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const index = parseInt(option.dataset.fontIndex);
-                this.setFont(index);
-            });
+        // Font select
+        document.getElementById('font-select')?.addEventListener('change', e => {
+            this.setFont(parseInt(e.target.value));
         });
 
         // Clear data button
@@ -287,10 +288,11 @@ export class StatusBar extends BaseComponent {
 
         storageService.saveThemeState();
 
-        // Update active state in popup
-        document.querySelectorAll('.theme-swatch').forEach(swatch => {
-            swatch.classList.toggle('active', parseInt(swatch.dataset.themeIndex) === index);
-        });
+        // Update select value in popup
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = index;
+        }
     }
 
     setFont(index) {
@@ -304,10 +306,11 @@ export class StatusBar extends BaseComponent {
 
         storageService.saveFontState();
 
-        // Update active state in popup
-        document.querySelectorAll('.font-option').forEach(option => {
-            option.classList.toggle('active', parseInt(option.dataset.fontIndex) === index);
-        });
+        // Update select value in popup
+        const fontSelect = document.getElementById('font-select');
+        if (fontSelect) {
+            fontSelect.value = index;
+        }
     }
 
     /**
