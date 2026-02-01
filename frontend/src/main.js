@@ -280,13 +280,26 @@ class TON3SApp {
         };
         document.addEventListener('mousemove', this.mouseMoveHandler);
 
-        // Escape key exits zen mode
-        this.zenEscapeHandler = e => {
-            if (e.key === 'Escape' && appState.settings.zenMode) {
-                appState.setZenMode(false);
+        // Escape key resets app to default state
+        this.escapeHandler = e => {
+            if (e.key === 'Escape') {
+                if (appState.settings.zenMode) {
+                    appState.setZenMode(false);
+                }
+                if (appState.settings.sidebarOpen) {
+                    appState.setSidebarOpen(false);
+                }
+                if (appState.settings.nostrPanelOpen) {
+                    appState.setNostrPanelOpen(false);
+                }
+                if (appState.ui.searchQuery) {
+                    appState.setSearchQuery('');
+                }
+                this.components.editor?.focus();
+                this.components.editor?.moveCursorToEnd();
             }
         };
-        document.addEventListener('keydown', this.zenEscapeHandler);
+        document.addEventListener('keydown', this.escapeHandler);
     }
 
     initSecurity() {
@@ -344,8 +357,8 @@ class TON3SApp {
         if (this.activePageHandler) {
             appState.off(StateEvents.ACTIVE_PAGE_CHANGED, this.activePageHandler);
         }
-        if (this.zenEscapeHandler) {
-            document.removeEventListener('keydown', this.zenEscapeHandler);
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
         }
 
         // Cleanup keyboard manager

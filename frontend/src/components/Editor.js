@@ -125,6 +125,8 @@ export class Editor extends BaseComponent {
         // Sanitize HTML content to prevent XSS
         this.editorElement.innerHTML = sanitizeHtml(note.content || '<p><br></p>');
         this.updateCounts();
+        this.editorElement.focus();
+        this.moveCursorToEnd();
     }
 
     /**
