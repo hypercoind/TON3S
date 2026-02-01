@@ -31,3 +31,6 @@ Thumbs.db
 *.swp
 *.swo
 worktrees/
+
+# Security tests (local only)
+security-tests/
