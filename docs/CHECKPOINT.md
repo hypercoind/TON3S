@@ -1,7 +1,7 @@
 # CHECKPOINT.md
 
 > Auto-generated project checkpoint for AI-assisted development sessions.
-> Last updated: 2026-01-26
+> Last updated: 2026-02-01
 
 ---
 
@@ -10,13 +10,14 @@
 | Attribute | Value |
 |-----------|-------|
 | Project | TON3S v2.0.0 |
-| Type | Full-stack JavaScript (Vite + Fastify) |
+| Type | Full-stack JavaScript + Rust WASM (Vite + Fastify) |
 | Purpose | Privacy-focused writing app with NOSTR integration |
-| Frontend | Vite 6.0 + Dexie (IndexedDB) |
-| Backend | Fastify 5.0 + WebSocket proxy |
-| Test Framework | Vitest |
+| Frontend | Vite 6.0 + Dexie (IndexedDB) + Rust WASM signing |
+| Backend | Fastify 5.0 + WebSocket relay proxy |
+| Test Framework | Vitest 4.0 |
 | Container | Docker Compose (nginx + Node 22) |
 | Ports | Frontend: 3002, Backend: 3001, Dev: 3000 |
+| Languages | JavaScript, Rust (WASM), CSS, HTML |
 
 ---
 
@@ -26,25 +27,26 @@
 TON3S/
 ├── frontend/                    # Vite SPA
 │   ├── src/
-│   │   ├── main.js              # Application bootstrap
+│   │   ├── main.js              # Application bootstrap (TON3SApp class)
 │   │   ├── components/          # 8 UI components (BaseComponent pattern)
 │   │   │   ├── BaseComponent.js # Abstract base with lifecycle
 │   │   │   ├── Editor.js        # ContentEditable rich text
 │   │   │   ├── Header.js        # Logo, theme/font controls
-│   │   │   ├── Sidebar.js       # Note list, search, resize
+│   │   │   ├── Sidebar.js       # Note list, search, tag editing
 │   │   │   ├── StatusBar.js     # Word count, settings popup
 │   │   │   ├── NostrPanel.js    # NOSTR publishing UI
 │   │   │   ├── Toast.js         # Notification manager
 │   │   │   └── index.js         # Component exports
-│   │   ├── services/            # 5 business logic services
+│   │   ├── services/            # 6 business logic services
 │   │   │   ├── StorageService.js    # IndexedDB via Dexie
 │   │   │   ├── NostrService.js      # Relay WebSocket proxy
-│   │   │   ├── NostrAuthService.js  # NIP-07 authentication
+│   │   │   ├── NostrAuthService.js  # NIP-07 + WASM signing
 │   │   │   ├── ExportService.js     # JSON/Markdown/PDF export
 │   │   │   ├── FaviconService.js    # Dynamic favicon
+│   │   │   ├── wasm-loader.js       # WASM module loader
 │   │   │   └── index.js
 │   │   ├── state/               # Reactive state management
-│   │   │   ├── AppState.js      # Singleton with 39 event types
+│   │   │   ├── AppState.js      # Singleton with 26 event types
 │   │   │   └── StateEmitter.js  # Event emitter base class
 │   │   ├── utils/               # Utility functions
 │   │   │   ├── markdown.js      # HTML↔Markdown, word count
@@ -55,33 +57,38 @@ TON3S/
 │   │   │   └── fonts.js         # 27 font definitions
 │   │   └── styles/              # 10 modular CSS files
 │   │       ├── main.css         # Entry point
-│   │       ├── base.css         # Reset, typography
+│   │       ├── base.css         # Reset, typography, Google Fonts
 │   │       ├── layout.css       # Grid/flexbox
 │   │       ├── components.css   # UI components
 │   │       ├── editor.css       # Editor styles
 │   │       ├── themes.css       # All 72 themes
-│   │       ├── fonts.css        # Google Fonts imports
+│   │       ├── fonts.css        # Font application rules
 │   │       ├── animations.css   # Transitions
 │   │       ├── zen-mode.css     # Distraction-free mode
 │   │       └── responsive.css   # Mobile/tablet
+│   ├── wasm/                    # Rust WASM signing module
+│   │   ├── src/lib.rs           # secp256k1 Schnorr signing
+│   │   ├── Cargo.toml           # k256, wasm-bindgen, zeroize
+│   │   └── pkg/                 # Built WASM output
 │   ├── public/
 │   │   └── manifest.json        # PWA manifest
 │   ├── index.html               # Entry with CSP headers
-│   ├── vite.config.js           # Vite + PWA plugin config
+│   ├── vite.config.js           # Vite + PWA + WASM plugins
 │   ├── vitest.config.js         # Test config (30% coverage)
-│   ├── Dockerfile               # Multi-stage: Node → nginx
+│   ├── Dockerfile               # Multi-stage: Rust → Node → nginx
 │   └── nginx.conf               # Security headers, gzip, proxy
 │
 ├── backend/                     # Fastify server
 │   ├── src/
 │   │   ├── index.js             # Server entry, routes, middleware
 │   │   └── websocket/
-│   │       └── NostrProxy.js    # Relay proxy with SSRF protection
+│   │       └── NostrProxy.js    # Relay proxy with SSRF/DNS pinning
 │   ├── Dockerfile               # Node 22 Alpine, health check
 │   ├── vitest.config.js         # Test config (50% coverage)
 │   └── package.json
 │
 ├── docs/                        # Documentation
+│   ├── CHECKPOINT.md            # This file
 │   ├── getting-started.md
 │   ├── user-guide.md
 │   ├── nostr-guide.md
@@ -111,6 +118,7 @@ TON3S is a minimalist, privacy-focused writing application with:
 - **Export formats**: Markdown (with YAML frontmatter), JSON, PDF
 - **PWA support** with offline capability via service worker
 - **Privacy-first**: IP masking through WebSocket relay proxy
+- **WASM signing**: Rust-based secp256k1 Schnorr signing for offline key management
 
 ### Core Philosophy
 
@@ -150,40 +158,55 @@ class MyComponent extends BaseComponent {
 Centralized reactive state via `AppState` singleton:
 
 ```javascript
-// State structure
 {
-  notes: [],                    // Array of note objects
-  currentNoteId: null,          // Active note ID
-  settings: {
+  _notes: [],                    // Array of note objects
+  _currentNoteId: null,          // Active note ID
+  _settings: {
     theme: { currentIndex, unusedIndices },
     font: { currentIndex, unusedIndices },
     zenMode: false,
-    sidebarVisible: true
+    sidebarOpen: true,
+    nostrPanelOpen: false,
+    nostr: {
+      enabled: true,
+      defaultRelays: [...],      // 6 default relays
+      proxyUrl: '/ws/nostr'
+    }
   },
-  nostr: {
+  _nostr: {
     connected: false,
     pubkey: null,
     extension: null,
-    publishedNotes: []
+    error: null
   },
-  ui: {
+  _publishedNotes: [],           // Ephemeral, cleared on disconnect
+  _ui: {
     searchQuery: '',
-    saveStatus: 'saved',
-    loading: false
+    saveStatus: 'saving' | 'saved' | 'error',
+    lastSaveTime: number,
+    loading: false,
+    activeMobilePage: 'editor' | 'notes' | 'nostr'
   }
 }
 ```
 
-**39 event types** for granular state subscriptions.
+### State Events (26 types)
+
+| Category | Events |
+|----------|--------|
+| Note (5) | `NOTE_CREATED`, `NOTE_UPDATED`, `NOTE_DELETED`, `NOTE_SELECTED`, `NOTES_LOADED` |
+| Settings (6) | `THEME_CHANGED`, `FONT_CHANGED`, `PRE_ZEN_MODE`, `ZEN_MODE_TOGGLED`, `SIDEBAR_TOGGLED`, `NOSTR_PANEL_TOGGLED` |
+| Nostr (6) | `NOSTR_CONNECTED`, `NOSTR_DISCONNECTED`, `NOSTR_PUBLISHED`, `NOSTR_ERROR`, `NOSTR_PUBLISHED_NOTE_ADDED`, `NOSTR_PUBLISHED_NOTES_CLEARED` |
+| UI (4) | `SEARCH_CHANGED`, `SAVE_STATUS_CHANGED`, `LOADING_CHANGED`, `ACTIVE_PAGE_CHANGED` |
 
 ### Data Flow
 
 ```
 User Action → Component → Service → Storage/API
                 ↓
-            AppState.setState()
+            AppState mutator method
                 ↓
-            emit('stateChange')
+            emit(StateEvent)
                 ↓
             All subscribed components re-render
 ```
@@ -212,15 +235,15 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 
 ### Frontend Components
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| BaseComponent | `BaseComponent.js` | Abstract base with lifecycle, subscriptions, DOM helpers |
-| Editor | `Editor.js` | ContentEditable with h1/h2/p styles, auto-zen, paste handling |
-| Header | `Header.js` | Logo, theme rotation button, font rotation button |
-| Sidebar | `Sidebar.js` | Note list, search with debounce, resize handles (200-500px) |
-| StatusBar | `StatusBar.js` | Word/char count, settings popup with export buttons |
-| NostrPanel | `NostrPanel.js` | Extension detection, pubkey display, publish Kind 1/30023 |
-| Toast | `Toast.js` | Singleton notifications: success/error/info/warning |
+| Component | File | LOC | Purpose |
+|-----------|------|-----|---------|
+| BaseComponent | `BaseComponent.js` | 111 | Abstract base with lifecycle, subscriptions, DOM helpers |
+| Editor | `Editor.js` | 380 | ContentEditable with h1/h2/p styles, auto-zen, paste handling |
+| Header | `Header.js` | 151 | Logo, theme rotation button, font rotation button |
+| Sidebar | `Sidebar.js` | 828 | Note list, search with debounce, tag editing, note management |
+| StatusBar | `StatusBar.js` | 542 | Word/char count, settings popup with export/import |
+| NostrPanel | `NostrPanel.js` | 556 | Extension detection, pubkey display, publish Kind 1/30023 |
+| Toast | `Toast.js` | 171 | Singleton notifications: success/error/info/warning |
 
 ### Frontend Services
 
@@ -228,22 +251,40 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 |---------|------|---------|
 | StorageService | `StorageService.js` | Dexie wrapper, CRUD notes, 100ms throttle, 1MB max |
 | NostrService | `NostrService.js` | WebSocket to `/ws/nostr`, reconnect logic, relay management |
-| NostrAuthService | `NostrAuthService.js` | NIP-07 detection, WASM schnorr signing |
-| ExportService | `ExportService.js` | JSON/Markdown/PDF export, YAML frontmatter |
+| NostrAuthService | `NostrAuthService.js` | NIP-07 detection, WASM Schnorr signing, bech32 keys |
+| ExportService | `ExportService.js` | JSON/Markdown/PDF export, YAML frontmatter, file import |
 | FaviconService | `FaviconService.js` | Dynamic favicon from theme --accent color |
+| wasm-loader | `wasm-loader.js` | WASM signing module loader (`loadWasmModule`, `getWasmModule`, `isWasmAvailable`) |
+
+### WASM Module (Rust)
+
+| File | Purpose |
+|------|---------|
+| `frontend/wasm/src/lib.rs` | secp256k1 Schnorr signing for NOSTR events |
+| `frontend/wasm/Cargo.toml` | Dependencies: k256, wasm-bindgen, zeroize, getrandom |
+
+Keys stored exclusively in WASM memory, never exposed to JavaScript.
 
 ### Backend Modules
 
 | Module | File | Purpose |
 |--------|------|---------|
-| Server | `index.js` | Fastify entry, routes, CORS, rate limiting |
-| NostrProxy | `websocket/NostrProxy.js` | Relay proxy, SSRF protection, 10 connections max |
+| Server | `index.js` | Fastify entry, routes, CORS, rate limiting, security headers |
+| NostrProxy | `websocket/NostrProxy.js` | Relay proxy, SSRF protection, DNS pinning, 10 connections max |
+
+### Utilities
+
+| Module | File | Key Exports |
+|--------|------|-------------|
+| markdown | `markdown.js` | `htmlToMarkdown`, `markdownToHtml`, `htmlToPlainText`, `parseContentForPDF`, `countWords`, `countCharacters` |
+| sanitizer | `sanitizer.js` | `sanitizeInput`, `sanitizeHtml`, `sanitizeFilename`, `stripHtml`, `validateIndex`, `generateUUID` |
+| keyboard | `keyboard.js` | `KeyboardManager` with defaults: Cmd+T, Cmd+N, Cmd+K, Cmd+F, Cmd+Shift+?, Escape |
 
 ### State Modules
 
 | Module | File | Purpose |
 |--------|------|---------|
-| AppState | `AppState.js` | Reactive singleton, 39 event types, persistence |
+| AppState | `AppState.js` | Reactive singleton, 26 event types, persistence |
 | StateEmitter | `StateEmitter.js` | Event emitter base: on/off/emit/once |
 
 ---
@@ -263,11 +304,22 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 |---------|---------|---------|
 | vite | ^6.0.0 | Build tool and dev server |
 | vite-plugin-pwa | ^0.21.0 | PWA/service worker generation |
+| vite-plugin-wasm | ^3.5.0 | WASM module loading |
+| vite-plugin-top-level-await | ^1.6.0 | Async WASM init support |
 | vitest | ^4.0.17 | Unit testing framework |
 | @vitest/coverage-v8 | ^4.0.17 | Code coverage |
 | @testing-library/dom | ^10.4.1 | DOM testing utilities |
 | happy-dom | ^20.3.4 | Lightweight DOM for tests |
 | sharp | ^0.34.5 | Image processing for icons |
+
+### Rust WASM
+
+| Crate | Version | Purpose |
+|-------|---------|---------|
+| wasm-bindgen | 0.2 | JS ↔ Rust FFI |
+| k256 | 0.13 | secp256k1 + Schnorr signatures |
+| getrandom | 0.2 | Random number generation (JS feature) |
+| zeroize | 1.x | Secure memory wiping |
 
 ### Backend Production
 
@@ -298,6 +350,17 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 
 ---
 
+## External Services
+
+| Integration | Type | Purpose | Privacy Impact |
+|-------------|------|---------|----------------|
+| Nostr Relays (6 default) | WebSocket | Decentralized publishing | IP hidden behind proxy |
+| Google Fonts (17 families) | CDN | Typography | IP + font usage tracking |
+| NIP-07 Extensions | Browser API | Cryptographic signing | Local extension only |
+| WASM Signing | Local compute | Offline Schnorr signing | Entirely client-side |
+
+---
+
 ## Environment Variables
 
 ### Docker Compose
@@ -323,15 +386,19 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 | NOSTR Proxy | `/ws/nostr` | AppState.js |
 | Auto-save throttle | 100ms | StorageService.js |
 | Max content size | 1MB | StorageService.js |
+| Max relays/client | 10 | NostrProxy.js |
+| Max message size | 64KB | NostrProxy.js |
+| Rate limit (Nostr) | 30 msg/sec | NostrProxy.js |
 
 ### Default NOSTR Relays
 
 ```
 wss://relay.damus.io
 wss://nos.lol
-wss://relay.nostr.band
+wss://relay.primal.net
 wss://relay.snort.social
-wss://nostr.wine
+wss://nostr.mom
+wss://relay.nostr.band
 ```
 
 ---
@@ -352,55 +419,24 @@ wss://nostr.wine
 |------|---------|
 | `/ws/nostr` | NOSTR relay proxy |
 
-**WebSocket Protocol**:
-- Max connections per client: 10
-- Max message size: 64KB
-- SSRF protection: blocks private IPs/hostnames
+**WebSocket Limits**: 10 relays/client, 64KB max message, 30 msg/sec rate limit
 
 ---
 
-## Critical Paths
-
-### Note Lifecycle
-
-```
-Create → StorageService.saveNote() → IndexedDB
-       → AppState.emit('note:created')
-       → Sidebar.render() + Editor.render()
-
-Update → Editor input event → throttle 100ms
-       → StorageService.saveNote() → IndexedDB
-       → AppState.emit('note:updated')
-
-Delete → StorageService.deleteNote() → IndexedDB
-       → AppState.emit('note:deleted')
-       → Select next note or create new
-```
-
-### NOSTR Publish Flow
-
-```
-User clicks Publish → NostrPanel.publishNote()
-  → NostrAuthService.signEvent() (NIP-07 or private key)
-  → NostrService.publishEvent()
-  → WebSocket BROADCAST to proxy
-  → Backend fans out to all relays
-  → RELAY_MESSAGE responses collected
-  → AppState.emit('nostr:published')
-```
-
-### Storage Schema
+## Storage Schema
 
 ```javascript
-// IndexedDB: TON3SDatabase
+// IndexedDB database: "ton3s"
+// Version 2 (migrated from v1 "documents" table)
+
 notes: {
-  id: number,           // Auto-increment primary key
-  title: string,
-  content: string,      // HTML (h1, h2, p tags)
+  id: number,           // ++id auto-increment primary key
+  title: string,        // Auto-generated from first line
+  content: string,      // HTML (h1, h2, p tags only)
   plainText: string,    // Extracted for search
-  tags: string[],
-  createdAt: number,    // Unix timestamp
-  updatedAt: number,
+  tags: string[],       // Multi-value index (*tags)
+  createdAt: number,    // Unix timestamp (indexed)
+  updatedAt: number,    // Unix timestamp (indexed)
   nostr: {
     published: boolean,
     eventId: string,
@@ -412,6 +448,62 @@ settings: {
   key: string,          // Primary key
   value: any
 }
+```
+
+---
+
+## Critical Paths
+
+### Note Lifecycle
+
+```
+Create → StorageService.saveNote() → IndexedDB
+       → appState.addNote() → emit(NOTE_CREATED)
+       → Sidebar.render() + Editor.render()
+
+Edit   → Editor input event → throttle 100ms
+       → StorageService.updateNote() → IndexedDB
+       → appState.updateNote() → emit(NOTE_UPDATED)
+
+Delete → StorageService.deleteNote() → IndexedDB
+       → appState.deleteNote() → emit(NOTE_DELETED)
+       → Select next note or create new
+```
+
+### NOSTR Publish Flow
+
+```
+User clicks Publish → NostrPanel.publishNote()
+  → NostrAuthService.signEvent() (NIP-07 or WASM private key)
+  → NostrService.publishEvent()
+  → WebSocket BROADCAST to proxy
+  → NostrProxy validates URLs (SSRF + DNS pinning)
+  → Backend fans out to all connected relays
+  → RELAY_MESSAGE responses collected
+  → appState.addPublishedNote() → emit(NOSTR_PUBLISHED_NOTE_ADDED)
+```
+
+### Theme/Font Rotation
+
+```
+Cmd+T / Cmd+K → rotateTheme() / rotateFont()
+  → unusedIndices array prevents repeats
+  → emit(THEME_CHANGED / FONT_CHANGED)
+  → Components apply CSS class to <body>
+  → FaviconService updates favicon color
+```
+
+### App Bootstrap (main.js)
+
+```
+1. Initialize WASM signing module (non-blocking)
+2. Initialize StorageService + migrate legacy data
+3. Load/apply settings (theme, font, zen mode)
+4. Initialize FaviconService
+5. Initialize UI components (Header, Sidebar, Editor, StatusBar, NostrPanel)
+6. Load notes from database
+7. Setup keyboard shortcuts (KeyboardManager)
+8. Initialize security measures (eval disabled, HTTPS warning)
 ```
 
 ---
@@ -468,7 +560,7 @@ npm run format:check              # Check formatting
 
 ---
 
-## Verification & Testing
+## Testing
 
 ### Test Thresholds
 
@@ -477,25 +569,20 @@ npm run format:check              # Check formatting
 | Frontend | 30% (statements, branches, functions, lines) |
 | Backend | 50% (statements, branches, functions, lines) |
 
-### Manual Test Checklist
-
-1. **Editor**: Title/Heading/Body styles, paste strips to plain text, auto-save
-2. **Notes**: Create, switch, delete, search with debounce
-3. **Zen mode**: Activates after 3s typing, exits on mouse movement
-4. **Themes/Fonts**: Cycle through, verify CSS variables applied
-5. **Export**: Markdown (with frontmatter), JSON, PDF
-6. **NOSTR**: Connect extension (nos2x/Alby), publish Kind 1 and Kind 30023
-7. **Persistence**: Refresh page, verify IndexedDB data persists
-8. **PWA**: Install prompt, offline functionality
-
 ### Test Files
 
 ```
-frontend/src/components/__tests__/
-frontend/src/services/__tests__/
-frontend/src/utils/__tests__/
-backend/src/__tests__/
-backend/src/websocket/__tests__/
+frontend/src/components/__tests__/BaseComponent.test.js
+frontend/src/components/__tests__/StatusBar.test.js
+frontend/src/state/__tests__/StateEmitter.test.js
+frontend/src/state/__tests__/AppState.test.js
+frontend/src/utils/__tests__/sanitizer.test.js
+frontend/src/utils/__tests__/markdown.test.js
+frontend/src/services/__tests__/StorageService.test.js
+frontend/src/services/__tests__/NostrAuthService.test.js
+frontend/src/services/__tests__/NostrService.test.js
+backend/__tests__/http-endpoints.test.js
+backend/__tests__/websocket-proxy.test.js
 ```
 
 ---
@@ -505,17 +592,24 @@ backend/src/websocket/__tests__/
 ### Frontend
 
 - **CSP headers** in index.html meta tag
-- **Input sanitization** via sanitizer.js
+- **Input sanitization** via sanitizer.js (whitelist h1/h2/p/br only)
 - **Paste handling** strips to plain text
 - **eval() disabled** at runtime
 - **HTTPS warning** in console if not secure
+- **WASM key isolation** — private keys never enter JS heap
 
 ### Backend
 
-- **CORS** restricted to localhost + *.ton3s.app
+- **CORS** restricted to localhost + *.ton3s.app + optional FRONTEND_URL
 - **Rate limiting** 100 req/min per IP
 - **Security headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
-- **SSRF protection** in NostrProxy (blocks private IPs)
+- **SSRF protection** in NostrProxy:
+  - Blocks private IPs (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8)
+  - Blocks IPv6 private ranges (fe80::/10, fc00::/7, ::1)
+  - Blocks metadata endpoints (169.254.169.254, metadata.google.internal)
+  - DNS pinning prevents TOCTOU rebinding attacks
+- **Message validation**: structure, size (64KB), type checking
+- **Event ID tracking**: only accepts OK for events client actually sent
 
 ### nginx
 
@@ -523,7 +617,7 @@ backend/src/websocket/__tests__/
 - **X-Content-Type-Options**: nosniff
 - **X-XSS-Protection**: 1; mode=block
 - **Referrer-Policy**: strict-origin-when-cross-origin
-- **Permissions-Policy**: Disabled geolocation, microphone, camera
+- **Permissions-Policy**: Disabled geolocation, microphone, camera, payment
 
 ---
 
@@ -531,22 +625,27 @@ backend/src/websocket/__tests__/
 
 ### Key Files to Read First
 
-1. `CLAUDE.md` - Project conventions and patterns
-2. `frontend/src/state/AppState.js` - State structure and events
-3. `frontend/src/components/BaseComponent.js` - Component pattern
-4. `frontend/src/services/StorageService.js` - Data persistence
+1. `CLAUDE.md` — Project conventions and patterns
+2. `frontend/src/state/AppState.js` — State structure and 26 events
+3. `frontend/src/components/BaseComponent.js` — Component pattern
+4. `frontend/src/services/StorageService.js` — Data persistence
+5. `backend/src/websocket/NostrProxy.js` — Security-critical proxy
 
 ### Common Patterns
 
 - Components use `this.$()` and `this.$$()` for DOM queries
 - Services are singleton exports (lowercase camelCase)
-- State updates via `appState.setState()` emit `stateChange`
+- State updates via `appState.mutatorMethod()` emit specific `StateEvents`
 - CSS custom properties: `--bg`, `--fg`, `--accent`, `--fg-dim`
 - Theme classes: `theme-{name}`, Font classes: `font-{name}`
+- WASM loaded non-blocking at startup, checked via `isWasmAvailable()`
 
 ### Gotchas
 
-- Auto-save has 100ms throttle - don't expect immediate persistence
-- Zen mode needs `preZenMode` state to restore settings
+- Auto-save has 100ms throttle — don't expect immediate persistence
+- Zen mode needs `PRE_ZEN_MODE` event to snapshot settings before enabling
 - IndexedDB max content size is 1MB per note
 - Toast notifications auto-dismiss (3s default, 5s errors)
+- Published notes list is ephemeral — cleared on disconnect/refresh
+- Frontend Dockerfile is 3-stage: Rust WASM build → Node build → nginx serve
+- `data-ton3s-initialized` flag on body prevents double-init during HMR
