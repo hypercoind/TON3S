@@ -223,13 +223,7 @@ class TON3SApp {
         keyboardManager.init();
         keyboardManager.setupDefaults({
             onNewNote: async () => {
-                const note = await storageService.createNote({
-                    title: 'Untitled Note',
-                    content: '<p><br></p>',
-                    plainText: '',
-                    tags: []
-                });
-                appState.selectNote(note.id);
+                await this.components.sidebar?.createNewNote();
                 this.components.editor?.focus();
             },
             onSearch: () => {

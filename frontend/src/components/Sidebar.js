@@ -159,34 +159,20 @@ export class Sidebar extends BaseComponent {
 
         if (notes.length === 0) {
             const isSearching = appState.ui.searchQuery?.length > 0;
-            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            const shortcut = isMac ? '⌘N' : 'Ctrl+N';
 
-            listEl.innerHTML = `
-                <div class="note-item-empty">
-                    <svg class="empty-state-icon" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
-                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                    </svg>
-                    ${
-                        isSearching
-                            ? '<p>No notes found</p><span class="empty-state-hint">Try a different search term</span>'
-                            : `<p>No notes yet</p>
-                           <span class="empty-state-hint">Press ${shortcut} or click below</span>
-                           <button class="empty-state-create-btn" aria-label="Create your first note">
-                               <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                               </svg>
-                               Create your first note
-                           </button>`
-                    }
-                </div>
-            `;
-
-            // Add click handler for the create button
-            const createBtn = listEl.querySelector('.empty-state-create-btn');
-            createBtn?.addEventListener('click', () => {
-                this.createNewNote();
-            });
+            if (isSearching) {
+                listEl.innerHTML = `
+                    <div class="note-item-empty">
+                        <svg class="empty-state-icon" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                        <p>No notes found</p>
+                        <span class="empty-state-hint">Try a different search term</span>
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = '';
+            }
             return;
         }
 
@@ -295,9 +281,21 @@ export class Sidebar extends BaseComponent {
     }
 
     /**
-     * Create a new note
+     * Create a new note (with tag prompt if current note is untagged)
      */
     async createNewNote() {
+        const currentNote = appState.notes.find(n => n.id === appState.currentNoteId);
+        if (currentNote && (!currentNote.tags || currentNote.tags.length === 0)) {
+            this.showTagPromptModal(currentNote, () => this.doCreateNewNote());
+        } else {
+            this.doCreateNewNote();
+        }
+    }
+
+    /**
+     * Actually create the new note
+     */
+    async doCreateNewNote() {
         const note = await storageService.createNote({
             title: 'Untitled Note',
             content: '<p><br></p>',
@@ -306,6 +304,156 @@ export class Sidebar extends BaseComponent {
         });
 
         appState.selectNote(note.id);
+    }
+
+    /**
+     * Show tag prompt modal before creating a new note
+     */
+    showTagPromptModal(note, onComplete) {
+        // Remove any existing tag prompt
+        document.querySelector('.tag-prompt-overlay')?.remove();
+
+        const previouslyFocused = document.activeElement;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay tag-prompt-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'tag-prompt-title');
+
+        const renderContent = () => {
+            const tags = note.tags || [];
+            overlay.innerHTML = `
+                <div class="confirm-dialog tag-prompt-dialog">
+                    <h4 id="tag-prompt-title">Tag your note before moving on?</h4>
+                    <div class="tag-editor-tags">
+                        ${tags
+                            .map(
+                                tag => `
+                            <span class="tag-editor-tag">
+                                ${sanitizeInput(tag)}
+                                <button class="tag-editor-tag-remove" data-tag="${sanitizeInput(tag)}" aria-label="Remove tag ${sanitizeInput(tag)}">
+                                    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </span>
+                        `
+                            )
+                            .join('')}
+                    </div>
+                    <input
+                        type="text"
+                        class="tag-editor-input tag-prompt-input"
+                        placeholder="Add tag (Enter)"
+                        aria-label="Add new tag"
+                    />
+                    <span class="tag-prompt-hint"></span>
+                    <div class="confirm-actions">
+                        <button class="confirm-ok tag-prompt-done">Done</button>
+                        <button class="confirm-cancel tag-prompt-skip">Skip</button>
+                    </div>
+                </div>
+            `;
+
+            // Bind tag remove buttons
+            overlay.querySelectorAll('.tag-editor-tag-remove').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tagToRemove = btn.dataset.tag;
+                    const newTags = (note.tags || []).filter(t => t !== tagToRemove);
+                    await storageService.updateNote(note.id, { tags: newTags });
+                    note.tags = newTags;
+                    renderContent();
+                });
+            });
+
+            // Bind tag input
+            const input = overlay.querySelector('.tag-prompt-input');
+            const hint = overlay.querySelector('.tag-prompt-hint');
+
+            const clearHint = () => {
+                hint.textContent = '';
+                hint.classList.remove('visible');
+            };
+
+            input.addEventListener('keydown', async e => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    clearHint();
+                    const newTag = input.value.trim().replace(/,/g, '');
+                    if (newTag && !(note.tags || []).includes(newTag)) {
+                        const newTags = [...(note.tags || []), newTag];
+                        await storageService.updateNote(note.id, { tags: newTags });
+                        note.tags = newTags;
+                        renderContent();
+                        overlay.querySelector('.tag-prompt-input').focus();
+                    } else {
+                        input.value = '';
+                    }
+                }
+            });
+
+            input.addEventListener('input', () => {
+                if (!input.value.trim()) {
+                    clearHint();
+                }
+            });
+
+            // Bind buttons
+            overlay.querySelector('.tag-prompt-done').addEventListener('click', () => {
+                if (input.value.trim()) {
+                    hint.textContent = 'Press Enter to save your tag first';
+                    hint.classList.add('visible');
+                    input.focus();
+                    return;
+                }
+                closeModal();
+                onComplete();
+            });
+
+            overlay.querySelector('.tag-prompt-skip').addEventListener('click', () => {
+                if ((note.tags || []).length > 0) {
+                    hint.textContent = "You've already added tags \u2014 click Done to continue";
+                    hint.classList.add('visible');
+                    return;
+                }
+                closeModal();
+                onComplete();
+            });
+
+            // Close on overlay click
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) {
+                    closeModal();
+                    onComplete();
+                }
+            });
+
+            setTimeout(() => input.focus(), 50);
+        };
+
+        const closeModal = () => {
+            overlay.classList.remove('show');
+            document.removeEventListener('keydown', handleKeyDown);
+            setTimeout(() => {
+                overlay.remove();
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
+                }
+            }, 200);
+        };
+
+        const handleKeyDown = e => {
+            if (e.key === 'Escape') {
+                closeModal();
+                onComplete();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+
+        renderContent();
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
     }
 
     /**
@@ -321,8 +469,11 @@ export class Sidebar extends BaseComponent {
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             danger: true,
-            onConfirm: () => {
-                storageService.deleteNote(noteId);
+            onConfirm: async () => {
+                await storageService.deleteNote(noteId);
+                if (appState.notes.length === 0) {
+                    this.doCreateNewNote();
+                }
             }
         });
     }
