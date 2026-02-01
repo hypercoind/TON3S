@@ -227,6 +227,9 @@ class TON3SApp {
                 this.components.editor?.focus();
             },
             onSearch: () => {
+                if (!appState.settings.sidebarOpen) {
+                    appState.setSidebarOpen(true);
+                }
                 this.components.sidebar?.focusSearch();
             }
         });

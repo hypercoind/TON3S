@@ -127,6 +127,14 @@ class KeyboardManager {
             description: 'Focus search'
         });
 
+        // Find (Cmd+F) - hijack browser find for sidebar search
+        this.register('find', {
+            key: 'f',
+            cmdOrCtrl: true,
+            handler: callbacks.onSearch || (() => {}),
+            description: 'Search notes'
+        });
+
         // Help modal
         this.register('help', {
             key: '?',
