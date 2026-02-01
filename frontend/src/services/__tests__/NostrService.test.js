@@ -253,6 +253,7 @@ describe('NostrService', () => {
             const resolve = vi.fn();
             const reject = vi.fn();
             nostrService.pendingPublishes.set('event123', { resolve, reject });
+            nostrService.sentEventIds.add('event123');
 
             nostrService.handleMessage(
                 JSON.stringify([
@@ -273,6 +274,7 @@ describe('NostrService', () => {
             const resolve = vi.fn();
             const reject = vi.fn();
             nostrService.pendingPublishes.set('event456', { resolve, reject });
+            nostrService.sentEventIds.add('event456');
 
             nostrService.handleMessage(
                 JSON.stringify([

@@ -17,6 +17,7 @@ class NostrService {
         this.pendingPublishes = new Map();
         this.connectedRelays = new Set();
         this.pendingRelays = new Set();
+        this.sentEventIds = new Set(); // Track event IDs we've published
     }
 
     /**
@@ -72,6 +73,7 @@ class NostrService {
         this.connected = false;
         this.connectedRelays.clear();
         this.pendingRelays.clear();
+        this.sentEventIds.clear();
     }
 
     /**
@@ -181,6 +183,13 @@ class NostrService {
             case 'OK': {
                 // Event published successfully
                 const [eventId, success, reason] = params;
+
+                // Validate: only process OK for events we actually sent
+                if (!this.sentEventIds.has(eventId)) {
+                    console.warn(`[NOSTR] Ignoring OK for unknown event ID: ${eventId}`);
+                    break;
+                }
+
                 const handler = this.pendingPublishes.get(eventId);
                 if (handler) {
                     if (success) {
@@ -190,6 +199,7 @@ class NostrService {
                     }
                     this.pendingPublishes.delete(eventId);
                 }
+                this.sentEventIds.delete(eventId);
                 appState.emit(StateEvents.NOSTR_PUBLISHED, { eventId, relayUrl, success });
                 break;
             }
@@ -255,6 +265,9 @@ class NostrService {
                 return;
             }
 
+            // Track this event ID as one we sent
+            this.sentEventIds.add(signedEvent.id);
+
             // Store handler for OK response
             this.pendingPublishes.set(signedEvent.id, { resolve, reject });
 
@@ -266,6 +279,7 @@ class NostrService {
             setTimeout(() => {
                 if (this.pendingPublishes.has(signedEvent.id)) {
                     this.pendingPublishes.delete(signedEvent.id);
+                    this.sentEventIds.delete(signedEvent.id);
                     reject(new Error('Publish timeout'));
                 }
             }, 10000);

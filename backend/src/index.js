@@ -33,7 +33,8 @@ const nostrProxy = new NostrProxy();
 // Register CORS plugin with origin validation
 await fastify.register(cors, {
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
+        // Allow requests with no origin (server-to-server proxies, curl, etc.)
+        // CORS is a browser enforcement mechanism; non-browser clients bypass it regardless.
         if (!origin) {
             return callback(null, true);
         }
@@ -103,7 +104,20 @@ fastify.get('/api/relays', async () => {
 
 // WebSocket endpoint for NOSTR proxy
 fastify.register(async function (fastify) {
-    fastify.get('/ws/nostr', { websocket: true }, (socket, _req) => {
+    fastify.get('/ws/nostr', { websocket: true }, (socket, req) => {
+        const origin = req.headers.origin;
+        const isAllowed =
+            origin &&
+            (ALLOWED_ORIGINS.includes(origin) ||
+                origin.endsWith('.ton3s.app') ||
+                (process.env.NODE_ENV !== 'production' &&
+                    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)));
+
+        if (!isAllowed) {
+            socket.close(4003, 'Origin not allowed');
+            return;
+        }
+
         const clientId = randomUUID();
         nostrProxy.handleConnection(socket, clientId);
     });

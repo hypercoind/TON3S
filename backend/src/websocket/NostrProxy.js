@@ -17,11 +17,16 @@ const MAX_MESSAGE_SIZE = 64 * 1024;
 // Maximum relay connections per client
 const MAX_RELAYS_PER_CLIENT = 10;
 
+// Rate limiting: max messages per second per client
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_MS = 1000;
+
 export class NostrProxy {
     constructor() {
         this.relayConnections = new Map(); // clientId -> Map<relayUrl, WebSocket>
         this.clientConnections = new Map(); // clientId -> WebSocket
         this.messageQueue = new Map(); // clientId -> messages[]
+        this.messageTimestamps = new Map(); // clientId -> timestamp[]
     }
 
     /**
@@ -100,19 +105,14 @@ export class NostrProxy {
         }
 
         // Resolve hostname and check if it resolves to a private IP
-        try {
-            const { address } = await dnsLookup(parsed.hostname);
-            if (this.isPrivateIP(address)) {
-                throw new Error('Relay hostname resolves to a private IP address');
-            }
-        } catch (err) {
-            if (err.message.includes('private IP')) {
-                throw err;
-            }
-            // DNS resolution failed - could be temporary, let WebSocket handle it
+        // Fail closed: if DNS fails, reject the connection
+        const { address } = await dnsLookup(parsed.hostname);
+        if (this.isPrivateIP(address)) {
+            throw new Error('Relay hostname resolves to a private IP address');
         }
 
-        return true;
+        // Return resolved IP for DNS pinning (prevent TOCTOU rebinding)
+        return { parsed, resolvedIP: address };
     }
 
     /**
@@ -172,6 +172,23 @@ export class NostrProxy {
      * Handle message from client
      */
     handleClientMessage(clientId, data) {
+        // Rate limiting
+        const now = Date.now();
+        let timestamps = this.messageTimestamps.get(clientId) || [];
+        timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+        timestamps.push(now);
+        this.messageTimestamps.set(clientId, timestamps);
+
+        if (timestamps.length > RATE_LIMIT_MAX) {
+            console.warn(`[NostrProxy] Rate limit exceeded for client: ${clientId}`);
+            this.sendToClient(clientId, ['ERROR', 'Rate limit exceeded']);
+            const clientSocket = this.clientConnections.get(clientId);
+            if (clientSocket) {
+                clientSocket.close(4008, 'Rate limit exceeded');
+            }
+            return;
+        }
+
         try {
             const dataStr = data.toString();
 
@@ -279,8 +296,9 @@ export class NostrProxy {
         }
 
         // Validate relay URL for SSRF protection
+        let parsed, resolvedIP;
         try {
-            await this.validateRelayUrl(relayUrl);
+            ({ parsed, resolvedIP } = await this.validateRelayUrl(relayUrl));
         } catch (error) {
             console.warn(`[NostrProxy] URL validation failed for ${relayUrl}: ${error.message}`);
             this.sendToClient(clientId, [
@@ -292,12 +310,18 @@ export class NostrProxy {
             return;
         }
 
-        console.log(`[NostrProxy] Connecting to relay: ${relayUrl} for client: ${clientId}`);
+        console.log(
+            `[NostrProxy] Connecting to relay: ${relayUrl} (${resolvedIP}) for client: ${clientId}`
+        );
 
         try {
-            const relaySocket = new WebSocket(relayUrl, {
-                // Set maximum payload size
-                maxPayload: MAX_MESSAGE_SIZE
+            // Use resolved IP to prevent DNS rebinding (TOCTOU)
+            const port = parsed.port || (parsed.protocol === 'wss:' ? 443 : 80);
+            const pinnedUrl = `${parsed.protocol}//${resolvedIP}:${port}${parsed.pathname}${parsed.search}`;
+            const relaySocket = new WebSocket(pinnedUrl, {
+                maxPayload: MAX_MESSAGE_SIZE,
+                headers: { Host: parsed.host },
+                servername: parsed.hostname // SNI for TLS
             });
 
             relaySocket.on('open', () => {
@@ -451,6 +475,7 @@ export class NostrProxy {
         this.clientConnections.delete(clientId);
         this.relayConnections.delete(clientId);
         this.messageQueue.delete(clientId);
+        this.messageTimestamps.delete(clientId);
     }
 
     /**
