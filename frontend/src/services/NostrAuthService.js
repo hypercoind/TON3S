@@ -211,14 +211,14 @@ class NostrAuthService {
             // Setup unload handler for WASM key cleanup
             this._setupUnloadHandler();
 
-            appState.setNostrConnected(this.pubkey, 'Private Key (WASM)');
+            appState.setNostrConnected(this.pubkey, 'Private Key');
             console.log(
-                `[NOSTR] Connected with Private Key (WASM), pubkey: ${this.pubkey.slice(0, 8)}...`
+                `[NOSTR] Connected with Private Key, pubkey: ${this.pubkey.slice(0, 8)}...`
             );
 
             return {
                 pubkey: this.pubkey,
-                extension: 'Private Key (WASM)'
+                extension: 'Private Key'
             };
         } catch (error) {
             appState.setNostrError(error.message);
