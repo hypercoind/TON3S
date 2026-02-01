@@ -34,3 +34,6 @@ worktrees/
 
 # Security tests (local only)
 security-tests/
+
+# Tech debt reports (local only)
+docs/TECHDEBT.md
