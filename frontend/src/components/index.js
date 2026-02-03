@@ -9,3 +9,4 @@ export { Sidebar } from './Sidebar.js';
 export { Editor } from './Editor.js';
 export { StatusBar } from './StatusBar.js';
 export { NostrPanel } from './NostrPanel.js';
+export { DonationPanel } from './DonationPanel.js';

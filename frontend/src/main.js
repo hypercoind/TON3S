@@ -17,6 +17,7 @@ import { Sidebar } from './components/Sidebar.js';
 import { Editor } from './components/Editor.js';
 import { StatusBar } from './components/StatusBar.js';
 import { NostrPanel } from './components/NostrPanel.js';
+import { DonationPanel } from './components/DonationPanel.js';
 import { nostrAuthService } from './services/NostrAuthService.js';
 
 // Initialization state (using window to persist across module re-evaluations)
@@ -171,6 +172,13 @@ class TON3SApp {
             this.components.nostrPanel = new NostrPanel(nostrContainer);
             this.components.nostrPanel.init();
         }
+
+        // Donation Panel
+        const donationContainer = document.getElementById('donation-container');
+        if (donationContainer) {
+            this.components.donationPanel = new DonationPanel(donationContainer);
+            this.components.donationPanel.init();
+        }
     }
 
     async loadNotes() {
@@ -291,6 +299,9 @@ class TON3SApp {
                 }
                 if (appState.settings.nostrPanelOpen) {
                     appState.setNostrPanelOpen(false);
+                }
+                if (appState.settings.donationPanelOpen) {
+                    appState.setDonationPanelOpen(false);
                 }
                 if (appState.ui.searchQuery) {
                     appState.setSearchQuery('');

@@ -23,6 +23,7 @@ export const StateEvents = {
     ZEN_MODE_TOGGLED: 'settings:zenMode',
     SIDEBAR_TOGGLED: 'settings:sidebar',
     NOSTR_PANEL_TOGGLED: 'settings:nostrPanel',
+    DONATION_PANEL_TOGGLED: 'settings:donationPanel',
 
     // NOSTR events
     NOSTR_CONNECTED: 'nostr:connected',
@@ -60,6 +61,7 @@ class AppState extends StateEmitter {
             zenMode: false,
             sidebarOpen: false,
             nostrPanelOpen: false,
+            donationPanelOpen: false,
             nostr: {
                 enabled: false,
                 defaultRelays: [
@@ -296,6 +298,18 @@ class AppState extends StateEmitter {
         if (this._settings.nostrPanelOpen !== open) {
             this._settings.nostrPanelOpen = open;
             this.emit(StateEvents.NOSTR_PANEL_TOGGLED, open);
+        }
+    }
+
+    toggleDonationPanel() {
+        this._settings.donationPanelOpen = !this._settings.donationPanelOpen;
+        this.emit(StateEvents.DONATION_PANEL_TOGGLED, this._settings.donationPanelOpen);
+    }
+
+    setDonationPanelOpen(open) {
+        if (this._settings.donationPanelOpen !== open) {
+            this._settings.donationPanelOpen = open;
+            this.emit(StateEvents.DONATION_PANEL_TOGGLED, open);
         }
     }
 

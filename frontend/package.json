@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@scure/base": "^1.1.1",
-    "dexie": "^4.0.10"
+    "dexie": "^4.0.10",
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

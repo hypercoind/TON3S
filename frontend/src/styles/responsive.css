@@ -5,9 +5,10 @@
 
 /* Tablet and smaller */
 @media (max-width: 1024px) {
-    /* Default: editor page - hide sidebar and nostr */
+    /* Default: editor page - hide sidebar, nostr, and donation */
     .sidebar,
-    .nostr-panel {
+    .nostr-panel,
+    .donation-panel {
         display: none;
     }
 
@@ -53,7 +54,8 @@
 
     /* Editor page: hide panels (default above) */
     body.mobile-page-editor .sidebar,
-    body.mobile-page-editor .nostr-panel {
+    body.mobile-page-editor .nostr-panel,
+    body.mobile-page-editor .donation-panel {
         display: none;
     }
 
@@ -65,7 +67,8 @@
 
     /* Hide panel collapse buttons on mobile (header buttons control navigation) */
     .sidebar-collapse-btn,
-    .nostr-collapse-btn {
+    .nostr-collapse-btn,
+    .donation-collapse-btn {
         display: none;
     }
 
