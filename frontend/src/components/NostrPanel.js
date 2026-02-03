@@ -10,6 +10,7 @@ import { nostrService } from '../services/NostrService.js';
 import { storageService } from '../services/StorageService.js';
 import { exportService } from '../services/ExportService.js';
 import { toast } from './Toast.js';
+import { sanitizeInput } from '../utils/sanitizer.js';
 
 export class NostrPanel extends BaseComponent {
     constructor(container) {
@@ -62,7 +63,7 @@ export class NostrPanel extends BaseComponent {
                     ${
                         error
                             ? `
-                        <div class="nostr-error">${error}</div>
+                        <div class="nostr-error">${sanitizeInput(error)}</div>
                     `
                             : ''
                     }
@@ -88,7 +89,7 @@ export class NostrPanel extends BaseComponent {
                 });
                 return `
                 <a href="https://njump.me/${note.eventId}" target="_blank" rel="noopener noreferrer" class="published-note-item">
-                    <span class="published-note-title">${note.title || 'Untitled'}</span>
+                    <span class="published-note-title">${sanitizeInput(note.title || 'Untitled')}</span>
                     <span class="published-note-time">${time}</span>
                 </a>
             `;

@@ -32,9 +32,8 @@ class NostrAuthService {
      */
     secureZero(array) {
         if (array && array instanceof Uint8Array) {
-            for (let i = 0; i < array.length; i++) {
-                array[i] = 0;
-            }
+            crypto.getRandomValues(array);
+            array.fill(0);
         }
     }
 
@@ -56,21 +55,21 @@ class NostrAuthService {
      * Handle page unload - warn user about losing Nostr session
      */
     _handleBeforeUnload(event) {
-        // Check if user has active Nostr session (extension or private key)
-        if (this.pubkey) {
-            // Show browser's native confirmation dialog
-            event.preventDefault();
-            event.returnValue = true; // Required for Chrome/Safari
-            return true; // Required for Firefox
-        }
-
-        // Clear private key from WASM memory
+        // Always clear private key from WASM memory on unload
         if (isWasmAvailable()) {
             try {
                 getWasmModule()?.clear_key();
             } catch {
                 /* ignore */
             }
+        }
+
+        // Check if user has active Nostr session (extension or private key)
+        if (this.pubkey) {
+            // Show browser's native confirmation dialog
+            event.preventDefault();
+            event.returnValue = true; // Required for Chrome/Safari
+            return true; // Required for Firefox
         }
     }
 
@@ -83,6 +82,8 @@ class NostrAuthService {
         }
 
         window.addEventListener('beforeunload', this._handleBeforeUnload);
+        // pagehide is more reliable than beforeunload on mobile/tab discard
+        window.addEventListener('pagehide', this._handleBeforeUnload);
         this._unloadBound = true;
     }
 
@@ -191,11 +192,10 @@ class NostrAuthService {
                 throw new Error('WASM signing module not available. Cannot use private key.');
             }
 
-            // Parse and validate the private key
-            const privateKeyHex = this.parsePrivateKey(keyInput);
+            // Parse and validate the private key (returns Uint8Array)
+            const keyBytes = this.parsePrivateKey(keyInput);
 
             // Key bytes go into WASM memory, never stored in JS
-            const keyBytes = this.hexToBytes(privateKeyHex);
             const wasm = getWasmModule();
             wasm.import_key(keyBytes);
             // Zero the JS copy immediately
@@ -229,6 +229,10 @@ class NostrAuthService {
     /**
      * Parse private key from nsec (bech32) or hex format
      */
+    /**
+     * Parse private key from nsec (bech32) or hex format.
+     * Returns Uint8Array (32 bytes) to avoid immutable hex string copies in memory.
+     */
     parsePrivateKey(input) {
         const trimmed = input.trim();
 
@@ -241,10 +245,7 @@ class NostrAuthService {
                 }
                 const words = decoded.words;
                 const bytes = bech32.fromWords(words);
-                const hex = Array.from(bytes)
-                    .map(b => b.toString(16).padStart(2, '0'))
-                    .join('');
-                return hex;
+                return new Uint8Array(bytes);
             } catch {
                 throw new Error('Invalid nsec format');
             }
@@ -256,7 +257,7 @@ class NostrAuthService {
             throw new Error('Invalid private key format. Use nsec or 64-character hex.');
         }
 
-        return trimmed.toLowerCase();
+        return this.hexToBytes(trimmed.toLowerCase());
     }
 
     /**
