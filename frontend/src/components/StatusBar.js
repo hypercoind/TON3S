@@ -107,9 +107,12 @@ export class StatusBar extends BaseComponent {
                         <summary><h4>Privacy & Data</h4></summary>
                         <div class="privacy-details">
                             <ul>
-                                <li><strong>Local storage:</strong> Notes stored in browser's IndexedDB. Nothing sent to any server.</li>
-                                <li><strong>No tracking:</strong> No analytics, cookies, or user tracking.</li>
-                                <li><strong>NOSTR publishing:</strong> Optional. Content goes through proxy to protect your IP.</li>
+                                <li><strong>Local-only storage:</strong> Notes and settings live in your browser's IndexedDB. No server, no cloud — your data never leaves the device unless you publish via Nostr.</li>
+                                <li><strong>No tracking:</strong> Zero analytics, cookies, fingerprinting, or telemetry.</li>
+                                <li><strong>Nostr publishing:</strong> Optional. Notes are relayed through our backend proxy so your IP is never exposed to relay operators. Note content is visible to relays and their readers.</li>
+                                <li><strong>Key protection:</strong> If you sign with a private key instead of a browser extension, it is held only in WASM memory and zeroed on disconnect. It is never saved to disk or sent to any server.</li>
+                                <li><strong>Export &amp; delete:</strong> You can export all data (JSON/Markdown) or wipe everything from the actions below.</li>
+                                <li><strong>Open source:</strong> The full source code is available for audit on GitHub.</li>
                             </ul>
                         </div>
                     </details>
