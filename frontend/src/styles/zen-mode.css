@@ -62,6 +62,17 @@ body.zen-mode .nostr-panel {
                 filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Donation panel zen mode - hides with blur effect */
+body.zen-mode .donation-panel {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    filter: blur(8px);
+    pointer-events: none !important;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Force-close dropdowns and popups during zen mode */
 body.zen-mode .dropdown-menu.show {
     opacity: 0;

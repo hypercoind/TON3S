@@ -22,19 +22,12 @@ export class DonationPanel extends BaseComponent {
 
         this.container.innerHTML = `
             <div class="donation-panel${panelOpen ? ' donation-panel-open' : ''}">
-                <div class="donation-icon-strip">
-                    <button class="donation-icon-strip-btn donation-toggle-btn" aria-label="Toggle donation panel" title="Support TON3S">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
-                    </button>
-                </div>
                 <div class="donation-panel-content">
                     <div class="donation-panel-header">
                         <span class="donation-panel-title">Support TON3S</span>
-                        <button class="donation-collapse-btn" aria-label="Collapse panel" title="Collapse panel">
+                        <button class="donation-collapse-btn" aria-label="Close panel" title="Close">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                             </svg>
                         </button>
                     </div>
@@ -61,11 +54,11 @@ export class DonationPanel extends BaseComponent {
                     </div>
 
                     <input
-                        type="number"
+                        type="text"
+                        inputmode="numeric"
                         class="donation-custom-input"
                         placeholder="Custom sats"
-                        value="${this.customAmount}"
-                        min="1"
+                        value="${this.formatNumber(this.customAmount)}"
                     >
 
                     <div class="donation-qr-container">
@@ -127,15 +120,31 @@ export class DonationPanel extends BaseComponent {
         }
     }
 
-    bindEvents() {
-        // Toggle panel button (in icon strip - opens panel)
-        this.container.addEventListener('click', e => {
-            if (e.target.closest('.donation-toggle-btn')) {
-                appState.toggleDonationPanel();
-                return;
-            }
+    formatNumber(value) {
+        if (!value) {
+            return '';
+        }
+        const num = String(value).replace(/[^\d]/g, '');
+        return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
 
-            // Collapse panel button
+    parseNumber(formatted) {
+        return formatted.replace(/[^\d]/g, '');
+    }
+
+    updateQRCode() {
+        const container = this.container.querySelector('.donation-qr-container');
+        if (container) {
+            container.innerHTML = this.renderQRCode();
+        }
+    }
+
+    bindEvents() {
+        // Panel click events (stopPropagation prevents click-outside from firing after render)
+        this.container.addEventListener('click', e => {
+            e.stopPropagation();
+
+            // Close panel button
             if (e.target.closest('.donation-collapse-btn')) {
                 appState.setDonationPanelOpen(false);
                 return;
@@ -168,16 +177,47 @@ export class DonationPanel extends BaseComponent {
         // Custom amount input
         this.container.addEventListener('input', e => {
             if (e.target.classList.contains('donation-custom-input')) {
-                this.customAmount = e.target.value;
-                this.render();
-                // Re-focus the input after render
-                const input = this.container.querySelector('.donation-custom-input');
-                if (input) {
-                    input.focus();
-                    input.setSelectionRange(input.value.length, input.value.length);
+                const input = e.target;
+                const cursorPos = input.selectionStart;
+                const oldValue = input.value;
+                const oldLength = oldValue.length;
+
+                // Parse and store raw number
+                this.customAmount = this.parseNumber(input.value);
+
+                // Format with commas
+                const formatted = this.formatNumber(this.customAmount);
+                input.value = formatted;
+
+                // Adjust cursor position for added/removed commas
+                const lengthDiff = formatted.length - oldLength;
+                const newPos = Math.max(0, cursorPos + lengthDiff);
+                input.setSelectionRange(newPos, newPos);
+
+                // Clear preset selection when custom value entered
+                if (this.customAmount) {
+                    this.container.querySelectorAll('.donation-amount-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
                 }
+
+                // Update only the QR code
+                this.updateQRCode();
             }
         });
+
+        // Click outside to close
+        this.handleClickOutside = e => {
+            const panel = this.container.querySelector('.donation-panel');
+            if (
+                panel?.classList.contains('donation-panel-open') &&
+                !panel.contains(e.target) &&
+                !e.target.closest('#donation-btn')
+            ) {
+                appState.setDonationPanelOpen(false);
+            }
+        };
+        document.addEventListener('click', this.handleClickOutside);
 
         // State subscription
         this.subscribe(
@@ -200,6 +240,11 @@ export class DonationPanel extends BaseComponent {
         } catch (err) {
             toast.error('Failed to copy');
         }
+    }
+
+    destroy() {
+        document.removeEventListener('click', this.handleClickOutside);
+        super.destroy();
     }
 }
 

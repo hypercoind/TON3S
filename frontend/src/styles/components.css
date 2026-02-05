@@ -1404,92 +1404,37 @@
     color: var(--fg);
 }
 
-/* Donation Panel - mirrors NostrPanel structure */
+/* Donation Panel - Bottom-right popup */
 .donation-panel {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--panel-collapsed-width);
+    position: fixed;
+    bottom: 60px;
+    right: 1rem;
+    width: 280px;
     background: var(--bg);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    overflow: hidden;
-    transition: width 0.3s ease;
-}
-
-.donation-panel.donation-panel-open {
-    width: var(--nostr-panel-width);
-}
-
-/* Donation panel content (hidden when collapsed) */
-.donation-panel-content {
+    border: 1px solid var(--secondary);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
     opacity: 0;
-    transition: opacity 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: var(--nostr-panel-width);
-    padding: 1rem;
-    box-sizing: border-box;
-}
-
-.donation-panel.donation-panel-open .donation-panel-content {
-    opacity: 1;
-}
-
-/* Donation panel icon strip (visible when collapsed) */
-.donation-icon-strip {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--panel-collapsed-width);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 1rem;
-    gap: 0.5rem;
-    opacity: 1;
-    transition: opacity 0.2s ease;
-    z-index: 1;
-}
-
-.donation-panel.donation-panel-open .donation-icon-strip {
-    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
     pointer-events: none;
 }
 
-.donation-icon-strip-btn {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border-radius: 6px;
-    background: transparent;
-    border: none;
+.donation-panel.donation-panel-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Donation panel content - always visible when panel open */
+.donation-panel-content {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: var(--fg-dim);
-}
-
-.donation-icon-strip-btn:hover {
-    background: var(--secondary);
-    color: var(--accent);
-    transform: scale(1.1);
-}
-
-.donation-icon-strip-btn:active {
-    transform: scale(0.95);
-}
-
-.donation-icon-strip-btn svg {
-    width: 18px;
-    height: 18px;
+    flex-direction: column;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .donation-panel-header {
