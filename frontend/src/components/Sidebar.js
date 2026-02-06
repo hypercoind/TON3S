@@ -314,6 +314,7 @@ export class Sidebar extends BaseComponent {
         document.querySelector('.tag-prompt-overlay')?.remove();
 
         const previouslyFocused = document.activeElement;
+        const originalTags = [...(note.tags || [])];
 
         const overlay = document.createElement('div');
         overlay.className = 'confirm-overlay tag-prompt-overlay';
@@ -352,6 +353,7 @@ export class Sidebar extends BaseComponent {
                     <div class="confirm-actions">
                         <button class="confirm-ok tag-prompt-done">Done</button>
                         <button class="confirm-cancel tag-prompt-skip">Skip</button>
+                        <button class="confirm-cancel tag-prompt-cancel">Cancel</button>
                     </div>
                 </div>
             `;
@@ -421,11 +423,14 @@ export class Sidebar extends BaseComponent {
                 onComplete();
             });
 
+            overlay.querySelector('.tag-prompt-cancel').addEventListener('click', () => {
+                cancelModal();
+            });
+
             // Close on overlay click
             overlay.addEventListener('click', e => {
                 if (e.target === overlay) {
-                    closeModal();
-                    onComplete();
+                    cancelModal();
                 }
             });
 
@@ -443,10 +448,18 @@ export class Sidebar extends BaseComponent {
             }, 200);
         };
 
+        const cancelModal = async () => {
+            if (JSON.stringify(note.tags || []) !== JSON.stringify(originalTags)) {
+                await storageService.updateNote(note.id, { tags: originalTags });
+                note.tags = originalTags;
+            }
+            closeModal();
+            this.renderNoteList();
+        };
+
         const handleKeyDown = e => {
             if (e.key === 'Escape') {
-                closeModal();
-                onComplete();
+                cancelModal();
             }
         };
         document.addEventListener('keydown', handleKeyDown);
