@@ -41,6 +41,9 @@ export class DonationPanel extends BaseComponent {
                         </button>
                     </div>
 
+                    ${
+                        this.activeTab === 'onchain'
+                            ? `
                     <div class="donation-amounts">
                         ${DONATION_CONFIG.presets
                             .map(
@@ -60,6 +63,9 @@ export class DonationPanel extends BaseComponent {
                         placeholder="Custom sats"
                         value="${this.formatNumber(this.customAmount)}"
                     >
+                    `
+                            : ''
+                    }
 
                     <div class="donation-qr-container">
                         ${this.renderQRCode()}
