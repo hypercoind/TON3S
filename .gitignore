@@ -37,3 +37,7 @@ security-tests/
 
 # Tech debt reports (local only)
 docs/TECHDEBT.md
+
+# Kubernetes
+k8s/values-secrets.yaml
+k8s/charts/

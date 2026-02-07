@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ton3s
+description: TON3S - Fastify backend + Vite/WASM frontend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
