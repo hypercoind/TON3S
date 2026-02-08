@@ -387,6 +387,8 @@ class NostrAuthService {
 
     /**
      * Calculate event ID (SHA256 of serialized event)
+     * Falls back to WASM sha256_hash when crypto.subtle is unavailable
+     * (non-secure contexts like HTTP on non-localhost domains)
      */
     async calculateEventId(event) {
         const serialized = JSON.stringify([
@@ -400,9 +402,25 @@ class NostrAuthService {
 
         const encoder = new TextEncoder();
         const data = encoder.encode(serialized);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = new Uint8Array(hashBuffer);
-        return this.bytesToHex(hashArray);
+
+        // Try Web Crypto API first (secure contexts)
+        if (typeof crypto !== 'undefined' && crypto.subtle) {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return this.bytesToHex(new Uint8Array(hashBuffer));
+        }
+
+        // Fall back to WASM SHA-256 (non-secure contexts)
+        if (isWasmAvailable()) {
+            const wasm = getWasmModule();
+            if (typeof wasm.sha256_hash === 'function') {
+                const hashBytes = wasm.sha256_hash(data);
+                return this.bytesToHex(hashBytes);
+            }
+        }
+
+        throw new Error(
+            'SHA-256 unavailable: crypto.subtle requires HTTPS, and WASM fallback not loaded'
+        );
     }
 
     /**

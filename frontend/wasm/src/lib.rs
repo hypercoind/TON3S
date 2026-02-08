@@ -1,5 +1,6 @@
 use k256::schnorr::{SigningKey, VerifyingKey};
 use k256::schnorr::signature::hazmat::PrehashSigner;
+use sha2::{Sha256, Digest};
 use wasm_bindgen::prelude::*;
 use zeroize::Zeroizing;
 use std::sync::Mutex;
@@ -72,4 +73,11 @@ pub fn clear_key() {
 pub fn is_key_loaded() -> bool {
     let guard = PRIVATE_KEY_BYTES.lock().unwrap();
     guard.is_some()
+}
+
+#[wasm_bindgen]
+pub fn sha256_hash(data: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
 }

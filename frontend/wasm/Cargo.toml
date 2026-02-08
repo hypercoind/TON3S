@@ -14,6 +14,7 @@ wasm-bindgen = "0.2"
 k256 = { version = "0.13", default-features = false, features = ["schnorr", "std"] }
 getrandom = { version = "0.2", features = ["js"] }
 zeroize = { version = "1", features = ["derive"] }
+sha2 = "0.10"
 
 [profile.release]
 opt-level = "z"

@@ -29,6 +29,8 @@ spec:
               value: {{ .Values.backend.env.PORT | quote }}
             - name: HOST
               value: {{ .Values.backend.env.HOST | quote }}
+            - name: FRONTEND_URL
+              value: {{ .Values.backend.env.FRONTEND_URL | quote }}
           livenessProbe:
             httpGet:
               path: /health

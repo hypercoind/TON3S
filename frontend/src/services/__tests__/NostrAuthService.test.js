@@ -12,9 +12,25 @@ vi.mock('../../state/AppState.js', () => ({
     }
 }));
 
+// Mock wasm-loader
+const mockWasmModule = {
+    is_key_loaded: vi.fn(() => false),
+    sha256_hash: vi.fn(() => {
+        // Simple mock: return 32 zero bytes (tests check behavior, not crypto correctness)
+        return new Uint8Array(32);
+    })
+};
+
+vi.mock('../wasm-loader.js', () => ({
+    loadWasmModule: vi.fn(),
+    getWasmModule: vi.fn(() => mockWasmModule),
+    isWasmAvailable: vi.fn(() => false)
+}));
+
 // Import after mocking
 const { nostrAuthService } = await import('../NostrAuthService.js');
 const { appState } = await import('../../state/AppState.js');
+const { isWasmAvailable } = await import('../wasm-loader.js');
 
 describe('NostrAuthService', () => {
     let originalNostr;
@@ -342,6 +358,97 @@ describe('NostrAuthService', () => {
             nostrAuthService.pubkey = null;
 
             expect(nostrAuthService.getShortPubkey()).toBeNull();
+        });
+    });
+
+    describe('calculateEventId', () => {
+        const mockEvent = {
+            pubkey: 'aabbccdd',
+            created_at: 1700000000,
+            kind: 1,
+            tags: [],
+            content: 'hello'
+        };
+
+        it('should use crypto.subtle when available', async () => {
+            // crypto.subtle is available in vitest (Node secure context)
+            const result = await nostrAuthService.calculateEventId(mockEvent);
+
+            expect(result).toMatch(/^[0-9a-f]{64}$/);
+        });
+
+        it('should fall back to WASM sha256_hash when crypto.subtle is unavailable', async () => {
+            // Temporarily remove crypto.subtle
+            const originalSubtle = crypto.subtle;
+            Object.defineProperty(crypto, 'subtle', {
+                value: undefined,
+                writable: true,
+                configurable: true
+            });
+
+            // Enable WASM mock
+            isWasmAvailable.mockReturnValue(true);
+
+            const result = await nostrAuthService.calculateEventId(mockEvent);
+
+            // WASM mock returns 32 zero bytes
+            expect(result).toBe('00'.repeat(32));
+            expect(mockWasmModule.sha256_hash).toHaveBeenCalled();
+
+            // Restore
+            Object.defineProperty(crypto, 'subtle', {
+                value: originalSubtle,
+                writable: true,
+                configurable: true
+            });
+            isWasmAvailable.mockReturnValue(false);
+        });
+
+        it('should throw when neither crypto.subtle nor WASM is available', async () => {
+            const originalSubtle = crypto.subtle;
+            Object.defineProperty(crypto, 'subtle', {
+                value: undefined,
+                writable: true,
+                configurable: true
+            });
+
+            isWasmAvailable.mockReturnValue(false);
+
+            await expect(nostrAuthService.calculateEventId(mockEvent)).rejects.toThrow(
+                'SHA-256 unavailable'
+            );
+
+            Object.defineProperty(crypto, 'subtle', {
+                value: originalSubtle,
+                writable: true,
+                configurable: true
+            });
+        });
+
+        it('should throw when WASM available but sha256_hash missing', async () => {
+            const originalSubtle = crypto.subtle;
+            Object.defineProperty(crypto, 'subtle', {
+                value: undefined,
+                writable: true,
+                configurable: true
+            });
+
+            isWasmAvailable.mockReturnValue(true);
+            const originalHash = mockWasmModule.sha256_hash;
+            mockWasmModule.sha256_hash = 'not_a_function';
+
+            await expect(nostrAuthService.calculateEventId(mockEvent)).rejects.toThrow(
+                'SHA-256 unavailable'
+            );
+
+            // Restore
+            mockWasmModule.sha256_hash = originalHash;
+            Object.defineProperty(crypto, 'subtle', {
+                value: originalSubtle,
+                writable: true,
+                configurable: true
+            });
+            isWasmAvailable.mockReturnValue(false);
         });
     });
 });
