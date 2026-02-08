@@ -1,0 +1,50 @@
+# Cluster-wide TLS setup for .local sites via cert-manager
+# Apply once: kubectl apply -f k8s/cluster-tls-setup.yaml
+#
+# Prerequisites:
+#   helm repo add jetstack https://charts.jetstack.io
+#   helm repo update
+#   helm install cert-manager jetstack/cert-manager \
+#     --namespace cert-manager --create-namespace \
+#     --set crds.enabled=true
+#
+# After applying, trust the CA on macOS (one-time):
+#   kubectl get secret local-ca-secret -n cert-manager -o jsonpath='{.data.tls\.crt}' \
+#     | base64 -d > /tmp/local-dev-ca.crt
+#   sudo security add-trusted-cert -d -r trustRoot \
+#     -k /Library/Keychains/System.keychain /tmp/local-dev-ca.crt
+---
+# Step 1: Bootstrap self-signed issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+# Step 2: CA certificate (issued by the self-signed issuer)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: local-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: local-dev-ca
+  secretName: local-ca-secret
+  duration: 87600h  # 10 years
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+---
+# Step 3: CA issuer (uses the CA cert to sign leaf certs)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: local-ca-issuer
+spec:
+  ca:
+    secretName: local-ca-secret

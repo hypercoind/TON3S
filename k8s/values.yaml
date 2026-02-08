@@ -10,7 +10,7 @@ backend:
     NODE_ENV: production
     PORT: "3001"
     HOST: "0.0.0.0"
-    FRONTEND_URL: "http://ton3s.local"
+    FRONTEND_URL: "https://ton3s.local"
   resources:
     requests:
       cpu: 100m
