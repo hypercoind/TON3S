@@ -18,6 +18,7 @@ export class Editor extends BaseComponent {
         this.autoZenTimeout = null;
         this.autoZenDelay = 3000; // 3 seconds of typing triggers zen mode
         this.isTyping = false;
+        this.savedRange = null;
     }
 
     render() {
@@ -68,10 +69,7 @@ export class Editor extends BaseComponent {
             if (interactiveElements.includes(activeElement?.tagName)) {
                 return;
             }
-            if (
-                activeElement?.hasAttribute('contenteditable') &&
-                activeElement !== this.editorElement
-            ) {
+            if (activeElement?.hasAttribute('contenteditable')) {
                 return;
             }
             if (activeElement?.closest('dialog')) {
@@ -90,10 +88,17 @@ export class Editor extends BaseComponent {
 
             // Focus editor
             this.editorElement.focus();
-            // Only move to end if empty
-            if (!this.editorElement.textContent?.trim()) {
+
+            // Restore saved cursor position, or move to end if empty
+            if (this.savedRange && this.editorElement.textContent?.trim()) {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(this.savedRange);
+            } else if (!this.editorElement.textContent?.trim()) {
                 this.moveCursorToEnd();
             }
+            // Always clear — prevent stale range on subsequent keypresses
+            this.savedRange = null;
         };
 
         document.addEventListener('keydown', this.autoFocusHandler);
@@ -105,7 +110,8 @@ export class Editor extends BaseComponent {
     moveCursorToEnd() {
         const selection = window.getSelection();
         const range = document.createRange();
-        range.selectNodeContents(this.editorElement);
+        const target = this.editorElement.lastElementChild || this.editorElement;
+        range.selectNodeContents(target);
         range.collapse(false); // false = collapse to end
         selection.removeAllRanges();
         selection.addRange(range);
@@ -117,6 +123,7 @@ export class Editor extends BaseComponent {
     loadNote(note) {
         // Clear auto-zen timer when switching notes
         this.clearAutoZenTimer();
+        this.savedRange = null;
 
         if (!note) {
             this.editorElement.innerHTML = '<p><br></p>';
@@ -181,7 +188,7 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Insert a new paragraph
+     * Insert a new paragraph, splitting content at cursor position
      */
     insertParagraph() {
         const selection = window.getSelection();
@@ -189,16 +196,13 @@ export class Editor extends BaseComponent {
             return;
         }
 
-        const newP = document.createElement('p');
-        newP.innerHTML = '<br>';
-
         const range = selection.getRangeAt(0);
-        let currentBlock = range.startContainer;
+        range.deleteContents(); // Remove any selected text first
 
+        let currentBlock = range.startContainer;
         if (currentBlock.nodeType === Node.TEXT_NODE) {
             currentBlock = currentBlock.parentElement;
         }
-
         while (
             currentBlock &&
             currentBlock !== this.editorElement &&
@@ -207,9 +211,34 @@ export class Editor extends BaseComponent {
             currentBlock = currentBlock.parentElement;
         }
 
+        const newP = document.createElement('p');
+
         if (currentBlock && currentBlock !== this.editorElement) {
+            // Extract content from cursor to end of current block
+            const afterRange = document.createRange();
+            afterRange.setStart(range.startContainer, range.startOffset);
+            if (currentBlock.lastChild) {
+                afterRange.setEndAfter(currentBlock.lastChild);
+            } else {
+                afterRange.setEnd(currentBlock, currentBlock.childNodes.length);
+            }
+            const fragment = afterRange.extractContents();
+
+            // If extracted fragment has content, use it; otherwise use <br>
+            if (fragment.textContent.trim() || fragment.querySelector('br')) {
+                newP.appendChild(fragment);
+            } else {
+                newP.innerHTML = '<br>';
+            }
+
+            // If current block is now empty, give it a <br>
+            if (!currentBlock.textContent.trim() && !currentBlock.querySelector('br')) {
+                currentBlock.innerHTML = '<br>';
+            }
+
             currentBlock.parentNode.insertBefore(newP, currentBlock.nextSibling);
         } else {
+            newP.innerHTML = '<br>';
             this.editorElement.appendChild(newP);
         }
 
@@ -284,11 +313,16 @@ export class Editor extends BaseComponent {
     }
 
     /**
-     * Handle editor blur - stop tracking typing
+     * Handle editor blur - save cursor position for restore on re-focus
      */
     handleEditorBlur() {
         this.isTyping = false;
         this.clearAutoZenTimer();
+
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            this.savedRange = selection.getRangeAt(0).cloneRange();
+        }
     }
 
     /**
