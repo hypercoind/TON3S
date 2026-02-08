@@ -420,6 +420,79 @@ export class NostrPanel extends BaseComponent {
     }
 
     /**
+     * Show publish confirmation dialog
+     */
+    _showPublishConfirm() {
+        return new Promise(resolve => {
+            const previouslyFocused = document.activeElement;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('aria-labelledby', 'publish-confirm-title');
+            overlay.setAttribute('aria-describedby', 'publish-confirm-desc');
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <h4 id="publish-confirm-title">Publish to NOSTR?</h4>
+                    <p id="publish-confirm-desc">Your note will be sent to connected relays and removed from local storage.</p>
+                    <div class="confirm-actions">
+                        <button class="confirm-ok">Publish</button>
+                        <button class="confirm-cancel">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.classList.add('show'));
+
+            const cancelBtn = overlay.querySelector('.confirm-cancel');
+            const confirmBtn = overlay.querySelector('.confirm-ok');
+
+            setTimeout(() => cancelBtn.focus(), 50);
+
+            const closeModal = result => {
+                overlay.classList.remove('show');
+                document.removeEventListener('keydown', handleKeyDown);
+                setTimeout(() => {
+                    overlay.remove();
+                    if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                        previouslyFocused.focus();
+                    }
+                }, 200);
+                resolve(result);
+            };
+
+            cancelBtn.addEventListener('click', () => closeModal(false));
+            confirmBtn.addEventListener('click', () => closeModal(true));
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) {
+                    closeModal(false);
+                }
+            });
+
+            const handleKeyDown = e => {
+                if (e.key === 'Escape') {
+                    closeModal(false);
+                }
+                if (e.key === 'Tab') {
+                    const focusables = overlay.querySelectorAll('button');
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            };
+            document.addEventListener('keydown', handleKeyDown);
+        });
+    }
+
+    /**
      * Handle disconnect with warning if published notes exist
      */
     handleDisconnect() {
@@ -436,12 +509,17 @@ export class NostrPanel extends BaseComponent {
      * Show disconnect warning modal
      */
     _showDisconnectWarning(count) {
+        const previouslyFocused = document.activeElement;
+
         const overlay = document.createElement('div');
         overlay.className = 'disconnect-warning-overlay';
         overlay.id = 'disconnect-warning-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'disconnect-title');
         overlay.innerHTML = `
             <div class="disconnect-warning-modal">
-                <h4>Export Before Disconnecting?</h4>
+                <h4 id="disconnect-title">Export Before Disconnecting?</h4>
                 <p>You have <strong>${count}</strong> published note${count > 1 ? 's' : ''} this session. This list will be cleared when you disconnect.</p>
                 <div class="disconnect-warning-actions">
                     <button class="disconnect-export-btn">Export & Disconnect</button>
@@ -455,9 +533,18 @@ export class NostrPanel extends BaseComponent {
 
         requestAnimationFrame(() => overlay.classList.add('show'));
 
+        const cancelBtn = overlay.querySelector('.disconnect-cancel-btn');
+        setTimeout(() => cancelBtn.focus(), 50);
+
         const closeOverlay = () => {
             overlay.classList.remove('show');
-            setTimeout(() => overlay.remove(), 200);
+            document.removeEventListener('keydown', handleKeyDown);
+            setTimeout(() => {
+                overlay.remove();
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
+                }
+            }, 200);
         };
 
         overlay.querySelector('.disconnect-export-btn').addEventListener('click', () => {
@@ -471,13 +558,32 @@ export class NostrPanel extends BaseComponent {
             closeOverlay();
         });
 
-        overlay.querySelector('.disconnect-cancel-btn').addEventListener('click', closeOverlay);
+        cancelBtn.addEventListener('click', closeOverlay);
 
         overlay.addEventListener('click', e => {
             if (e.target === overlay) {
                 closeOverlay();
             }
         });
+
+        const handleKeyDown = e => {
+            if (e.key === 'Escape') {
+                closeOverlay();
+            }
+            if (e.key === 'Tab') {
+                const focusables = overlay.querySelectorAll('button');
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
     }
 
     /**
@@ -504,6 +610,12 @@ export class NostrPanel extends BaseComponent {
 
         if (!note.plainText?.trim()) {
             toast.warning('Note is empty');
+            return;
+        }
+
+        // Show confirmation dialog before publishing
+        const confirmed = await this._showPublishConfirm();
+        if (!confirmed) {
             return;
         }
 

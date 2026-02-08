@@ -21,6 +21,15 @@ const MAX_RELAYS_PER_CLIENT = 10;
 const RATE_LIMIT_MAX = 30;
 const RATE_LIMIT_WINDOW_MS = 1000;
 
+// Maximum queued messages per client (prevents memory exhaustion)
+const MAX_QUEUE_SIZE = 100;
+
+// WebSocket handshake timeout (prevents stalled connections consuming relay slots)
+const HANDSHAKE_TIMEOUT_MS = 10000;
+
+// Message types exempt from rate limiting (control messages, not relay-bound)
+const RATE_LIMIT_EXEMPT = new Set(['CONNECT', 'DISCONNECT']);
+
 export class NostrProxy {
     constructor() {
         this.relayConnections = new Map(); // clientId -> Map<relayUrl, WebSocket>
@@ -172,23 +181,6 @@ export class NostrProxy {
      * Handle message from client
      */
     handleClientMessage(clientId, data) {
-        // Rate limiting
-        const now = Date.now();
-        let timestamps = this.messageTimestamps.get(clientId) || [];
-        timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
-        timestamps.push(now);
-        this.messageTimestamps.set(clientId, timestamps);
-
-        if (timestamps.length > RATE_LIMIT_MAX) {
-            console.warn(`[NostrProxy] Rate limit exceeded for client: ${clientId}`);
-            this.sendToClient(clientId, ['ERROR', 'Rate limit exceeded']);
-            const clientSocket = this.clientConnections.get(clientId);
-            if (clientSocket) {
-                clientSocket.close(4008, 'Rate limit exceeded');
-            }
-            return;
-        }
-
         try {
             const dataStr = data.toString();
 
@@ -212,6 +204,25 @@ export class NostrProxy {
             if (typeof type !== 'string') {
                 this.sendToClient(clientId, ['ERROR', 'Invalid message type']);
                 return;
+            }
+
+            // Rate limiting (exempt control messages like CONNECT/DISCONNECT)
+            if (!RATE_LIMIT_EXEMPT.has(type)) {
+                const now = Date.now();
+                let timestamps = this.messageTimestamps.get(clientId) || [];
+                timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+                timestamps.push(now);
+                this.messageTimestamps.set(clientId, timestamps);
+
+                if (timestamps.length > RATE_LIMIT_MAX) {
+                    console.warn(`[NostrProxy] Rate limit exceeded for client: ${clientId}`);
+                    this.sendToClient(clientId, ['ERROR', 'Rate limit exceeded']);
+                    const clientSocket = this.clientConnections.get(clientId);
+                    if (clientSocket) {
+                        clientSocket.close(4008, 'Rate limit exceeded');
+                    }
+                    return;
+                }
             }
 
             switch (type) {
@@ -310,8 +321,10 @@ export class NostrProxy {
             return;
         }
 
+        // Strip query params from relay URL before logging to prevent leaking auth tokens
+        const logSafeUrl = relayUrl.split('?')[0];
         console.log(
-            `[NostrProxy] Connecting to relay: ${relayUrl} (${resolvedIP}) for client: ${clientId}`
+            `[NostrProxy] Connecting to relay: ${logSafeUrl} (${resolvedIP}) for client: ${clientId}`
         );
 
         try {
@@ -321,7 +334,8 @@ export class NostrProxy {
             const relaySocket = new WebSocket(pinnedUrl, {
                 maxPayload: MAX_MESSAGE_SIZE,
                 headers: { Host: parsed.host },
-                servername: parsed.hostname // SNI for TLS
+                servername: parsed.hostname, // SNI for TLS
+                handshakeTimeout: HANDSHAKE_TIMEOUT_MS
             });
 
             relaySocket.on('open', () => {
@@ -408,8 +422,10 @@ export class NostrProxy {
         } else {
             // Queue message for when relay connects
             const queue = this.messageQueue.get(clientId) || [];
-            queue.push({ relayUrl, message });
-            this.messageQueue.set(clientId, queue);
+            if (queue.length < MAX_QUEUE_SIZE) {
+                queue.push({ relayUrl, message });
+                this.messageQueue.set(clientId, queue);
+            }
         }
     }
 

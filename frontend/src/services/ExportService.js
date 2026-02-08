@@ -101,6 +101,12 @@ class ExportService {
      * Import from file (JSON or Markdown)
      */
     async importFromFile(file) {
+        // Reject files larger than 50MB
+        const MAX_IMPORT_SIZE = 50 * 1024 * 1024;
+        if (file.size > MAX_IMPORT_SIZE) {
+            throw new Error('File too large. Maximum import size is 50MB.');
+        }
+
         const content = await this.readFile(file);
         const extension = file.name.split('.').pop().toLowerCase();
 

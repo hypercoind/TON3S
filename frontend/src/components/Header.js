@@ -8,6 +8,7 @@ import { appState, StateEvents } from '../state/AppState.js';
 import { storageService } from '../services/StorageService.js';
 import { themes } from '../data/themes.js';
 import { fonts } from '../data/fonts.js';
+import { toast } from './Toast.js';
 
 export class Header extends BaseComponent {
     constructor(container) {
@@ -96,6 +97,8 @@ export class Header extends BaseComponent {
         this.applyTheme();
         storageService.saveThemeState();
 
+        toast.info(appState.currentTheme.full, { duration: 1500 });
+
         setTimeout(() => icon?.classList.remove('rotating'), 500);
     }
 
@@ -106,6 +109,8 @@ export class Header extends BaseComponent {
         appState.rotateFont();
         this.applyFont();
         storageService.saveFontState();
+
+        toast.info(appState.currentFont.full, { duration: 1500 });
 
         setTimeout(() => icon?.classList.remove('rotating'), 500);
     }

@@ -3,8 +3,38 @@
  * Reset and root CSS custom properties
  */
 
-/* Google Fonts with display=swap for better performance */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fira+Code:wght@400;600&family=Source+Code+Pro:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&family=Inconsolata:wght@400;600&family=Cousine:wght@400;700&family=Overpass+Mono:wght@400;600&family=Red+Hat+Mono:wght@400;600&family=PT+Mono:wght@400&family=Oxygen+Mono:wght@400&family=Noto+Sans+Mono:wght@400;600&family=Recursive:wght@400&family=Cutive+Mono:wght@400&family=Nova+Mono:wght@400&family=Martian+Mono:wght@400&family=B612+Mono:wght@400&display=swap');
+/* Self-hosted fonts (no external requests to Google) */
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/jetbrains-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/jetbrains-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/fira-code-400.woff2') format('woff2'); }
+@font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/fira-code-600.woff2') format('woff2'); }
+@font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/source-code-pro-400.woff2') format('woff2'); }
+@font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/source-code-pro-600.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/ibm-plex-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/ibm-plex-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/roboto-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/roboto-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/space-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/space-mono-700.woff2') format('woff2'); }
+@font-face { font-family: 'Ubuntu Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/ubuntu-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Ubuntu Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/ubuntu-mono-700.woff2') format('woff2'); }
+@font-face { font-family: 'Inconsolata'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inconsolata-400.woff2') format('woff2'); }
+@font-face { font-family: 'Inconsolata'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inconsolata-600.woff2') format('woff2'); }
+@font-face { font-family: 'Cousine'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/cousine-400.woff2') format('woff2'); }
+@font-face { font-family: 'Cousine'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/cousine-700.woff2') format('woff2'); }
+@font-face { font-family: 'Overpass Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/overpass-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Overpass Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/overpass-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Red Hat Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/red-hat-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Red Hat Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/red-hat-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'PT Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/pt-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Oxygen Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/oxygen-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/noto-sans-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/noto-sans-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Recursive'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/recursive-400.woff2') format('woff2'); }
+@font-face { font-family: 'Cutive Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/cutive-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Nova Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/nova-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Martian Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/martian-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'B612 Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/b612-mono-400.woff2') format('woff2'); }
 
 :root {
     --bg: #fafaf8;
@@ -51,11 +81,11 @@ body::after {
 }
 
 /* Visible focus indicators for accessibility (WCAG 2.1 AA) */
-/* Remove default outline, will add custom focus-visible */
-button:focus,
-input:focus,
-select:focus,
-[tabindex]:focus {
+/* Remove outline for mouse/touch users but preserve for older browsers without :focus-visible */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+[tabindex]:focus:not(:focus-visible) {
     outline: none;
 }
 

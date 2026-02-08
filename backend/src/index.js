@@ -19,6 +19,8 @@ const ALLOWED_ORIGINS = [
     'http://localhost:3002',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3002',
+    'https://ton3s.com',
+    'https://www.ton3s.com',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -39,8 +41,8 @@ await fastify.register(cors, {
             return callback(null, true);
         }
 
-        // Check if origin is allowed
-        if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.ton3s.app')) {
+        // Check if origin is in the explicit allowlist
+        if (ALLOWED_ORIGINS.includes(origin)) {
             return callback(null, true);
         }
 
@@ -106,10 +108,12 @@ fastify.get('/api/relays', async () => {
 fastify.register(async function (fastify) {
     fastify.get('/ws/nostr', { websocket: true }, (socket, req) => {
         const origin = req.headers.origin;
+        // WebSocket requires a valid origin (unlike HTTP CORS which allows no-origin
+        // for curl/Postman). Browsers always send Origin on WebSocket upgrade requests,
+        // so rejecting missing origin blocks non-browser clients from the proxy.
         const isAllowed =
             origin &&
             (ALLOWED_ORIGINS.includes(origin) ||
-                origin.endsWith('.ton3s.app') ||
                 (process.env.NODE_ENV !== 'production' &&
                     /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)));
 

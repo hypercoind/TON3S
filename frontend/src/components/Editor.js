@@ -33,6 +33,7 @@ export class Editor extends BaseComponent {
                 data-gramm="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"
+                data-empty="true"
             ></div>
         `;
 
@@ -119,11 +120,13 @@ export class Editor extends BaseComponent {
 
         if (!note) {
             this.editorElement.innerHTML = '<p><br></p>';
+            this.updateEmptyState();
             return;
         }
 
         // Sanitize HTML content to prevent XSS
         this.editorElement.innerHTML = sanitizeHtml(note.content || '<p><br></p>');
+        this.updateEmptyState();
         this.updateCounts();
         this.editorElement.focus();
         this.moveCursorToEnd();
@@ -134,6 +137,7 @@ export class Editor extends BaseComponent {
      */
     handleInput() {
         this.ensureParagraph();
+        this.updateEmptyState();
         this.autoSave();
         this.updateCounts();
         this.autoScroll();
@@ -232,6 +236,14 @@ export class Editor extends BaseComponent {
             selection.addRange(range);
             this.editorElement.dispatchEvent(new Event('input'));
         }
+    }
+
+    /**
+     * Update data-empty attribute for placeholder visibility
+     */
+    updateEmptyState() {
+        const isEmpty = !this.editorElement.textContent?.trim();
+        this.editorElement.setAttribute('data-empty', isEmpty);
     }
 
     /**

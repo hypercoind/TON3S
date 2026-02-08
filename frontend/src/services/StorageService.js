@@ -6,6 +6,7 @@
 import Dexie from 'dexie';
 import { appState } from '../state/AppState.js';
 import { htmlToPlainText } from '../utils/markdown.js';
+import { sanitizeHtml } from '../utils/sanitizer.js';
 
 // Database schema
 class TON3SDatabase extends Dexie {
@@ -377,6 +378,10 @@ class StorageService {
         const notesToImport = data.notes || data.documents;
         if (notesToImport && Array.isArray(notesToImport)) {
             for (const note of notesToImport) {
+                // Sanitize imported HTML content before storing
+                if (note.content) {
+                    note.content = sanitizeHtml(note.content);
+                }
                 await this.createNote(note);
             }
         }

@@ -82,14 +82,8 @@ body,
     transition: color 0.4s ease, background-color 0.4s ease, border-color 0.4s ease;
 }
 
-/* GPU-accelerated transforms for animations */
-.sidebar,
-.dropdown-menu,
-.privacy-popup,
-.help-modal,
-.confirm-dialog {
-    will-change: transform, opacity;
-}
+/* Note: will-change removed from always-present elements to save GPU memory.
+   Apply will-change dynamically via JS when animations begin if needed. */
 
 /* Loading spinner */
 .spinner {

@@ -89,8 +89,9 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-    /* Always show delete button on touch devices */
-    .note-delete-btn {
+    /* Always show action buttons on touch devices */
+    .note-delete-btn,
+    .note-tag-btn {
         opacity: 0.7;
     }
 

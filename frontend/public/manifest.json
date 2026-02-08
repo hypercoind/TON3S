@@ -1,10 +1,10 @@
 {
+  "id": "/",
   "name": "TON3S - Write to Inspire",
   "short_name": "TON3S",
   "description": "Privacy-focused writing application with NOSTR integration",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#1e1e2e",
   "theme_color": "#1e1e2e",
   "icons": [
@@ -26,7 +26,6 @@
     }
   ],
   "categories": ["productivity", "utilities"],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "New Document",
