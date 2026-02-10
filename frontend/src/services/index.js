@@ -9,3 +9,5 @@ export { nostrService } from './NostrService.js';
 export { faviconService } from './FaviconService.js';
 export { exportService } from './ExportService.js';
 export { qrCodeService } from './QRCodeService.js';
+export { blossomService } from './BlossomService.js';
+export { mediaService } from './MediaService.js';

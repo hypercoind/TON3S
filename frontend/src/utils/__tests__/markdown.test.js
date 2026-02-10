@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
     htmlToMarkdown,
+    htmlToPlainText,
     parseContentForPDF,
     markdownToHtml,
+    extractMediaMetadata,
     countWords,
     countCharacters
 } from '../markdown.js';
@@ -187,6 +189,113 @@ describe('markdown', () => {
             // Note: emojis may count as multiple code units
             const emoji = '👋';
             expect(countCharacters(emoji)).toBe(emoji.length);
+        });
+    });
+
+    describe('htmlToMarkdown - media', () => {
+        it('should convert img to markdown image syntax', () => {
+            const html =
+                '<img src="https://example.com/img.jpg" alt="test photo" data-blossom-url="https://example.com/img.jpg">';
+            expect(htmlToMarkdown(html)).toBe('![test photo](https://example.com/img.jpg)');
+        });
+
+        it('should convert video to plain URL', () => {
+            const html =
+                '<video src="https://example.com/vid.mp4" data-blossom-url="https://example.com/vid.mp4"></video>';
+            expect(htmlToMarkdown(html)).toBe('https://example.com/vid.mp4');
+        });
+
+        it('should prefer data-blossom-url over src', () => {
+            const html =
+                '<img src="https://cdn.example.com/img.jpg" data-blossom-url="https://blossom.example.com/img.jpg" alt="">';
+            expect(htmlToMarkdown(html)).toContain('https://blossom.example.com/img.jpg');
+        });
+
+        it('should handle mixed text and media', () => {
+            const html =
+                '<h1>Title</h1><img src="https://example.com/img.jpg" data-blossom-url="https://example.com/img.jpg" alt=""><p>Caption text</p>';
+            const md = htmlToMarkdown(html);
+            expect(md).toContain('# Title');
+            expect(md).toContain('![](https://example.com/img.jpg)');
+            expect(md).toContain('Caption text');
+        });
+    });
+
+    describe('htmlToPlainText - media', () => {
+        it('should convert img to URL line', () => {
+            const html =
+                '<p>Before</p><img src="https://example.com/img.jpg" data-blossom-url="https://example.com/img.jpg"><p>After</p>';
+            const result = htmlToPlainText(html);
+            expect(result).toContain('https://example.com/img.jpg');
+            expect(result).toContain('Before');
+            expect(result).toContain('After');
+        });
+
+        it('should convert video to URL line', () => {
+            const html =
+                '<video src="https://example.com/vid.mp4" data-blossom-url="https://example.com/vid.mp4"></video>';
+            expect(htmlToPlainText(html)).toBe('https://example.com/vid.mp4');
+        });
+    });
+
+    describe('extractMediaMetadata', () => {
+        it('should extract metadata from img elements', () => {
+            const html =
+                '<img src="https://example.com/img.jpg" data-blossom-url="https://example.com/img.jpg" data-mime="image/jpeg" data-sha256="abc123" data-dim="800x600">';
+            const metadata = extractMediaMetadata(html);
+            expect(metadata).toHaveLength(1);
+            expect(metadata[0]).toEqual({
+                url: 'https://example.com/img.jpg',
+                type: 'image/jpeg',
+                sha256: 'abc123',
+                dim: '800x600'
+            });
+        });
+
+        it('should extract metadata from video elements', () => {
+            const html =
+                '<video src="https://example.com/vid.mp4" data-blossom-url="https://example.com/vid.mp4" data-mime="video/mp4" data-sha256="def456" data-dim="1920x1080"></video>';
+            const metadata = extractMediaMetadata(html);
+            expect(metadata).toHaveLength(1);
+            expect(metadata[0].url).toBe('https://example.com/vid.mp4');
+            expect(metadata[0].type).toBe('video/mp4');
+        });
+
+        it('should return empty array for content without media', () => {
+            const html = '<p>Just text</p>';
+            expect(extractMediaMetadata(html)).toEqual([]);
+        });
+
+        it('should return empty array for null/empty input', () => {
+            expect(extractMediaMetadata(null)).toEqual([]);
+            expect(extractMediaMetadata('')).toEqual([]);
+        });
+
+        it('should handle multiple media elements', () => {
+            const html =
+                '<img data-blossom-url="https://a.com/1.jpg" data-mime="image/jpeg" data-sha256="a" data-dim="100x100"><img data-blossom-url="https://b.com/2.png" data-mime="image/png" data-sha256="b" data-dim="200x200">';
+            const metadata = extractMediaMetadata(html);
+            expect(metadata).toHaveLength(2);
+            expect(metadata[0].url).toBe('https://a.com/1.jpg');
+            expect(metadata[1].url).toBe('https://b.com/2.png');
+        });
+
+        it('should skip media without data-blossom-url', () => {
+            const html = '<img src="https://example.com/img.jpg">';
+            expect(extractMediaMetadata(html)).toEqual([]);
+        });
+    });
+
+    describe('parseContentForPDF - media', () => {
+        it('should include image blocks', () => {
+            const html =
+                '<p>Text</p><img src="https://example.com/img.jpg" data-blossom-url="https://example.com/img.jpg" data-dim="800x600">';
+            const blocks = parseContentForPDF(html);
+            expect(blocks).toContainEqual({
+                type: 'image',
+                url: 'https://example.com/img.jpg',
+                dim: '800x600'
+            });
         });
     });
 });

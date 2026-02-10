@@ -7,7 +7,9 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
+import multipart from '@fastify/multipart';
 import { NostrProxy } from './websocket/NostrProxy.js';
+import { mediaUploadRoutes } from './routes/mediaUpload.js';
 import { randomUUID } from 'crypto';
 
 const PORT = process.env.PORT || 3001;
@@ -56,8 +58,8 @@ await fastify.register(cors, {
 
         callback(new Error('Not allowed by CORS'), false);
     },
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 });
 
@@ -75,6 +77,16 @@ await fastify.register(rateLimit, {
 
 // Register WebSocket plugin
 await fastify.register(websocket);
+
+// Register multipart plugin for file uploads
+await fastify.register(multipart, {
+    limits: {
+        fileSize: 11 * 1024 * 1024 // 11MB (10MB + multipart overhead)
+    }
+});
+
+// Register media upload routes
+await fastify.register(mediaUploadRoutes);
 
 // Health check endpoint
 fastify.get('/health', async () => {

@@ -57,8 +57,41 @@ export function stripHtml(html) {
 }
 
 /**
- * Sanitize HTML to only allow safe tags (h1, h2, p, br)
- * Removes all attributes and disallowed tags
+ * Validate that a src URL is safe (https: or blob: only)
+ */
+export function isAllowedSrc(url) {
+    if (!url || typeof url !== 'string') {
+        return false;
+    }
+    const trimmed = url.trim();
+    return trimmed.startsWith('https://') || trimmed.startsWith('blob:');
+}
+
+// Allowed attributes per media tag
+const MEDIA_ALLOWED_ATTRS = {
+    IMG: new Set([
+        'src',
+        'alt',
+        'data-sha256',
+        'data-mime',
+        'data-dim',
+        'data-blossom-url',
+        'loading'
+    ]),
+    VIDEO: new Set([
+        'src',
+        'controls',
+        'data-sha256',
+        'data-mime',
+        'data-dim',
+        'data-blossom-url',
+        'preload'
+    ])
+};
+
+/**
+ * Sanitize HTML to only allow safe tags (h1, h2, p, br, img, video)
+ * Removes all attributes from text tags, allows whitelisted attributes on media tags
  */
 export function sanitizeHtml(html) {
     if (!html || typeof html !== 'string') {
@@ -68,7 +101,7 @@ export function sanitizeHtml(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    const allowedTags = new Set(['H1', 'H2', 'P', 'BR']);
+    const allowedTags = new Set(['H1', 'H2', 'P', 'BR', 'IMG', 'VIDEO']);
 
     function sanitizeNode(node) {
         const fragment = document.createDocumentFragment();
@@ -78,9 +111,34 @@ export function sanitizeHtml(html) {
                 fragment.appendChild(document.createTextNode(child.textContent));
             } else if (child.nodeType === Node.ELEMENT_NODE) {
                 if (allowedTags.has(child.tagName)) {
-                    const cleanElement = document.createElement(child.tagName.toLowerCase());
-                    // Recursively sanitize children
-                    cleanElement.appendChild(sanitizeNode(child));
+                    const tagName = child.tagName;
+                    const cleanElement = document.createElement(tagName.toLowerCase());
+
+                    // Copy allowed attributes for media elements
+                    const allowedAttrs = MEDIA_ALLOWED_ATTRS[tagName];
+                    if (allowedAttrs) {
+                        for (const attr of allowedAttrs) {
+                            if (child.hasAttribute(attr)) {
+                                const value = child.getAttribute(attr);
+                                // Validate src attribute
+                                if (attr === 'src') {
+                                    if (!isAllowedSrc(value)) {
+                                        continue; // Skip element entirely if src is unsafe
+                                    }
+                                }
+                                cleanElement.setAttribute(attr, value);
+                            }
+                        }
+                        // If src was required but missing or rejected, skip the element
+                        if (!cleanElement.hasAttribute('src')) {
+                            continue;
+                        }
+                    }
+
+                    // Recursively sanitize children (for non-void elements)
+                    if (tagName !== 'IMG' && tagName !== 'BR') {
+                        cleanElement.appendChild(sanitizeNode(child));
+                    }
                     fragment.appendChild(cleanElement);
                 } else {
                     // For disallowed tags, keep text content wrapped in <p>
@@ -134,5 +192,6 @@ export default {
     sanitizeFilename,
     stripHtml,
     sanitizeHtml,
+    isAllowedSrc,
     generateUUID
 };

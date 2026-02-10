@@ -5,11 +5,7 @@
  */
 
 import WebSocket from 'ws';
-import { URL } from 'url';
-import dns from 'dns';
-import { promisify } from 'util';
-
-const dnsLookup = promisify(dns.lookup);
+import { validateRelayUrl, sanitizeErrorMessage } from '../utils/ssrf.js';
 
 // Maximum WebSocket message size (64KB)
 const MAX_MESSAGE_SIZE = 64 * 1024;
@@ -38,121 +34,7 @@ export class NostrProxy {
         this.messageTimestamps = new Map(); // clientId -> timestamp[]
     }
 
-    /**
-     * Check if an IP address is private/internal
-     */
-    isPrivateIP(ip) {
-        // IPv4 private ranges
-        const privateRanges = [
-            /^127\./, // 127.0.0.0/8 (loopback)
-            /^10\./, // 10.0.0.0/8
-            /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12
-            /^192\.168\./, // 192.168.0.0/16
-            /^169\.254\./, // 169.254.0.0/16 (link-local)
-            /^0\./, // 0.0.0.0/8
-            /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./ // 100.64.0.0/10 (CGNAT)
-        ];
-
-        // IPv6 private/special ranges
-        const ipv6Private = [
-            /^::1$/, // Loopback
-            /^fe80:/i, // Link-local
-            /^fc00:/i, // Unique local
-            /^fd/i, // Unique local
-            /^::ffff:127\./i, // IPv4-mapped loopback
-            /^::ffff:10\./i, // IPv4-mapped private
-            /^::ffff:192\.168\./i, // IPv4-mapped private
-            /^::ffff:172\.(1[6-9]|2[0-9]|3[0-1])\./i // IPv4-mapped private
-        ];
-
-        for (const range of privateRanges) {
-            if (range.test(ip)) {
-                return true;
-            }
-        }
-
-        for (const range of ipv6Private) {
-            if (range.test(ip)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Validate relay URL for SSRF protection
-     */
-    async validateRelayUrl(url) {
-        let parsed;
-        try {
-            parsed = new URL(url);
-        } catch {
-            throw new Error('Invalid URL format');
-        }
-
-        // Only allow WebSocket protocols
-        if (!['ws:', 'wss:'].includes(parsed.protocol)) {
-            throw new Error('Only WebSocket protocols (ws/wss) are allowed');
-        }
-
-        // Block localhost and common internal hostnames
-        const blockedHostnames = [
-            'localhost',
-            '127.0.0.1',
-            '0.0.0.0',
-            '::1',
-            '[::1]',
-            'metadata.google.internal',
-            'metadata.google',
-            '169.254.169.254'
-        ];
-
-        const hostname = parsed.hostname.toLowerCase();
-        if (blockedHostnames.includes(hostname)) {
-            throw new Error('Connecting to internal hosts is not allowed');
-        }
-
-        // Resolve hostname and check if it resolves to a private IP
-        // Fail closed: if DNS fails, reject the connection
-        const { address } = await dnsLookup(parsed.hostname);
-        if (this.isPrivateIP(address)) {
-            throw new Error('Relay hostname resolves to a private IP address');
-        }
-
-        // Return resolved IP for DNS pinning (prevent TOCTOU rebinding)
-        return { parsed, resolvedIP: address };
-    }
-
-    /**
-     * Sanitize error message to prevent information leakage
-     */
-    sanitizeErrorMessage(error) {
-        // Only expose generic error messages to clients
-        const message = error?.message || 'Unknown error';
-
-        // List of safe error patterns to pass through
-        const safePatterns = [
-            /^Invalid URL/i,
-            /^Only WebSocket protocols/i,
-            /^Connecting to internal hosts/i,
-            /^private IP/i,
-            /^connection refused/i,
-            /^connection timeout/i,
-            /^relay disconnected/i,
-            /^already connected/i,
-            /^Unexpected server response: \d+/i // HTTP status errors (502, 503, etc.)
-        ];
-
-        for (const pattern of safePatterns) {
-            if (pattern.test(message)) {
-                return message;
-            }
-        }
-
-        // Return generic error for unexpected errors
-        return 'Connection failed';
-    }
+    // SSRF utilities delegated to shared module (../utils/ssrf.js)
 
     /**
      * Handle a new client connection
@@ -309,14 +191,14 @@ export class NostrProxy {
         // Validate relay URL for SSRF protection
         let parsed, resolvedIP;
         try {
-            ({ parsed, resolvedIP } = await this.validateRelayUrl(relayUrl));
+            ({ parsed, resolvedIP } = await validateRelayUrl(relayUrl));
         } catch (error) {
             console.warn(`[NostrProxy] URL validation failed for ${relayUrl}: ${error.message}`);
             this.sendToClient(clientId, [
                 'RELAY_STATUS',
                 relayUrl,
                 'error',
-                this.sanitizeErrorMessage(error)
+                sanitizeErrorMessage(error)
             ]);
             return;
         }
@@ -376,7 +258,7 @@ export class NostrProxy {
                     'RELAY_STATUS',
                     relayUrl,
                     'error',
-                    this.sanitizeErrorMessage(error)
+                    sanitizeErrorMessage(error)
                 ]);
             });
         } catch (error) {
@@ -385,7 +267,7 @@ export class NostrProxy {
                 'RELAY_STATUS',
                 relayUrl,
                 'error',
-                this.sanitizeErrorMessage(error)
+                sanitizeErrorMessage(error)
             ]);
         }
     }

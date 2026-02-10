@@ -324,9 +324,19 @@ class TON3SApp {
             console.warn('TON3S should be served over HTTPS for security');
         }
 
-        // Prevent drag and drop
-        this.dragOverHandler = e => e.preventDefault();
+        // Prevent drag and drop (except media drops on editor)
+        this.dragOverHandler = e => {
+            // Allow dragover inside editor (handled by Editor component)
+            if (e.target.closest?.('.editor') && e.dataTransfer?.types?.includes('Files')) {
+                return;
+            }
+            e.preventDefault();
+        };
         this.dropHandler = e => {
+            // Allow drops inside editor (handled by Editor component)
+            if (e.target.closest?.('.editor') && e.dataTransfer?.types?.includes('Files')) {
+                return;
+            }
             e.preventDefault();
             return false;
         };

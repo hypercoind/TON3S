@@ -307,6 +307,13 @@ class StorageService {
         if (Object.keys(settings).length > 0) {
             appState.loadSettings(settings);
         }
+
+        // Load Blossom server setting
+        const blossomServer = await this.getSetting('blossomServer');
+        if (blossomServer) {
+            appState.setBlossomServer(blossomServer);
+        }
+
         return settings;
     }
 

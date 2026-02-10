@@ -4,7 +4,15 @@
  */
 
 /**
+ * Get the media URL from an IMG or VIDEO element (prefer data-blossom-url)
+ */
+function getMediaUrl(el) {
+    return el.getAttribute('data-blossom-url') || el.getAttribute('src') || '';
+}
+
+/**
  * Convert HTML content to Markdown (XSS-safe using DOMParser)
+ * Handles h1, h2, p, img, video elements
  */
 export function htmlToMarkdown(html) {
     if (!html || typeof html !== 'string') {
@@ -16,17 +24,50 @@ export function htmlToMarkdown(html) {
 
     let markdown = '';
 
-    // Process all block elements (h1, h2, p)
-    const blocks = doc.body.querySelectorAll('h1, h2, p');
-    blocks.forEach(block => {
-        const text = block.textContent.trim();
+    // Process all block-level and media elements in document order
+    const elements = doc.body.querySelectorAll('h1, h2, p, img, video');
+    elements.forEach(el => {
+        if (el.tagName === 'IMG') {
+            const url = getMediaUrl(el);
+            if (url) {
+                const alt = el.getAttribute('alt') || '';
+                markdown += `![${alt}](${url})\n\n`;
+            }
+            return;
+        }
+
+        if (el.tagName === 'VIDEO') {
+            const url = getMediaUrl(el);
+            if (url) {
+                markdown += `${url}\n\n`;
+            }
+            return;
+        }
+
+        // Check for images nested inside p tags
+        const nestedImg = el.querySelector('img');
+        if (nestedImg) {
+            const url = getMediaUrl(nestedImg);
+            if (url) {
+                const alt = nestedImg.getAttribute('alt') || '';
+                markdown += `![${alt}](${url})\n\n`;
+            }
+            // Also include any text in the paragraph
+            const text = el.textContent.trim();
+            if (text) {
+                markdown += `${text}\n\n`;
+            }
+            return;
+        }
+
+        const text = el.textContent.trim();
         if (!text) {
             return;
         }
 
-        if (block.tagName === 'H1') {
+        if (el.tagName === 'H1') {
             markdown += `# ${text}\n\n`;
-        } else if (block.tagName === 'H2') {
+        } else if (el.tagName === 'H2') {
             markdown += `## ${text}\n\n`;
         } else {
             markdown += `${text}\n\n`;
@@ -49,21 +90,46 @@ export function parseContentForPDF(html) {
 
     const contentBlocks = [];
 
-    const blocks = doc.body.querySelectorAll('h1, h2, p');
-    blocks.forEach(block => {
-        const text = block.textContent.trim();
+    const elements = doc.body.querySelectorAll('h1, h2, p, img');
+    elements.forEach(el => {
+        if (el.tagName === 'IMG') {
+            const url = getMediaUrl(el);
+            if (url) {
+                contentBlocks.push({
+                    type: 'image',
+                    url: url,
+                    dim: el.getAttribute('data-dim') || ''
+                });
+            }
+            return;
+        }
+
+        // Check for nested images in paragraphs
+        const nestedImg = el.querySelector('img');
+        if (nestedImg) {
+            const url = getMediaUrl(nestedImg);
+            if (url) {
+                contentBlocks.push({
+                    type: 'image',
+                    url: url,
+                    dim: nestedImg.getAttribute('data-dim') || ''
+                });
+            }
+        }
+
+        const text = el.textContent.trim();
         if (!text) {
             return;
         }
 
-        if (block.tagName === 'H1') {
+        if (el.tagName === 'H1') {
             contentBlocks.push({
                 type: 'title',
                 text: text,
                 fontSize: 24,
                 fontStyle: 'bold'
             });
-        } else if (block.tagName === 'H2') {
+        } else if (el.tagName === 'H2') {
             contentBlocks.push({
                 type: 'heading',
                 text: text,
@@ -162,6 +228,7 @@ function escapeHtml(text) {
  * Convert HTML content to plain text with preserved newlines between blocks
  * Used for Nostr publishing where block structure should be maintained
  * Empty paragraphs (<p><br></p>) are preserved as blank lines
+ * IMG/VIDEO elements emit their URL on its own line
  */
 export function htmlToPlainText(html) {
     if (!html || typeof html !== 'string') {
@@ -172,14 +239,69 @@ export function htmlToPlainText(html) {
     const doc = parser.parseFromString(html, 'text/html');
 
     const lines = [];
-    const blocks = doc.body.querySelectorAll('h1, h2, p');
+    const elements = doc.body.querySelectorAll('h1, h2, p, img, video');
 
-    blocks.forEach(block => {
-        // Trim text content - empty blocks become empty strings (blank lines)
-        lines.push(block.textContent.trim());
+    elements.forEach(el => {
+        if (el.tagName === 'IMG' || el.tagName === 'VIDEO') {
+            const url = getMediaUrl(el);
+            if (url) {
+                lines.push(url);
+            }
+            return;
+        }
+
+        // Check for images nested inside p tags
+        const nestedMedia = el.querySelector('img, video');
+        if (nestedMedia) {
+            const url = getMediaUrl(nestedMedia);
+            if (url) {
+                lines.push(url);
+            }
+            const text = el.textContent.trim();
+            if (text) {
+                lines.push(text);
+            }
+            return;
+        }
+
+        lines.push(el.textContent.trim());
     });
 
     return lines.join('\n').trim();
+}
+
+/**
+ * Extract media metadata from HTML content for NIP-92 imeta tags
+ * @returns {Array<{url: string, type: string, sha256: string, dim: string}>}
+ */
+export function extractMediaMetadata(html) {
+    if (!html || typeof html !== 'string') {
+        return [];
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const metadata = [];
+    const mediaElements = doc.body.querySelectorAll(
+        'img[data-blossom-url], video[data-blossom-url]'
+    );
+
+    mediaElements.forEach(el => {
+        const url = el.getAttribute('data-blossom-url') || el.getAttribute('src');
+        if (!url) {
+            return;
+        }
+
+        metadata.push({
+            url: url,
+            type: el.getAttribute('data-mime') || '',
+            sha256: el.getAttribute('data-sha256') || '',
+            dim: el.getAttribute('data-dim') || ''
+        });
+    });
+
+    return metadata;
 }
 
 /**
@@ -211,6 +333,7 @@ export default {
     htmlToPlainText,
     parseContentForPDF,
     markdownToHtml,
+    extractMediaMetadata,
     countWords,
     countCharacters
 };

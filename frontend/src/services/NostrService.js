@@ -5,6 +5,7 @@
 
 import { appState, StateEvents } from '../state/AppState.js';
 import { nostrAuthService } from './NostrAuthService.js';
+import { extractMediaMetadata, htmlToMarkdown } from '../utils/markdown.js';
 
 class NostrService {
     constructor() {
@@ -247,6 +248,9 @@ class NostrService {
             }
         }
 
+        // Add NIP-92 imeta tags for media
+        this._addImetaTags(event, note.content);
+
         // Sign the event with the extension
         const signedEvent = await nostrAuthService.signEvent(event);
         console.log('[NOSTR] Signed event:', signedEvent.id);
@@ -294,8 +298,9 @@ class NostrService {
             throw new Error('Not connected to NOSTR');
         }
 
-        const content = note.plainText || '';
-        if (!content.trim()) {
+        // Use markdown for long-form content (NIP-23)
+        const markdownContent = htmlToMarkdown(note.content || '');
+        if (!markdownContent.trim()) {
             throw new Error('Note is empty');
         }
 
@@ -305,7 +310,7 @@ class NostrService {
         // Create long-form event (kind 30023)
         const event = {
             kind: 30023,
-            content: content,
+            content: markdownContent,
             tags: [
                 ['d', dTag],
                 ['title', note.title || 'Untitled'],
@@ -321,8 +326,42 @@ class NostrService {
             }
         }
 
+        // Add NIP-92 imeta tags for media
+        const mediaItems = this._addImetaTags(event, note.content);
+
+        // Add article thumbnail (first image) per NIP-23
+        if (mediaItems.length > 0 && mediaItems[0].url) {
+            event.tags.push(['image', mediaItems[0].url]);
+        }
+
         const signedEvent = await nostrAuthService.signEvent(event);
         return this.publishEvent(signedEvent);
+    }
+
+    /**
+     * Add NIP-92 imeta tags for media in content
+     * @returns {Array} media metadata items
+     */
+    _addImetaTags(event, htmlContent) {
+        if (!htmlContent) {
+            return [];
+        }
+
+        const mediaItems = extractMediaMetadata(htmlContent);
+        for (const item of mediaItems) {
+            const imetaFields = [`url ${item.url}`];
+            if (item.type) {
+                imetaFields.push(`m ${item.type}`);
+            }
+            if (item.dim) {
+                imetaFields.push(`dim ${item.dim}`);
+            }
+            if (item.sha256) {
+                imetaFields.push(`x ${item.sha256}`);
+            }
+            event.tags.push(['imeta', ...imetaFields]);
+        }
+        return mediaItems;
     }
 
     /**

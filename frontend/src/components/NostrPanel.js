@@ -70,6 +70,8 @@ export class NostrPanel extends BaseComponent {
 
                     ${this.renderConnectionUI(connected)}
 
+                    ${connected ? this.renderBlossomConfig() : ''}
+
                     ${connected ? this.renderPublishedList(publishedNotes) : ''}
                 </div>
             </div>
@@ -169,6 +171,23 @@ export class NostrPanel extends BaseComponent {
         `;
     }
 
+    renderBlossomConfig() {
+        const currentServer = appState.blossomServer || '';
+        return `
+            <div class="blossom-config" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--secondary);">
+                <label for="blossom-server-input" style="font-size: 0.75rem; color: var(--fg-dim); display: block; margin-bottom: 0.25rem;">Blossom Server</label>
+                <input type="text"
+                       class="blossom-server-input"
+                       id="blossom-server-input"
+                       placeholder="https://blossom.primal.net"
+                       value="${sanitizeInput(currentServer)}"
+                       autocomplete="off"
+                       spellcheck="false"
+                       style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.8rem; background: transparent; border: 1px solid var(--secondary); border-radius: 4px; color: var(--fg); box-sizing: border-box;">
+            </div>
+        `;
+    }
+
     bindEvents() {
         // Connect button
         this.container.addEventListener('click', async e => {
@@ -244,6 +263,15 @@ export class NostrPanel extends BaseComponent {
             }
             if (e.target.id === 'nostr-key-input' && e.key === 'Escape') {
                 this.hideKeyInputUI();
+            }
+        });
+
+        // Blossom server input - save on blur or Enter
+        this.container.addEventListener('change', e => {
+            if (e.target.classList.contains('blossom-server-input')) {
+                const value = e.target.value.trim();
+                appState.setBlossomServer(value);
+                storageService.setSetting('blossomServer', value);
             }
         });
 

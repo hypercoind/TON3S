@@ -33,6 +33,13 @@ export const StateEvents = {
     NOSTR_PUBLISHED_NOTE_ADDED: 'nostr:publishedNoteAdded',
     NOSTR_PUBLISHED_NOTES_CLEARED: 'nostr:publishedNotesCleared',
 
+    // Media events
+    MEDIA_UPLOAD_STARTED: 'media:uploadStarted',
+    MEDIA_UPLOAD_PROGRESS: 'media:uploadProgress',
+    MEDIA_UPLOAD_COMPLETED: 'media:uploadCompleted',
+    MEDIA_UPLOAD_FAILED: 'media:uploadFailed',
+    BLOSSOM_SERVER_CHANGED: 'media:blossomServerChanged',
+
     // UI events
     SEARCH_CHANGED: 'ui:search',
     SAVE_STATUS_CHANGED: 'ui:saveStatus',
@@ -86,6 +93,13 @@ class AppState extends StateEmitter {
 
         // Ephemeral published notes (cleared on disconnect/refresh)
         this._publishedNotes = [];
+
+        // Media state
+        this._media = {
+            blossomServer: '',
+            uploading: false,
+            uploadProgress: 0
+        };
 
         // UI state
         this._ui = {
@@ -362,6 +376,48 @@ class AppState extends StateEmitter {
     clearPublishedNotes() {
         this._publishedNotes = [];
         this.emit(StateEvents.NOSTR_PUBLISHED_NOTES_CLEARED);
+    }
+
+    // ==================
+    // Media accessors
+    // ==================
+
+    get media() {
+        return this._media;
+    }
+
+    get blossomServer() {
+        return this._media.blossomServer;
+    }
+
+    setBlossomServer(url) {
+        this._media.blossomServer = url;
+        this.emit(StateEvents.BLOSSOM_SERVER_CHANGED, url);
+    }
+
+    setMediaUploading(uploading) {
+        this._media.uploading = uploading;
+        if (uploading) {
+            this._media.uploadProgress = 0;
+            this.emit(StateEvents.MEDIA_UPLOAD_STARTED);
+        }
+    }
+
+    setMediaUploadProgress(progress) {
+        this._media.uploadProgress = progress;
+        this.emit(StateEvents.MEDIA_UPLOAD_PROGRESS, progress);
+    }
+
+    mediaUploadCompleted(descriptor) {
+        this._media.uploading = false;
+        this._media.uploadProgress = 100;
+        this.emit(StateEvents.MEDIA_UPLOAD_COMPLETED, descriptor);
+    }
+
+    mediaUploadFailed(error) {
+        this._media.uploading = false;
+        this._media.uploadProgress = 0;
+        this.emit(StateEvents.MEDIA_UPLOAD_FAILED, error);
     }
 
     // ==================

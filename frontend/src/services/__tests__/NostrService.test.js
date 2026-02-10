@@ -25,10 +25,17 @@ vi.mock('../NostrAuthService.js', () => ({
     }
 }));
 
+// Mock markdown utilities
+vi.mock('../../utils/markdown.js', () => ({
+    extractMediaMetadata: vi.fn(() => []),
+    htmlToMarkdown: vi.fn(html => html || '')
+}));
+
 // Import after mocking
 import { nostrService } from '../NostrService.js';
 import { nostrAuthService } from '../NostrAuthService.js';
 import { appState } from '../../state/AppState.js';
+import { extractMediaMetadata, htmlToMarkdown } from '../../utils/markdown.js';
 
 describe('NostrService', () => {
     let mockWebSocket;
@@ -373,13 +380,15 @@ describe('NostrService', () => {
                 id: 'event456',
                 kind: 30023
             });
+            htmlToMarkdown.mockReturnValue('Long form content');
+            extractMediaMetadata.mockReturnValue([]);
 
             nostrService.socket = mockWebSocket;
             nostrService.connected = true;
 
             nostrService.publishLongForm({
                 id: 123,
-                plainText: 'Long form content',
+                content: '<p>Long form content</p>',
                 title: 'Article Title'
             });
 
@@ -431,6 +440,135 @@ describe('NostrService', () => {
                 eventId: 'event789',
                 relayUrl: 'wss://relay.example.com'
             });
+        });
+    });
+
+    describe('_addImetaTags', () => {
+        it('should add imeta tags for media items', () => {
+            extractMediaMetadata.mockReturnValue([
+                {
+                    url: 'https://b.com/abc123.jpg',
+                    type: 'image/jpeg',
+                    sha256: 'abc123',
+                    dim: '800x600'
+                }
+            ]);
+
+            const event = { tags: [] };
+            const result = nostrService._addImetaTags(
+                event,
+                '<img data-blossom-url="https://b.com/abc123.jpg">'
+            );
+
+            expect(event.tags).toHaveLength(1);
+            expect(event.tags[0][0]).toBe('imeta');
+            expect(event.tags[0]).toContain('url https://b.com/abc123.jpg');
+            expect(event.tags[0]).toContain('m image/jpeg');
+            expect(event.tags[0]).toContain('dim 800x600');
+            expect(event.tags[0]).toContain('x abc123');
+            expect(result).toHaveLength(1);
+        });
+
+        it('should handle multiple media items', () => {
+            extractMediaMetadata.mockReturnValue([
+                { url: 'https://b.com/1.jpg', type: 'image/jpeg', sha256: 'a', dim: '100x100' },
+                { url: 'https://b.com/2.mp4', type: 'video/mp4', sha256: 'b', dim: '1920x1080' }
+            ]);
+
+            const event = { tags: [] };
+            nostrService._addImetaTags(event, '<img><video>');
+
+            expect(event.tags).toHaveLength(2);
+            expect(event.tags[0]).toContain('url https://b.com/1.jpg');
+            expect(event.tags[1]).toContain('url https://b.com/2.mp4');
+        });
+
+        it('should skip optional fields when missing', () => {
+            extractMediaMetadata.mockReturnValue([{ url: 'https://b.com/1.jpg' }]);
+
+            const event = { tags: [] };
+            nostrService._addImetaTags(event, '<img>');
+
+            expect(event.tags[0]).toEqual(['imeta', 'url https://b.com/1.jpg']);
+        });
+
+        it('should return empty array for null content', () => {
+            const event = { tags: [] };
+            const result = nostrService._addImetaTags(event, null);
+
+            expect(result).toEqual([]);
+            expect(event.tags).toHaveLength(0);
+        });
+    });
+
+    describe('publishNote - media', () => {
+        it('should include imeta tags for media content', async () => {
+            nostrAuthService.isConnected.mockReturnValue(true);
+            nostrAuthService.signEvent.mockResolvedValue({
+                id: 'media-event',
+                kind: 1,
+                content: 'Photo https://b.com/img.jpg',
+                sig: 'sig'
+            });
+            extractMediaMetadata.mockReturnValue([
+                { url: 'https://b.com/img.jpg', type: 'image/jpeg', sha256: 'abc', dim: '800x600' }
+            ]);
+
+            nostrService.socket = mockWebSocket;
+            nostrService.connected = true;
+
+            nostrService.publishNote({
+                plainText: 'Photo https://b.com/img.jpg',
+                content: '<p>Photo</p><img data-blossom-url="https://b.com/img.jpg">'
+            });
+
+            expect(nostrAuthService.signEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    kind: 1,
+                    tags: expect.arrayContaining([
+                        expect.arrayContaining(['imeta', 'url https://b.com/img.jpg'])
+                    ])
+                })
+            );
+
+            nostrService.pendingPublishes.delete('media-event');
+        });
+    });
+
+    describe('publishLongForm - media', () => {
+        it('should use htmlToMarkdown for content and add image tag', async () => {
+            nostrAuthService.isConnected.mockReturnValue(true);
+            nostrAuthService.signEvent.mockResolvedValue({
+                id: 'lf-event',
+                kind: 30023
+            });
+            htmlToMarkdown.mockReturnValue('# Article\n\n![](https://b.com/img.jpg)\n\nText');
+            extractMediaMetadata.mockReturnValue([
+                { url: 'https://b.com/img.jpg', type: 'image/jpeg', sha256: 'abc', dim: '800x600' }
+            ]);
+
+            nostrService.socket = mockWebSocket;
+            nostrService.connected = true;
+
+            nostrService.publishLongForm({
+                id: 'note-42',
+                content:
+                    '<h1>Article</h1><img data-blossom-url="https://b.com/img.jpg"><p>Text</p>',
+                title: 'Article'
+            });
+
+            expect(htmlToMarkdown).toHaveBeenCalled();
+            expect(nostrAuthService.signEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    kind: 30023,
+                    tags: expect.arrayContaining([
+                        ['image', 'https://b.com/img.jpg'],
+                        expect.arrayContaining(['imeta', 'url https://b.com/img.jpg'])
+                    ])
+                })
+            );
+
+            nostrService.pendingPublishes.delete('lf-event');
         });
     });
 

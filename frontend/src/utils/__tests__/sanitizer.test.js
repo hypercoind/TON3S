@@ -4,6 +4,8 @@ import {
     validateIndex,
     sanitizeFilename,
     stripHtml,
+    sanitizeHtml,
+    isAllowedSrc,
     generateUUID
 } from '../sanitizer.js';
 
@@ -192,6 +194,105 @@ describe('sanitizer', () => {
             expect(uuid).toMatch(uuidRegex);
 
             crypto.randomUUID = originalRandomUUID;
+        });
+    });
+
+    describe('isAllowedSrc', () => {
+        it('should allow https URLs', () => {
+            expect(isAllowedSrc('https://example.com/image.jpg')).toBe(true);
+            expect(isAllowedSrc('https://blossom.primal.net/abc123')).toBe(true);
+        });
+
+        it('should allow blob URLs', () => {
+            expect(isAllowedSrc('blob:https://localhost/abc-123')).toBe(true);
+        });
+
+        it('should reject javascript: URLs', () => {
+            expect(isAllowedSrc('javascript:alert(1)')).toBe(false);
+        });
+
+        it('should reject data: URLs', () => {
+            expect(isAllowedSrc('data:image/png;base64,abc')).toBe(false);
+        });
+
+        it('should reject http URLs', () => {
+            expect(isAllowedSrc('http://example.com/image.jpg')).toBe(false);
+        });
+
+        it('should reject relative paths', () => {
+            expect(isAllowedSrc('/images/photo.jpg')).toBe(false);
+            expect(isAllowedSrc('../image.jpg')).toBe(false);
+        });
+
+        it('should reject empty/null/undefined', () => {
+            expect(isAllowedSrc('')).toBe(false);
+            expect(isAllowedSrc(null)).toBe(false);
+            expect(isAllowedSrc(undefined)).toBe(false);
+        });
+    });
+
+    describe('sanitizeHtml - media elements', () => {
+        it('should preserve img with allowed attributes', () => {
+            const html =
+                '<img src="https://example.com/img.jpg" alt="test" data-sha256="abc123" loading="lazy">';
+            const result = sanitizeHtml(html);
+            expect(result).toContain('<img');
+            expect(result).toContain('src="https://example.com/img.jpg"');
+            expect(result).toContain('alt="test"');
+            expect(result).toContain('data-sha256="abc123"');
+            expect(result).toContain('loading="lazy"');
+        });
+
+        it('should preserve video with allowed attributes', () => {
+            const html =
+                '<video src="https://example.com/video.mp4" controls data-sha256="def456" preload="metadata"></video>';
+            const result = sanitizeHtml(html);
+            expect(result).toContain('<video');
+            expect(result).toContain('src="https://example.com/video.mp4"');
+            expect(result).toContain('data-sha256="def456"');
+        });
+
+        it('should reject img with javascript: src', () => {
+            const html = '<img src="javascript:alert(1)" alt="xss">';
+            const result = sanitizeHtml(html);
+            expect(result).not.toContain('<img');
+            expect(result).not.toContain('javascript:');
+        });
+
+        it('should reject img with data: src', () => {
+            const html = '<img src="data:image/png;base64,abc" alt="test">';
+            const result = sanitizeHtml(html);
+            expect(result).not.toContain('<img');
+        });
+
+        it('should strip unknown attributes from img', () => {
+            const html =
+                '<img src="https://example.com/img.jpg" onclick="alert(1)" onerror="alert(2)">';
+            const result = sanitizeHtml(html);
+            expect(result).toContain('src="https://example.com/img.jpg"');
+            expect(result).not.toContain('onclick');
+            expect(result).not.toContain('onerror');
+        });
+
+        it('should strip unknown attributes from video', () => {
+            const html = '<video src="https://example.com/v.mp4" onload="alert(1)"></video>';
+            const result = sanitizeHtml(html);
+            expect(result).toContain('src="https://example.com/v.mp4"');
+            expect(result).not.toContain('onload');
+        });
+
+        it('should still allow text elements alongside media', () => {
+            const html = '<h1>Title</h1><img src="https://example.com/img.jpg"><p>Text</p>';
+            const result = sanitizeHtml(html);
+            expect(result).toContain('<h1>Title</h1>');
+            expect(result).toContain('<img');
+            expect(result).toContain('<p>Text</p>');
+        });
+
+        it('should reject img without src', () => {
+            const html = '<img alt="no source">';
+            const result = sanitizeHtml(html);
+            expect(result).not.toContain('<img');
         });
     });
 });
