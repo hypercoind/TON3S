@@ -96,7 +96,7 @@ class AppState extends StateEmitter {
 
         // Media state
         this._media = {
-            blossomServer: '',
+            blossomServer: 'https://blossom.primal.net',
             uploading: false,
             uploadProgress: 0
         };

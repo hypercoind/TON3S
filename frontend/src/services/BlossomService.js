@@ -73,9 +73,9 @@ class BlossomService {
     _uploadViaProxy(file, blossomServer, authHeader, onProgress) {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
-            formData.append('file', file);
             formData.append('blossomServer', blossomServer);
             formData.append('authorization', authHeader);
+            formData.append('file', file);
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/media/upload');
