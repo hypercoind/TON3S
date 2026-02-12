@@ -17,7 +17,7 @@ const bitcoinAddresses = [
 ];
 
 export const DONATION_CONFIG = {
-    lightningAddress: 'hypercoin@coinos.io',
+    lightningAddress: 'ton3s@coinos.io',
     bitcoinAddress: bitcoinAddresses[Math.floor(Math.random() * bitcoinAddresses.length)],
     presets: [
         { sats: 1000, label: '1k' },
