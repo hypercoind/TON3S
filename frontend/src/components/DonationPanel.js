@@ -99,8 +99,9 @@ export class DonationPanel extends BaseComponent {
             // Lightning Address - just the address itself
             return DONATION_CONFIG.lightningAddress;
         } else {
-            // On-chain - BIP21 URI with amount
-            const btcAmount = amount / 100000000;
+            // On-chain - BIP21 URI with amount; fall back to preset if custom is 0
+            const effectiveAmount = amount > 0 ? amount : this.selectedAmount;
+            const btcAmount = effectiveAmount / 100000000;
             return `bitcoin:${DONATION_CONFIG.bitcoinAddress}?amount=${btcAmount}`;
         }
     }

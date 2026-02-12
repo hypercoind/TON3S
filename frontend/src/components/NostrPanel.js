@@ -301,7 +301,11 @@ export class NostrPanel extends BaseComponent {
      * Render the key input modal overlay
      */
     renderKeyModal() {
-        // Remove existing modal if any
+        // Skip if modal already exists to prevent duplicate event listeners
+        if (document.getElementById('nostr-key-overlay')) {
+            return;
+        }
+        // Remove any stale modal reference
         this.removeKeyModal();
 
         const overlay = document.createElement('div');
@@ -389,7 +393,8 @@ export class NostrPanel extends BaseComponent {
         const overlay = document.getElementById('nostr-key-overlay');
         if (overlay) {
             overlay.classList.remove('show');
-            setTimeout(() => overlay.remove(), 200);
+            // Remove immediately to prevent duplicate listeners when render() re-creates the modal
+            overlay.remove();
         }
         if (this._keyModalEscapeHandler) {
             document.removeEventListener('keydown', this._keyModalEscapeHandler);

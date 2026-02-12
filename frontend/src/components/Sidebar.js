@@ -304,6 +304,17 @@ export class Sidebar extends BaseComponent {
      * Actually create the new note
      */
     async doCreateNewNote() {
+        // Clear search so the new note is visible in the list
+        if (appState.ui.searchQuery) {
+            appState.setSearchQuery('');
+            if (this.searchInput) {
+                this.searchInput.value = '';
+            }
+            if (this.searchClearBtn) {
+                this.searchClearBtn.style.display = 'none';
+            }
+        }
+
         const note = await storageService.createNote({
             title: 'Untitled Note',
             content: '<p><br></p>',
