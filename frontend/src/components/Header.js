@@ -97,7 +97,7 @@ export class Header extends BaseComponent {
         this.applyTheme();
         storageService.saveThemeState();
 
-        toast.info(appState.currentTheme.full, { duration: 1500 });
+        toast.info(appState.currentTheme.full, { duration: 1500, tag: 'theme-rotation' });
 
         setTimeout(() => icon?.classList.remove('rotating'), 500);
     }
@@ -110,7 +110,7 @@ export class Header extends BaseComponent {
         this.applyFont();
         storageService.saveFontState();
 
-        toast.info(appState.currentFont.full, { duration: 1500 });
+        toast.info(appState.currentFont.full, { duration: 1500, tag: 'font-rotation' });
 
         setTimeout(() => icon?.classList.remove('rotating'), 500);
     }

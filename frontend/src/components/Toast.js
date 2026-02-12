@@ -7,6 +7,7 @@ class ToastManager {
     constructor() {
         this.container = null;
         this.toasts = [];
+        this.taggedToasts = new Map(); // tag → { element, timeoutId }
         this.init();
     }
 
@@ -28,11 +29,20 @@ class ToastManager {
      * @param {number} options.duration - Duration in ms (default: 3000)
      */
     show(message, options = {}) {
-        const { type = 'info', duration = 3000 } = options;
+        const { type = 'info', duration = 3000, tag } = options;
+
+        // If tagged and already exists, update in-place
+        if (tag && this.taggedToasts.has(tag)) {
+            return this.updateTaggedToast(tag, message, duration);
+        }
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.setAttribute('role', 'alert');
+
+        if (tag) {
+            toast.dataset.tag = tag;
+        }
 
         const icon = this.getIcon(type);
         toast.innerHTML = `
@@ -58,13 +68,44 @@ class ToastManager {
         });
 
         // Auto-dismiss
+        let timeoutId = null;
         if (duration > 0) {
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 this.dismiss(toast);
             }, duration);
         }
 
+        // Track tagged toast
+        if (tag) {
+            this.taggedToasts.set(tag, { element: toast, timeoutId });
+        }
+
         return toast;
+    }
+
+    updateTaggedToast(tag, message, duration) {
+        const entry = this.taggedToasts.get(tag);
+        const { element } = entry;
+
+        // Update message text
+        const msgEl = element.querySelector('.toast-message');
+        if (msgEl) {
+            msgEl.textContent = message;
+        }
+
+        // Reset auto-dismiss timer
+        if (entry.timeoutId) {
+            clearTimeout(entry.timeoutId);
+        }
+        let timeoutId = null;
+        if (duration > 0) {
+            timeoutId = setTimeout(() => {
+                this.dismiss(element);
+            }, duration);
+        }
+        entry.timeoutId = timeoutId;
+
+        return element;
     }
 
     /**
@@ -73,6 +114,16 @@ class ToastManager {
     dismiss(toast) {
         if (!toast || !this.container.contains(toast)) {
             return;
+        }
+
+        // Clean up tag tracking
+        const tag = toast.dataset.tag;
+        if (tag && this.taggedToasts.has(tag)) {
+            const entry = this.taggedToasts.get(tag);
+            if (entry.timeoutId) {
+                clearTimeout(entry.timeoutId);
+            }
+            this.taggedToasts.delete(tag);
         }
 
         toast.classList.remove('show');
@@ -156,6 +207,14 @@ class ToastManager {
      * Destroy toast manager
      */
     destroy() {
+        // Clear all tagged toast timers
+        for (const entry of this.taggedToasts.values()) {
+            if (entry.timeoutId) {
+                clearTimeout(entry.timeoutId);
+            }
+        }
+        this.taggedToasts.clear();
+
         if (this.container && this.container.parentNode) {
             this.container.parentNode.removeChild(this.container);
         }
@@ -167,4 +226,5 @@ class ToastManager {
 // Create singleton instance
 export const toast = new ToastManager();
 
+export { ToastManager };
 export default toast;
