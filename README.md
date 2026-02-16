@@ -1,113 +1,110 @@
 # TON3S
 
-**Write to Inspire**
+**Write to Inspire** | [ton3s.com](https://ton3s.com)
 
-TON3S is a minimalist, privacy-focused writing application. Whether you're crafting articles, writing books, composing social posts, or jotting down ideas, TON3S provides a distraction-free environment to help you focus on what matters most—your words.
+A privacy-focused, distraction-free writing app. All data stays in your browser. Publish to Nostr with IP privacy through a backend proxy.
 
 ## Features
 
-- **Distraction-free editor** with clean, minimal interface
-- **72 beautiful themes** including Catppuccin, Dracula, Gruvbox, Tokyo Night, Nord, and more
-- **27 fonts** optimized for writing and reading
-- **Zen mode** for focused writing sessions
-- **Multi-note support** with sidebar navigation and search
-- **Export to Markdown and PDF**
-- **Publish to Nostr** decentralized network with IP privacy protection
-- **PWA support** for offline use and installation
-- **100% local storage** - your data never leaves your device
+**Writing** - Distraction-free editor with auto-save, zen mode, and multi-note support with sidebar search
+
+**Customization** - 72 themes (Catppuccin, Dracula, Gruvbox, Tokyo Night, Nord, and more) and 27 fonts
+
+**Privacy** - 100% local storage (IndexedDB), no cookies or tracking, IP-masking Nostr proxy
+
+**Publishing** - Publish notes (Kind 1) and long-form articles (Kind 30023) to Nostr relays
+
+**Import/Export** - Export to JSON and Markdown (with YAML frontmatter), import JSON and Markdown files
+
+**Media** - Drag-drop, paste, or keyboard upload images and video via Blossom protocol
+
+**Mobile/Offline** - PWA with offline support, mobile-optimized layout with bottom navigation
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Use Online
+
+Visit [ton3s.com](https://ton3s.com) to start writing immediately.
+
+### Self-Host with Docker
 
 ```bash
+git clone https://github.com/hypercoind/TON3S.git
+cd TON3S
 docker compose up -d
 ```
 
-Access the app at `http://localhost:3002`
+Open `http://localhost:3002`
 
-### Local Development
+### Develop Locally
 
 ```bash
-# Frontend
+# Frontend (terminal 1)
 cd frontend && npm install && npm run dev
 
-# Backend (separate terminal)
+# Backend (terminal 2)
 cd backend && npm install && npm run dev
 ```
 
-Access the app at `http://localhost:3000`
+Open `http://localhost:3000`
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Vanilla JS, Vite, Dexie.js (IndexedDB), PWA |
-| Backend | Node.js, Fastify, WebSocket |
-| Deployment | Docker, nginx |
+| Frontend | Vanilla JS, Vite 6, Dexie.js (IndexedDB), PWA |
+| Backend | Node.js 22, Fastify 5, WebSocket |
+| Signing | Rust WASM (k256 secp256k1 Schnorr) |
+| Deployment | Docker, nginx, Caddy (production) |
 
-## Project Structure
+## Keyboard Shortcuts
 
-```
-TON3S/
-├── frontend/           # Vite-based frontend application
-│   ├── src/
-│   │   ├── components/ # UI components (Editor, Sidebar, etc.)
-│   │   ├── services/   # Business logic (Storage, Nostr, Export)
-│   │   ├── state/      # Reactive state management
-│   │   ├── data/       # Theme and font definitions
-│   │   ├── utils/      # Utilities (keyboard, markdown, sanitizer)
-│   │   └── styles/     # Modular CSS
-│   └── public/         # Static assets and PWA manifest
-├── backend/            # Fastify backend server
-│   └── src/
-│       └── websocket/  # Nostr relay proxy
-├── docs/               # Documentation
-└── docker-compose.yml  # Container orchestration
-```
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + 1` | Title style |
+| `Cmd/Ctrl + 2` | Heading style |
+| `Cmd/Ctrl + 3` | Body style |
+| `Cmd/Ctrl + T` | Rotate theme |
+| `Cmd/Ctrl + N` | New note |
+| `Cmd/Ctrl + K` | Search notes |
+| `Cmd/Ctrl + S` | Open save menu |
+| `Cmd/Ctrl + \` | Toggle sidebar |
+| `Cmd/Ctrl + Shift + U` | Upload media |
+| `Cmd/Ctrl + Shift + ?` | Show shortcuts |
+| `Escape` | Exit zen mode / close panels |
 
 ## Documentation
 
-| Guide | Description |
-|-------|-------------|
-| [Getting Started](docs/getting-started.md) | Quick start for users and developers |
-| [User Guide](docs/user-guide.md) | Complete user documentation |
-| [Nostr Guide](docs/nostr-guide.md) | Publishing to Nostr network |
-| [Architecture](docs/architecture.md) | System design and components |
-| [Development](docs/development.md) | Local setup and workflow |
-| [Deployment](docs/deployment.md) | Docker deployment guide |
-| [Contributing](docs/contributing.md) | How to contribute |
+| Guide | Audience | Description |
+|-------|----------|-------------|
+| [Getting Started](docs/getting-started.md) | Everyone | Quick setup for users and developers |
+| [User Guide](docs/user-guide.md) | End users | Complete feature documentation |
+| [Nostr Guide](docs/nostr-guide.md) | End users | Publishing to Nostr network |
+| [FAQ](docs/faq.md) | Everyone | Common questions answered |
+| [Self-Hosting](docs/self-hosting.md) | Operators | Production deployment with Caddy |
+| [Architecture](docs/architecture.md) | Developers | System design and components |
+| [Development](docs/development.md) | Developers | Local setup and workflow |
+| [Deployment](docs/deployment.md) | Developers | Docker deployment guide |
+| [Contributing](docs/contributing.md) | Developers | How to contribute |
+| [Changelog](CHANGELOG.md) | Everyone | Version history |
 
 ## Privacy
 
-TON3S is designed with privacy as a core principle:
+All data is stored locally in your browser using IndexedDB. Nothing is sent to external servers unless you choose to publish to Nostr. When publishing, all relay traffic goes through a backend WebSocket proxy so your IP address is never exposed to relays.
 
-- **Local-only storage** using IndexedDB in your browser
-- **No external data transmission** except for optional Nostr publishing
-- **IP privacy** for Nostr via backend proxy
-- **No cookies, tracking, or analytics**
-- **Content Security Policy** headers for enhanced security
+> **Shared Computer Warning**: Other users of the same browser profile may be able to see your stored content. Use private/incognito mode or clear data when finished.
 
-> **Shared Computer Warning**: If using a shared computer, other users may be able to see your stored content. Consider using private/incognito mode or clearing data when finished.
+## Support TON3S
+
+TON3S is free and open source. If you find it useful, consider a Bitcoin donation:
+
+- **Lightning**: ton3s@coinos.io
+- **On-chain**: Available in the app via the donation button
 
 ## Contributing
 
-Contributions are welcome! See [Contributing Guide](docs/contributing.md) for details.
-
-- Report issues and suggest features
-- Submit pull requests
-- Add new themes or fonts
-- Improve documentation
-
-## Links
-
-- **Website**: [ton3s.com](https://ton3s.com)
-- **GitHub**: [github.com/hypercoind/TON3S](https://github.com/hypercoind/TON3S)
+Contributions are welcome! See the [Contributing Guide](docs/contributing.md) for details.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
-
----
-
-*Start writing today. Your words matter.*
+[MIT](LICENSE)

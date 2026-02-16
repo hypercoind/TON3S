@@ -318,6 +318,8 @@ ton3s.example.com {
 }
 ```
 
+> For a complete production setup using Caddy with auto-TLS, see the [Self-Hosting Guide](self-hosting.md).
+
 ## SSL/TLS Setup
 
 ### Let's Encrypt with Certbot

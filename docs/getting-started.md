@@ -137,13 +137,23 @@ Or use keyboard shortcuts:
 
 ### Saving Your Work
 
-Click the save button and choose:
-- **Markdown** - `.md` file for universal compatibility
-- **PDF** - Formatted note with theme colors
+Click the settings icon (gear) in the status bar to:
+- **Export Note (Markdown)** - `.md` file with YAML frontmatter
+- **Export Note (JSON)** - Structured data for single note
+- **Export All (JSON)** - Full backup of all notes and settings
+
+### Importing Notes
+
+Click the settings icon and select **Import** to load JSON or Markdown files.
+
+### Uploading Media
+
+Drag and drop images/video into the editor, paste from clipboard, or press `Ctrl/Cmd + Shift + U` to open the file picker.
 
 ## Next Steps
 
 - [User Guide](user-guide.md) - Complete feature documentation
 - [Nostr Guide](nostr-guide.md) - Publishing to Nostr network
+- [FAQ](faq.md) - Common questions answered
 - [Development Guide](development.md) - Deep dive into codebase
 - [Architecture](architecture.md) - System design overview

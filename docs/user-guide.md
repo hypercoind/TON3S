@@ -136,34 +136,121 @@ Zen mode provides maximum focus:
 | `Ctrl/Cmd + 1` | Apply Title style |
 | `Ctrl/Cmd + 2` | Apply Heading style |
 | `Ctrl/Cmd + 3` | Apply Body style |
-| `Ctrl/Cmd + S` | Open save menu |
+| `Ctrl/Cmd + T` | Rotate theme |
 | `Ctrl/Cmd + N` | New note |
+| `Ctrl/Cmd + K` | Search notes |
+| `Ctrl/Cmd + F` | Search notes |
+| `Ctrl/Cmd + S` | Open save menu |
 | `Ctrl/Cmd + \` | Toggle sidebar |
-| `Escape` | Exit zen mode |
+| `Ctrl/Cmd + Shift + U` | Upload media |
+| `Ctrl/Cmd + Shift + ?` | Show keyboard shortcuts |
+| `Escape` | Exit zen mode / close panels |
 
 ## Exporting
 
 ### Markdown Export
 
-Exports your note as a `.md` file:
+Exports the current note as a `.md` file with YAML frontmatter:
+- Title, tags, and dates included in frontmatter
 - Titles become `# Heading`
 - Headings become `## Heading`
 - Body text is preserved as-is
 
-### PDF Export
+### JSON Export
 
-Creates a formatted PDF with:
-- Your current theme colors applied
-- Page numbers
-- Word wrapping
-- Custom filename
+Two JSON export options:
+
+- **Export Note (JSON)** - Exports the current note as a structured JSON file
+- **Export All (JSON)** - Exports all notes, tags, and settings for backup
 
 ### How to Export
 
-1. Click the save button in the header
-2. Select **Markdown** or **PDF**
-3. Enter a filename when prompted
-4. File downloads automatically
+1. Click the settings icon (gear) in the status bar
+2. Select the export format from the menu
+3. File downloads automatically with an appropriate filename
+
+## Media Upload
+
+TON3S supports uploading images and videos directly into your notes via the Blossom protocol.
+
+### Supported Formats
+
+| Type | Formats |
+|------|---------|
+| Images | JPEG, PNG, GIF, WebP |
+| Video | MP4, WebM |
+
+Maximum file size: 100MB.
+
+### How to Upload
+
+- **Drag and drop** a file onto the editor
+- **Paste** an image from your clipboard
+- **Keyboard shortcut**: `Ctrl/Cmd + Shift + U` to open the file picker
+
+Uploaded media is inserted inline in the editor at the cursor position.
+
+### Privacy
+
+Files 10MB or smaller are uploaded through the backend proxy, keeping your IP address hidden from the Blossom server. Files larger than 10MB upload directly to the Blossom server.
+
+## Tags
+
+Tags help you organize and find your notes.
+
+### Adding Tags
+
+1. Open the sidebar and select a note
+2. Click the tag area below the note title in the sidebar
+3. Type a tag name and press Enter
+
+### Using Tags
+
+- Tags are searchable from the sidebar search box
+- Tags are included in JSON and Markdown exports (as YAML frontmatter)
+- Tags are indexed in the database for fast filtering
+
+## Importing
+
+You can import notes from JSON and Markdown files.
+
+### How to Import
+
+1. Click the settings icon (gear) in the status bar
+2. Select **Import**
+3. Choose a `.json` or `.md` file (max 50MB)
+
+### Import Formats
+
+- **JSON** - TON3S export format. Supports single notes or full exports with settings.
+- **Markdown** - Plain `.md` files. YAML frontmatter (title, tags) is parsed if present.
+
+## Donations
+
+TON3S is free and open source. You can support development with Bitcoin.
+
+### How to Donate
+
+1. Click the donation button in the header (or navigate to the Donate page on mobile)
+2. Choose **Lightning** or **On-chain**
+3. Select a preset amount or enter a custom amount
+4. Scan the QR code with your Bitcoin wallet
+
+**Lightning**: Instant payments via ton3s@coinos.io
+**On-chain**: Standard Bitcoin transaction to a rotating address
+
+## Mobile Navigation
+
+On mobile devices, TON3S uses a bottom navigation bar with four pages:
+
+| Page | Purpose |
+|------|---------|
+| **Editor** | Write and edit your notes |
+| **Notes** | Browse and search your note list |
+| **Nostr** | Connect and publish to Nostr |
+| **Donate** | Support TON3S with Bitcoin |
+
+Tap the navigation icons to switch between pages.
 
 ## Nostr Publishing
 
@@ -188,11 +275,11 @@ When publishing to Nostr:
 ### Clearing Data
 
 To delete all stored data:
-1. Open browser developer tools (F12)
-2. Go to Application > Storage
-3. Clear IndexedDB and localStorage for the site
+1. Click the settings icon (gear) in the status bar
+2. Select **Clear All Data**
+3. Confirm the action in the dialog
 
-Or use your browser's "Clear site data" feature.
+This removes all notes, tags, and settings from your browser. This action cannot be undone.
 
 ### Shared Computers
 
@@ -236,13 +323,9 @@ TON3S can be installed as a Progressive Web App:
 
 ### Export Not Working
 
-**Markdown:**
-- Ensure content is not empty
-- Check download folder permissions
-
-**PDF:**
-- Ensure jsPDF library loaded (needs internet first time)
-- Check browser popup blocker
+- Ensure the note is not empty
+- Check your browser's download folder permissions
+- Try a different browser if downloads are blocked
 
 ### Nostr Issues
 

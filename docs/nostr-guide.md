@@ -13,7 +13,12 @@ Nostr (Notes and Other Stuff Transmitted by Relays) is a decentralized protocol 
 
 ## Prerequisites
 
-To publish to Nostr, you need a **browser extension** that manages your keys:
+To publish to Nostr, you need one of the following:
+
+1. **A browser extension** (NIP-07) that manages your keys
+2. **A private key** entered directly into TON3S (signed locally via WASM - your key never leaves the browser)
+
+### Option 1: Browser Extension (Recommended)
 
 ### Recommended Extensions
 
@@ -33,6 +38,10 @@ These extensions implement [NIP-07](https://github.com/nostr-protocol/nips/blob/
    - New users: Create a new identity
    - Existing users: Import your private key (nsec)
 3. **Secure your key** - Back up your private key safely
+
+### Option 2: WASM Private Key
+
+If you don't want to install a browser extension, you can enter your Nostr private key (nsec) directly in the Nostr panel. TON3S uses a Rust WASM module for Schnorr signing, so your private key is stored in WASM memory and never exposed to JavaScript.
 
 ## Connecting to TON3S
 
@@ -83,9 +92,10 @@ TON3S connects to these default relays:
 
 - `wss://relay.damus.io`
 - `wss://nos.lol`
-- `wss://relay.nostr.band`
+- `wss://relay.primal.net`
 - `wss://relay.snort.social`
-- `wss://nostr.wine`
+- `wss://nostr.mom`
+- `wss://relay.nostr.band`
 
 Your content is broadcast to all connected relays for redundancy.
 

@@ -28,25 +28,29 @@ TON3S/
 ├── frontend/                    # Vite SPA
 │   ├── src/
 │   │   ├── main.js              # Application bootstrap (TON3SApp class)
-│   │   ├── components/          # 8 UI components (BaseComponent pattern)
+│   │   ├── components/          # 9 UI components (BaseComponent pattern)
 │   │   │   ├── BaseComponent.js # Abstract base with lifecycle
 │   │   │   ├── Editor.js        # ContentEditable rich text
 │   │   │   ├── Header.js        # Logo, theme/font controls
 │   │   │   ├── Sidebar.js       # Note list, search, tag editing
 │   │   │   ├── StatusBar.js     # Word count, settings popup
 │   │   │   ├── NostrPanel.js    # NOSTR publishing UI
+│   │   │   ├── DonationPanel.js # Bitcoin donation panel
 │   │   │   ├── Toast.js         # Notification manager
 │   │   │   └── index.js         # Component exports
-│   │   ├── services/            # 6 business logic services
+│   │   ├── services/            # 9 business logic services
 │   │   │   ├── StorageService.js    # IndexedDB via Dexie
 │   │   │   ├── NostrService.js      # Relay WebSocket proxy
 │   │   │   ├── NostrAuthService.js  # NIP-07 + WASM signing
-│   │   │   ├── ExportService.js     # JSON/Markdown/PDF export
+│   │   │   ├── ExportService.js     # JSON/Markdown export + file import
+│   │   │   ├── BlossomService.js    # BUD-01/02 Blossom file upload
+│   │   │   ├── MediaService.js      # File validation + upload orchestration
+│   │   │   ├── QRCodeService.js     # Inline SVG QR code generation
 │   │   │   ├── FaviconService.js    # Dynamic favicon
 │   │   │   ├── wasm-loader.js       # WASM module loader
 │   │   │   └── index.js
 │   │   ├── state/               # Reactive state management
-│   │   │   ├── AppState.js      # Singleton with 26 event types
+│   │   │   ├── AppState.js      # Singleton with 27 event types
 │   │   │   └── StateEmitter.js  # Event emitter base class
 │   │   ├── utils/               # Utility functions
 │   │   │   ├── markdown.js      # HTML↔Markdown, word count
@@ -57,7 +61,7 @@ TON3S/
 │   │   │   └── fonts.js         # 27 font definitions
 │   │   └── styles/              # 10 modular CSS files
 │   │       ├── main.css         # Entry point
-│   │       ├── base.css         # Reset, typography, Google Fonts
+│   │       ├── base.css         # Reset, typography, self-hosted @font-face
 │   │       ├── layout.css       # Grid/flexbox
 │   │       ├── components.css   # UI components
 │   │       ├── editor.css       # Editor styles
@@ -115,7 +119,7 @@ TON3S is a minimalist, privacy-focused writing application with:
 - **NOSTR integration** for decentralized publishing (Kind 1 + Kind 30023)
 - **72 themes** and **27 fonts** with random rotation
 - **Zen mode** that activates after 3 seconds of typing
-- **Export formats**: Markdown (with YAML frontmatter), JSON, PDF
+- **Export formats**: Markdown (with YAML frontmatter), JSON
 - **PWA support** with offline capability via service worker
 - **Privacy-first**: IP masking through WebSocket relay proxy
 - **WASM signing**: Rust-based secp256k1 Schnorr signing for offline key management
@@ -185,18 +189,19 @@ Centralized reactive state via `AppState` singleton:
     saveStatus: 'saving' | 'saved' | 'error',
     lastSaveTime: number,
     loading: false,
-    activeMobilePage: 'editor' | 'notes' | 'nostr'
+    activeMobilePage: 'editor' | 'notes' | 'nostr' | 'donate'
   }
 }
 ```
 
-### State Events (26 types)
+### State Events (27 types)
 
 | Category | Events |
 |----------|--------|
 | Note (5) | `NOTE_CREATED`, `NOTE_UPDATED`, `NOTE_DELETED`, `NOTE_SELECTED`, `NOTES_LOADED` |
-| Settings (6) | `THEME_CHANGED`, `FONT_CHANGED`, `PRE_ZEN_MODE`, `ZEN_MODE_TOGGLED`, `SIDEBAR_TOGGLED`, `NOSTR_PANEL_TOGGLED` |
+| Settings (7) | `THEME_CHANGED`, `FONT_CHANGED`, `PRE_ZEN_MODE`, `ZEN_MODE_TOGGLED`, `SIDEBAR_TOGGLED`, `NOSTR_PANEL_TOGGLED`, `DONATION_PANEL_TOGGLED` |
 | Nostr (6) | `NOSTR_CONNECTED`, `NOSTR_DISCONNECTED`, `NOSTR_PUBLISHED`, `NOSTR_ERROR`, `NOSTR_PUBLISHED_NOTE_ADDED`, `NOSTR_PUBLISHED_NOTES_CLEARED` |
+| Media (5) | `MEDIA_UPLOAD_STARTED`, `MEDIA_UPLOAD_PROGRESS`, `MEDIA_UPLOAD_COMPLETED`, `MEDIA_UPLOAD_FAILED`, `BLOSSOM_SERVER_CHANGED` |
 | UI (4) | `SEARCH_CHANGED`, `SAVE_STATUS_CHANGED`, `LOADING_CHANGED`, `ACTIVE_PAGE_CHANGED` |
 
 ### Data Flow
@@ -243,6 +248,7 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 | Sidebar | `Sidebar.js` | 828 | Note list, search with debounce, tag editing, note management |
 | StatusBar | `StatusBar.js` | 542 | Word/char count, settings popup with export/import |
 | NostrPanel | `NostrPanel.js` | 556 | Extension detection, pubkey display, publish Kind 1/30023 |
+| DonationPanel | `DonationPanel.js` | ~200 | Bitcoin donation panel with Lightning and on-chain QR codes |
 | Toast | `Toast.js` | 171 | Singleton notifications: success/error/info/warning |
 
 ### Frontend Services
@@ -252,7 +258,10 @@ Frontend ←→ Backend WebSocket Proxy ←→ NOSTR Relays
 | StorageService | `StorageService.js` | Dexie wrapper, CRUD notes, 100ms throttle, 1MB max |
 | NostrService | `NostrService.js` | WebSocket to `/ws/nostr`, reconnect logic, relay management |
 | NostrAuthService | `NostrAuthService.js` | NIP-07 detection, WASM Schnorr signing, bech32 keys |
-| ExportService | `ExportService.js` | JSON/Markdown/PDF export, YAML frontmatter, file import |
+| ExportService | `ExportService.js` | JSON/Markdown export, YAML frontmatter, file import |
+| BlossomService | `BlossomService.js` | BUD-01/02 file upload to Blossom servers, auth events |
+| MediaService | `MediaService.js` | File validation, upload orchestration, dimension extraction |
+| QRCodeService | `QRCodeService.js` | Inline SVG QR code generation for donations |
 | FaviconService | `FaviconService.js` | Dynamic favicon from theme --accent color |
 | wasm-loader | `wasm-loader.js` | WASM signing module loader (`loadWasmModule`, `getWasmModule`, `isWasmAvailable`) |
 
@@ -284,7 +293,7 @@ Keys stored exclusively in WASM memory, never exposed to JavaScript.
 
 | Module | File | Purpose |
 |--------|------|---------|
-| AppState | `AppState.js` | Reactive singleton, 26 event types, persistence |
+| AppState | `AppState.js` | Reactive singleton, 27 event types, persistence |
 | StateEmitter | `StateEmitter.js` | Event emitter base: on/off/emit/once |
 
 ---
@@ -355,7 +364,7 @@ Keys stored exclusively in WASM memory, never exposed to JavaScript.
 | Integration | Type | Purpose | Privacy Impact |
 |-------------|------|---------|----------------|
 | Nostr Relays (6 default) | WebSocket | Decentralized publishing | IP hidden behind proxy |
-| Google Fonts (17 families) | CDN | Typography | IP + font usage tracking |
+| Self-hosted Fonts (27 families) | Local files in `/public/fonts/` | Typography | No external requests |
 | NIP-07 Extensions | Browser API | Cryptographic signing | Local extension only |
 | WASM Signing | Local compute | Offline Schnorr signing | Entirely client-side |
 
@@ -412,6 +421,7 @@ wss://relay.nostr.band
 | GET | `/health` | `{ status: 'OK', timestamp }` |
 | GET | `/api/info` | `{ name, version, features, timestamp }` |
 | GET | `/api/relays` | `{ relays: [...] }` |
+| POST | `/api/media/upload` | Blossom proxy upload (multipart, 10MB max) |
 
 ### WebSocket
 

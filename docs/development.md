@@ -277,11 +277,11 @@ export const fonts = [
 2. Add CSS in `frontend/src/styles/fonts.css`:
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=My+Font&display=swap');
+/* In base.css - add @font-face declarations */
+/* Download woff2 files (400 + 600 weights) to public/fonts/ */
 
-.font-my-font .editor {
-  font-family: 'My Font', monospace;
-}
+/* In fonts.css - add font class */
+.font-my-font { --font: 'My Font', monospace; }
 ```
 
 ## State Management
@@ -357,8 +357,8 @@ const unsubscribe = appState.on('stateChange', (state) => {
 - [ ] Settings persist on refresh
 
 **Export:**
-- [ ] Markdown export
-- [ ] PDF export with theme colors
+- [ ] Markdown export with YAML frontmatter
+- [ ] JSON export (single note and all notes)
 
 **Nostr:**
 - [ ] Extension detection
@@ -447,7 +447,7 @@ if (localStorage.getItem('debug')) {
 - ES Modules (`import`/`export`)
 - Classes for components and services
 - Async/await for async operations
-- No semicolons (Vite handles it)
+- Semicolons required (Prettier `semi: true`)
 - Single quotes for strings
 
 ### CSS
@@ -466,7 +466,7 @@ if (localStorage.getItem('debug')) {
 | CSS classes | kebab-case | `note-list` |
 | Theme classes | `theme-*` | `theme-dracula` |
 | Font classes | `font-*` | `font-jetbrains` |
-| State events | camelCase | `stateChange` |
+| State events | SCREAMING_SNAKE_CASE | `NOTE_CREATED` |
 
 ## Performance Tips
 

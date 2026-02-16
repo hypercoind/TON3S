@@ -95,7 +95,7 @@ Then create a Pull Request on GitHub.
 
 Use a clear, descriptive title:
 - "Add Nord Light theme"
-- "Fix PDF export on Firefox"
+- "Fix Markdown export on Firefox"
 - "Update keyboard shortcuts documentation"
 
 ### PR Description
@@ -136,8 +136,8 @@ async function loadData() {
 // Single quotes for strings
 const message = 'Hello, world';
 
-// No semicolons (Vite handles it)
-const value = 42
+// Semicolons required (Prettier `semi: true`)
+const value = 42;
 ```
 
 ### CSS
@@ -228,21 +228,42 @@ export const fonts = [
 ];
 ```
 
-### 2. Import and Apply Font
+### 2. Download Font Files
+
+Download woff2 files (400 + 600 weights) to `frontend/public/fonts/`:
+
+```bash
+# Example: download from Google Fonts or font source
+# Place files as: public/fonts/MyFont-Regular.woff2, public/fonts/MyFont-SemiBold.woff2
+```
+
+### 3. Add @font-face Declarations
+
+In `frontend/src/styles/base.css`:
+
+```css
+@font-face {
+    font-family: 'My Font';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/MyFont-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'My Font';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/fonts/MyFont-SemiBold.woff2') format('woff2');
+}
+```
+
+### 4. Add Font Class
 
 In `frontend/src/styles/fonts.css`:
 
 ```css
-/* Import from Google Fonts (or other CDN) */
-@import url('https://fonts.googleapis.com/css2?family=My+Font:wght@400;700&display=swap');
-
-/* Apply to editor */
-.font-my-font .editor {
-  font-family: 'My Font', monospace;
-  /* Adjust sizing if needed */
-  font-size: 18px;
-  line-height: 1.8;
-}
+.font-my-font { --font: 'My Font', monospace; }
 ```
 
 ### Font Guidelines
@@ -250,7 +271,7 @@ In `frontend/src/styles/fonts.css`:
 - Use monospace or writing-optimized fonts
 - Ensure good readability at default sizes
 - Test with various content types
-- Consider loading performance
+- Self-host all font files (no external CDN requests)
 
 ## Adding Features
 
@@ -269,29 +290,19 @@ In `frontend/src/styles/fonts.css`:
 
 ### Example: Adding a New Export Format
 
-1. Add dropdown item in component:
-```javascript
-// In SaveControls.js
-const formats = ['markdown', 'pdf', 'newformat'];
-```
-
-2. Add export method in service:
+1. Add export method in service:
 ```javascript
 // In ExportService.js
-toNewFormat(content) {
-  // Convert HTML to new format
-  return converted;
+exportNoteAsNewFormat(note) {
+    const content = this.convertToNewFormat(note);
+    const filename = `${this.sanitizeFilename(note.title || 'untitled')}.ext`;
+    this.downloadFile(content, filename, 'text/newformat');
 }
 ```
 
-3. Handle in save flow:
-```javascript
-// In SaveControls.js
-case 'newformat':
-  const output = exportService.toNewFormat(content);
-  this.download(output, filename, 'text/newformat');
-  break;
-```
+2. Add menu option in StatusBar settings popup and wire it to the export method.
+
+Current export formats: JSON (single note, all notes) and Markdown (with YAML frontmatter).
 
 ## Testing
 

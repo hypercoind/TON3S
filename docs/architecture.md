@@ -12,7 +12,9 @@ System design and component overview for TON3S.
 │  │  - Editor   │  │  - Storage  │  │  - notes                │  │
 │  │  - Sidebar  │  │  - Export   │  │  - settings             │  │
 │  │  - Header   │  │  - Nostr    │  │  - nostr                │  │
-│  │  - NostrUI  │  │  - Auth     │  │  - ui                   │  │
+│  │  - NostrUI  │  │  - Auth     │  │  - media                │  │
+│  │  - Donation │  │  - Media    │  │  - ui                   │  │
+│  │  - Toast    │  │  - Blossom  │  │                         │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
 │          │              │                    │                   │
 │          └──────────────┼────────────────────┘                   │
@@ -56,10 +58,15 @@ App
 ├── StatusBar
 │   ├── StyleButtons (T, H, B)
 │   └── WordCount
-└── NostrPanel
-    ├── ConnectionStatus
-    ├── PublicKey
-    └── PublishButtons
+├── NostrPanel
+│   ├── ConnectionStatus
+│   ├── PublicKey
+│   └── PublishButtons
+├── DonationPanel
+│   ├── LightningTab
+│   └── OnchainTab
+└── Toast
+    └── Notification Stack
 ```
 
 ### BaseComponent Pattern
@@ -208,20 +215,19 @@ User Action → Component Handler → Service Call → State Update → Re-rende
 ### Service Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Services                              │
-├─────────────────┬─────────────────┬─────────────────────────┤
-│ StorageService  │  ExportService  │     NostrService        │
-│                 │                 │                         │
-│ - Dexie.js      │ - toMarkdown()  │ - WebSocket proxy      │
-│ - IndexedDB     │ - toPDF()       │ - Relay management     │
-│ - CRUD ops      │ - toJSON()      │ - Event publishing     │
-│                 │                 │                         │
-│ ┌─────────────┐ │ ┌─────────────┐ │ ┌─────────────────────┐ │
-│ │ notes   │ │ │   jsPDF     │ │ │  NostrAuthService   │ │
-│ │ settings    │ │ │             │ │ │  - NIP-07 ext       │ │
-│ └─────────────┘ │ └─────────────┘ │ │  - Key management   │ │
-└─────────────────┴─────────────────┴─┴─────────────────────┴─┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                  Services                                    │
+├─────────────────┬─────────────────┬──────────────────┬──────────────────────┤
+│ StorageService  │  ExportService  │  NostrService    │  MediaService        │
+│ - Dexie.js      │ - toMarkdown()  │ - WS proxy       │ - File validation    │
+│ - IndexedDB     │ - toJSON()      │ - Relay mgmt     │ - Upload orchestrate │
+│ - CRUD ops      │ - importFile()  │ - Event publish  │                      │
+├─────────────────┼─────────────────┼──────────────────┼──────────────────────┤
+│ NostrAuthService│ BlossomService  │ QRCodeService    │ FaviconService       │
+│ - NIP-07 ext    │ - BUD-01/02     │ - SVG QR codes   │ - Theme-based icon   │
+│ - WASM signing  │ - Upload proxy  │ - Donation QR    │ - --accent color     │
+│ - Key mgmt      │ - Auth events   │                  │                      │
+└─────────────────┴─────────────────┴──────────────────┴──────────────────────┘
 ```
 
 ### StorageService
@@ -441,12 +447,16 @@ class NostrProxy {
 ```html
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' https://cdnjs.cloudflare.com;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src 'self' https://fonts.gstatic.com;
-  connect-src 'self' ws: wss:;
-  img-src 'self' data:;
+  style-src 'self' 'unsafe-inline';
+  font-src 'self';
+  script-src 'self' 'wasm-unsafe-eval';
+  img-src 'self' data: blob: https:;
+  connect-src 'self' ws://localhost:* http://localhost:* https:;
   frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self';
+  object-src 'none';
+  media-src 'self' blob: https:;
 ">
 ```
 
@@ -501,8 +511,8 @@ class Editor {
 
 ### Lazy Loading
 
-- Fonts loaded from Google Fonts with `display=swap`
-- jsPDF loaded only when PDF export is triggered
+- Fonts self-hosted in `/public/fonts/` with `font-display: swap` via `@font-face` in `base.css`
+- WASM signing module loaded non-blocking at startup
 - Notes loaded on-demand from IndexedDB
 
 ### Bundle Optimization (Vite)
