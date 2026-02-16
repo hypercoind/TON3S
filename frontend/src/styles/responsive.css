@@ -5,6 +5,28 @@
 
 /* Tablet and smaller */
 @media (max-width: 1024px) {
+    /* Lock app to viewport height — no vertical scroll */
+    html, body {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .app-container {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .main-content {
+        overflow: hidden;
+    }
+
+    .main-content > .container {
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
     /* Default: editor page - hide sidebar, nostr, and donation */
     .sidebar,
     .nostr-panel,
@@ -119,15 +141,15 @@
     }
 
     .header {
-        padding: 1rem;
+        padding: 0.5rem 1rem;
     }
 
     .container {
-        padding: 1.5rem;
+        padding: 1rem 1.5rem;
     }
 
     .status {
-        padding: 1rem 1.5rem;
+        padding: 0.25rem 1rem;
     }
 
     .controls {
@@ -227,15 +249,15 @@
 /* Small mobile */
 @media (max-width: 480px) {
     .header {
-        padding: 0.75rem;
+        padding: 0.4rem 0.75rem;
     }
 
     .container {
-        padding: 1rem;
+        padding: 0.75rem;
     }
 
     .status {
-        padding: 0.75rem 1rem;
+        padding: 0.25rem 0.75rem;
     }
 
     .word-count {
