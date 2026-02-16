@@ -1,0 +1,55 @@
+# Production overlay — usage:
+#   cp .env.production.example .env.production
+#   # edit .env.production with your domain
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Note: base docker-compose.yml exposes frontend on host port 3002.
+# Override files cannot remove port mappings, so UFW firewall should
+# block 3002 from external access (vps-setup.sh handles this).
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN}
+      - CADDY_EMAIL=${CADDY_EMAIL}
+    depends_on:
+      - frontend
+    networks:
+      - ton3s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    restart: unless-stopped
+    environment:
+      - FRONTEND_URL=https://${DOMAIN}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:
