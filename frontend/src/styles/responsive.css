@@ -102,16 +102,9 @@
         display: none;
     }
 
-    /* Fixed settings button pinned to bottom-right */
-    #settings-btn {
-        position: fixed;
-        bottom: 1rem;
-        right: 1rem;
-        z-index: 1000;
-        background: var(--bg);
-        opacity: 1;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        border-radius: 50%;
+    /* Ensure 44px touch targets for status bar buttons */
+    #settings-btn,
+    #donation-btn {
         width: 44px;
         height: 44px;
     }
@@ -243,8 +236,6 @@
 
     .status {
         padding: 0.75rem 1rem;
-        flex-direction: column;
-        align-items: flex-start;
     }
 
     .word-count {
