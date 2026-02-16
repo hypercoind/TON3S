@@ -103,7 +103,7 @@
     }
 
     /* Fixed settings button pinned to bottom-right */
-    .settings-btn {
+    #settings-btn {
         position: fixed;
         bottom: 1rem;
         right: 1rem;

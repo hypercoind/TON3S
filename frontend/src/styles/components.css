@@ -179,6 +179,31 @@
     height: 21px;
 }
 
+/* Donation button in status bar */
+.donation-btn {
+    background: transparent;
+    color: var(--accent);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.donation-btn:hover {
+    background: var(--secondary);
+    opacity: 1;
+}
+
+.donation-btn svg {
+    width: 21px;
+    height: 21px;
+}
+
 /* Settings overlay and popup */
 .settings-overlay {
     position: fixed;
