@@ -24,7 +24,7 @@
         min-height: 0;
         overflow-y: auto;
         padding-top: 1rem;
-        padding-bottom: 0;
+        padding-bottom: 0.25rem;
     }
 
     /* Default: editor page - hide sidebar, nostr, and donation */
