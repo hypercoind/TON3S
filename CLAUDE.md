@@ -23,6 +23,12 @@ docker image prune -f            # Clean old images after rebuilds
 
 Ports: Frontend 3002, Backend 3001, Vite Dev 3000
 
+### Production VPS (Caddy + TLS)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
 ### Frontend
 
 ```bash
