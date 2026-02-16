@@ -94,6 +94,8 @@
     body.mobile-page-donate .donation-panel .donation-panel-content {
         padding: 2rem 1.5rem;
         align-items: center;
+        justify-content: center;
+        flex: 1;
     }
 
     body.mobile-page-donate .donation-panel svg {
