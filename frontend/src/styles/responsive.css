@@ -24,7 +24,7 @@
         min-height: 0;
         overflow-y: auto;
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: 0;
     }
 
     /* Default: editor page - hide sidebar, nostr, and donation */
@@ -93,6 +93,7 @@
 
     body.mobile-page-donate .donation-panel .donation-panel-content {
         padding: 2rem 1.5rem;
+        align-items: center;
     }
 
     body.mobile-page-donate .donation-panel svg {
