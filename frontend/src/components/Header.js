@@ -30,11 +30,6 @@ export class Header extends BaseComponent {
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                         </svg>
                     </button>
-                    <button class="btn-icon-circle donate-btn" id="donate-btn" aria-label="Support" title="Support TON3S">
-                        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
-                    </button>
                     <button class="btn-icon-circle font-btn" id="font-btn" aria-label="Rotate font" title="Change font">
                         <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/>
@@ -71,16 +66,6 @@ export class Header extends BaseComponent {
             }
         });
 
-        // Donate button (mobile page nav)
-        this.$('#donate-btn')?.addEventListener('click', () => {
-            if (this.isMobile()) {
-                const current = appState.ui.activeMobilePage;
-                appState.setActiveMobilePage(current === 'donate' ? 'editor' : 'donate');
-            } else {
-                appState.toggleDonationPanel();
-            }
-        });
-
         // Theme rotation button
         this.$('#theme-btn')?.addEventListener('click', () => {
             this.rotateTheme();
@@ -96,7 +81,6 @@ export class Header extends BaseComponent {
             appState.on(StateEvents.ACTIVE_PAGE_CHANGED, page => {
                 this.$('#notes-btn')?.classList.toggle('active', page === 'notes');
                 this.$('#nostr-btn')?.classList.toggle('active', page === 'nostr');
-                this.$('#donate-btn')?.classList.toggle('active', page === 'donate');
             })
         );
     }

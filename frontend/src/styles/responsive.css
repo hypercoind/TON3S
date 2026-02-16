@@ -58,9 +58,18 @@
         position: relative;
         width: 100%;
         flex: 1;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        pointer-events: auto;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        bottom: auto;
+        right: auto;
     }
 
-    body.mobile-page-donate .donation-panel .donation-content {
+    body.mobile-page-donate .donation-panel .donation-panel-content {
         padding: 2rem 1.5rem;
     }
 
@@ -82,8 +91,7 @@
 
     /* Show header nav buttons on mobile */
     .btn-icon-circle.notes-btn,
-    .btn-icon-circle.nostr-btn,
-    .btn-icon-circle.donate-btn {
+    .btn-icon-circle.nostr-btn {
         display: inline-flex;
     }
 
@@ -91,11 +99,6 @@
     .sidebar-collapse-btn,
     .nostr-collapse-btn,
     .donation-collapse-btn {
-        display: none;
-    }
-
-    /* Hide donation button from status bar on mobile (header handles it) */
-    .donation-btn {
         display: none;
     }
 

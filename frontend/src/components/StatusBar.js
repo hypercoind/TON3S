@@ -180,7 +180,12 @@ export class StatusBar extends BaseComponent {
     bindEvents() {
         // Donation button
         this.$('#donation-btn')?.addEventListener('click', () => {
-            appState.toggleDonationPanel();
+            if (window.innerWidth <= 1024) {
+                const current = appState.ui.activeMobilePage;
+                appState.setActiveMobilePage(current === 'donate' ? 'editor' : 'donate');
+            } else {
+                appState.toggleDonationPanel();
+            }
         });
 
         // Settings button

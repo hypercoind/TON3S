@@ -456,14 +456,12 @@
 
 /* Header nav buttons: mobile only */
 .btn-icon-circle.notes-btn,
-.btn-icon-circle.nostr-btn,
-.btn-icon-circle.donate-btn {
+.btn-icon-circle.nostr-btn {
     display: none;
 }
 
 .notes-btn.active,
-.nostr-btn.active,
-.donate-btn.active {
+.nostr-btn.active {
     color: var(--accent);
 }
 
