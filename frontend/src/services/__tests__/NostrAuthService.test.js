@@ -15,6 +15,11 @@ vi.mock('../../state/AppState.js', () => ({
 // Mock wasm-loader
 const mockWasmModule = {
     is_key_loaded: vi.fn(() => false),
+    import_nsec: vi.fn(),
+    import_hex: vi.fn(),
+    import_key: vi.fn(),
+    derive_pubkey: vi.fn(() => new Uint8Array(32)),
+    clear_key: vi.fn(),
     sha256_hash: vi.fn(() => {
         // Simple mock: return 32 zero bytes (tests check behavior, not crypto correctness)
         return new Uint8Array(32);
@@ -152,6 +157,69 @@ describe('NostrAuthService', () => {
 
             await expect(nostrAuthService.connect()).rejects.toThrow('User denied');
             expect(appState.setNostrError).toHaveBeenCalledWith('User denied');
+        });
+    });
+
+    describe('connectWithPrivateKey', () => {
+        beforeEach(() => {
+            nostrAuthService._wasmReady = true;
+            isWasmAvailable.mockReturnValue(true);
+        });
+
+        afterEach(() => {
+            nostrAuthService._wasmReady = false;
+            isWasmAvailable.mockReturnValue(false);
+        });
+
+        it('should call import_nsec for nsec keys', async () => {
+            const nsecKey = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+
+            const result = await nostrAuthService.connectWithPrivateKey(nsecKey);
+
+            expect(mockWasmModule.import_nsec).toHaveBeenCalledWith(nsecKey);
+            expect(mockWasmModule.import_hex).not.toHaveBeenCalled();
+            expect(result.pubkey).toMatch(/^[0-9a-f]{64}$/);
+            expect(result.extension).toBe('Private Key');
+            expect(appState.setNostrConnected).toHaveBeenCalled();
+        });
+
+        it('should call import_hex for hex keys', async () => {
+            const hexKey = 'a'.repeat(64);
+
+            const result = await nostrAuthService.connectWithPrivateKey(hexKey);
+
+            expect(mockWasmModule.import_hex).toHaveBeenCalledWith(hexKey);
+            expect(mockWasmModule.import_nsec).not.toHaveBeenCalled();
+            expect(result.pubkey).toMatch(/^[0-9a-f]{64}$/);
+            expect(result.extension).toBe('Private Key');
+        });
+
+        it('should trim whitespace before passing to WASM', async () => {
+            const hexKey = 'b'.repeat(64);
+
+            await nostrAuthService.connectWithPrivateKey(`  ${hexKey}  `);
+
+            expect(mockWasmModule.import_hex).toHaveBeenCalledWith(hexKey);
+        });
+
+        it('should throw when WASM is not ready', async () => {
+            nostrAuthService._wasmReady = false;
+            isWasmAvailable.mockReturnValue(false);
+
+            await expect(nostrAuthService.connectWithPrivateKey('a'.repeat(64))).rejects.toThrow(
+                'WASM signing module not available'
+            );
+            expect(appState.setNostrError).toHaveBeenCalled();
+        });
+
+        it('should propagate WASM import errors', async () => {
+            mockWasmModule.import_hex.mockImplementationOnce(() => {
+                throw new Error('Invalid hex private key (expected 64 hex chars)');
+            });
+
+            await expect(nostrAuthService.connectWithPrivateKey('not-valid-hex')).rejects.toThrow(
+                'Invalid hex private key (expected 64 hex chars)'
+            );
         });
     });
 

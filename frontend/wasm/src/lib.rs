@@ -1,3 +1,4 @@
+use bech32::Hrp;
 use k256::schnorr::{SigningKey, VerifyingKey};
 use k256::schnorr::signature::hazmat::PrehashSigner;
 use sha2::{Sha256, Digest};
@@ -25,20 +26,51 @@ where
     }
 }
 
-#[wasm_bindgen]
-pub fn import_key(key_bytes: &[u8]) -> Result<(), JsValue> {
+/// Validate and store 32 raw key bytes. Shared by all import paths.
+fn import_key_bytes(key_bytes: &[u8]) -> Result<(), JsValue> {
     if key_bytes.len() != 32 {
         return Err(JsValue::from_str("Private key must be 32 bytes"));
     }
-    // Validate the key is usable before storing
     SigningKey::from_bytes(key_bytes)
         .map_err(|e| JsValue::from_str(&format!("Invalid private key: {}", e)))?;
 
-    let mut buf = [0u8; 32];
+    let mut buf = Zeroizing::new([0u8; 32]);
     buf.copy_from_slice(key_bytes);
     let mut guard = PRIVATE_KEY_BYTES.lock().unwrap();
-    *guard = Some(Zeroizing::new(buf));
+    *guard = Some(buf);
     Ok(())
+}
+
+/// Import raw 32-byte private key (backward compatibility).
+#[wasm_bindgen]
+pub fn import_key(key_bytes: &[u8]) -> Result<(), JsValue> {
+    import_key_bytes(key_bytes)
+}
+
+/// Import private key from nsec (bech32) string.
+/// Decodes entirely in WASM — raw key bytes never touch JS.
+#[wasm_bindgen]
+pub fn import_nsec(nsec_str: &str) -> Result<(), JsValue> {
+    let (hrp, data) = bech32::decode(nsec_str)
+        .map_err(|_| JsValue::from_str("Invalid nsec format"))?;
+
+    let expected = Hrp::parse_unchecked("nsec");
+    if hrp != expected {
+        return Err(JsValue::from_str("Invalid nsec prefix"));
+    }
+
+    import_key_bytes(&data)
+}
+
+/// Import private key from 64-char hex string.
+/// Decodes entirely in WASM — raw key bytes never touch JS.
+#[wasm_bindgen]
+pub fn import_hex(hex_str: &str) -> Result<(), JsValue> {
+    let mut decoded = Zeroizing::new([0u8; 32]);
+    hex::decode_to_slice(hex_str, decoded.as_mut())
+        .map_err(|_| JsValue::from_str("Invalid hex private key (expected 64 hex chars)"))?;
+
+    import_key_bytes(decoded.as_ref())
 }
 
 #[wasm_bindgen]

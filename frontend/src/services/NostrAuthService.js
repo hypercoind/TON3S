@@ -4,7 +4,6 @@
  * Supports nos2x, Alby, and other NIP-07 compatible extensions
  */
 
-import { bech32 } from '@scure/base';
 import { appState } from '../state/AppState.js';
 import { loadWasmModule, getWasmModule, isWasmAvailable } from './wasm-loader.js';
 
@@ -192,14 +191,14 @@ class NostrAuthService {
                 throw new Error('WASM signing module not available. Cannot use private key.');
             }
 
-            // Parse and validate the private key (returns Uint8Array)
-            const keyBytes = this.parsePrivateKey(keyInput);
-
-            // Key bytes go into WASM memory, never stored in JS
+            // Pass string directly to WASM — raw key bytes never touch JS
             const wasm = getWasmModule();
-            wasm.import_key(keyBytes);
-            // Zero the JS copy immediately
-            this.secureZero(keyBytes);
+            const trimmed = keyInput.trim();
+            if (trimmed.startsWith('nsec1')) {
+                wasm.import_nsec(trimmed);
+            } else {
+                wasm.import_hex(trimmed);
+            }
 
             const pubkeyBytes = wasm.derive_pubkey();
             const pubkeyHex = this.bytesToHex(pubkeyBytes);
@@ -224,40 +223,6 @@ class NostrAuthService {
             appState.setNostrError(error.message);
             throw error;
         }
-    }
-
-    /**
-     * Parse private key from nsec (bech32) or hex format
-     */
-    /**
-     * Parse private key from nsec (bech32) or hex format.
-     * Returns Uint8Array (32 bytes) to avoid immutable hex string copies in memory.
-     */
-    parsePrivateKey(input) {
-        const trimmed = input.trim();
-
-        // Check if it's nsec format (bech32)
-        if (trimmed.startsWith('nsec1')) {
-            try {
-                const decoded = bech32.decode(trimmed, 1000);
-                if (decoded.prefix !== 'nsec') {
-                    throw new Error('Invalid nsec prefix');
-                }
-                const words = decoded.words;
-                const bytes = bech32.fromWords(words);
-                return new Uint8Array(bytes);
-            } catch {
-                throw new Error('Invalid nsec format');
-            }
-        }
-
-        // Assume hex format
-        const hexRegex = /^[0-9a-fA-F]{64}$/;
-        if (!hexRegex.test(trimmed)) {
-            throw new Error('Invalid private key format. Use nsec or 64-character hex.');
-        }
-
-        return this.hexToBytes(trimmed.toLowerCase());
     }
 
     /**
