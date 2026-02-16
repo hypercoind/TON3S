@@ -3,6 +3,16 @@
   "version": "2.0.0",
   "type": "module",
   "description": "TON3S - Privacy-focused writing application with NOSTR integration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hypercoind/TON3S.git",
+    "directory": "frontend"
+  },
+  "homepage": "https://ton3s.com",
+  "bugs": {
+    "url": "https://github.com/hypercoind/TON3S/issues"
+  },
   "scripts": {
     "wasm:build": "cd wasm && wasm-pack build --release --target web --out-dir pkg",
     "wasm:dev": "cd wasm && wasm-pack build --dev --target web --out-dir pkg",

@@ -23,7 +23,6 @@ export class StatusBar extends BaseComponent {
         this.container.innerHTML = `
             <div class="status">
                 <div class="status-left">
-                    <span class="save-indicator" id="save-indicator" aria-live="polite"></span>
                     <div class="word-count" aria-live="polite" aria-atomic="true">
                         <span id="char-count">0 characters</span>
                         <span id="word-count">0 words</span>
@@ -211,13 +210,6 @@ export class StatusBar extends BaseComponent {
             })
         );
 
-        // Listen for save status changes
-        this.subscribe(
-            appState.on(StateEvents.SAVE_STATUS_CHANGED, () => {
-                this.updateSaveIndicator();
-            })
-        );
-
         // Listen for editor count updates
         document.addEventListener('editor:counts', e => {
             this.updateCounts(e.detail);
@@ -332,28 +324,6 @@ export class StatusBar extends BaseComponent {
         const fontSelect = document.getElementById('font-select');
         if (fontSelect) {
             fontSelect.value = index;
-        }
-    }
-
-    /**
-     * Update save status indicator
-     */
-    updateSaveIndicator() {
-        const indicator = this.$('#save-indicator');
-        if (!indicator) {
-            return;
-        }
-
-        const { saveStatus } = appState.ui;
-        if (saveStatus === 'saved') {
-            indicator.textContent = 'Saved';
-            indicator.className = 'save-indicator saved';
-        } else if (saveStatus === 'saving') {
-            indicator.textContent = 'Saving...';
-            indicator.className = 'save-indicator saving';
-        } else {
-            indicator.textContent = '';
-            indicator.className = 'save-indicator';
         }
     }
 

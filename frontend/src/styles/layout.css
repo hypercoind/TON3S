@@ -454,29 +454,16 @@
     gap: 1.5rem;
 }
 
-.save-indicator {
-    font-size: 0.75rem;
-    color: var(--fg-dim);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.save-indicator.saved {
-    opacity: 1;
-}
-
-.save-indicator.saving {
-    opacity: 0.7;
-}
-
 /* Header nav buttons: mobile only */
 .btn-icon-circle.notes-btn,
-.btn-icon-circle.nostr-btn {
+.btn-icon-circle.nostr-btn,
+.btn-icon-circle.donate-btn {
     display: none;
 }
 
 .notes-btn.active,
-.nostr-btn.active {
+.nostr-btn.active,
+.donate-btn.active {
     color: var(--accent);
 }
 

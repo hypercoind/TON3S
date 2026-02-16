@@ -106,7 +106,7 @@ Contributions are welcome! See [Contributing Guide](docs/contributing.md) for de
 
 ## License
 
-This project is open source. See the repository for license details.
+MIT License — see [LICENSE](LICENSE).
 
 ---
 

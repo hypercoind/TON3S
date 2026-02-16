@@ -52,6 +52,27 @@
         display: none;
     }
 
+    /* Donate page: show donation panel as full-page, hide editor */
+    body.mobile-page-donate .donation-panel {
+        display: flex;
+        position: relative;
+        width: 100%;
+        flex: 1;
+    }
+
+    body.mobile-page-donate .donation-panel .donation-content {
+        padding: 2rem 1.5rem;
+    }
+
+    body.mobile-page-donate .donation-panel svg {
+        width: 240px;
+        height: 240px;
+    }
+
+    body.mobile-page-donate .main-content > .container {
+        display: none;
+    }
+
     /* Editor page: hide panels (default above) */
     body.mobile-page-editor .sidebar,
     body.mobile-page-editor .nostr-panel,
@@ -61,7 +82,8 @@
 
     /* Show header nav buttons on mobile */
     .btn-icon-circle.notes-btn,
-    .btn-icon-circle.nostr-btn {
+    .btn-icon-circle.nostr-btn,
+    .btn-icon-circle.donate-btn {
         display: inline-flex;
     }
 
@@ -69,6 +91,11 @@
     .sidebar-collapse-btn,
     .nostr-collapse-btn,
     .donation-collapse-btn {
+        display: none;
+    }
+
+    /* Hide donation button from status bar on mobile (header handles it) */
+    .donation-btn {
         display: none;
     }
 
@@ -191,6 +218,14 @@
     .confirm-dialog {
         width: 95%;
     }
+
+    .settings-actions {
+        flex-direction: column;
+    }
+
+    .settings-actions .btn {
+        width: 100%;
+    }
 }
 
 /* Small mobile */
@@ -211,11 +246,6 @@
 
     .word-count {
         order: 2;
-    }
-
-    .save-indicator {
-        order: 1;
-        width: 100%;
     }
 
     .privacy-btn {

@@ -130,7 +130,8 @@ class TON3SApp {
             document.body.classList.remove(
                 'mobile-page-editor',
                 'mobile-page-notes',
-                'mobile-page-nostr'
+                'mobile-page-nostr',
+                'mobile-page-donate'
             );
             document.body.classList.add(`mobile-page-${page}`);
         };

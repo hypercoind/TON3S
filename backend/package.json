@@ -3,6 +3,16 @@
   "version": "2.0.0",
   "type": "module",
   "description": "TON3S Backend - NOSTR relay proxy for IP privacy",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hypercoind/TON3S.git",
+    "directory": "backend"
+  },
+  "homepage": "https://ton3s.com",
+  "bugs": {
+    "url": "https://github.com/hypercoind/TON3S/issues"
+  },
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
