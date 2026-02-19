@@ -32,6 +32,22 @@
     z-index: 200;
 }
 
+/*
+ * Clip header/status animation overflow so zen-mode transforms
+ * don't create document scrollbars on non-overlay scrollbar platforms.
+ */
+#header-container,
+#status-container {
+    overflow: clip;
+}
+
+@supports not (overflow: clip) {
+    #header-container,
+    #status-container {
+        overflow: hidden;
+    }
+}
+
 .logo {
     font-size: 1.8rem;
     font-weight: 600;
