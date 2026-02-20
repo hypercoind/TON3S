@@ -2,6 +2,17 @@
 
 All notable changes to TON3S are documented here.
 
+## v1.0.1 (2026-02-20)
+
+Patch release for backend hardening and deployment compatibility.
+
+### Fixed
+
+- Backend app version resolution now falls back safely for container builds.
+- Media upload proxy now pins upstream upload connection to resolved IP to prevent DNS rebinding.
+- SSRF IP classifier now blocks additional IPv4-mapped private ranges.
+- Added backend regression tests for app version loading, upload pinning, and mapped-IP SSRF coverage.
+
 ## v1.0.0 (2026-02-18)
 
 Initial public release.
