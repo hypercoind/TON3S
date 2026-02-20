@@ -1,6 +1,6 @@
 {
   "name": "ton3s-frontend",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "TON3S - Privacy-focused writing application with NOSTR integration",
   "license": "MIT",

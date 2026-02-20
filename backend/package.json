@@ -1,6 +1,6 @@
 {
   "name": "ton3s-backend",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "TON3S Backend - NOSTR relay proxy for IP privacy",
   "license": "MIT",

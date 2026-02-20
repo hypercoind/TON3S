@@ -2,6 +2,8 @@
 
 All notable changes to TON3S are documented here.
 
+## Unreleased
+
 ## v1.0.2 (2026-02-20)
 
 ### Changed
