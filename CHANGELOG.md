@@ -2,6 +2,12 @@
 
 All notable changes to TON3S are documented here.
 
+## v1.0.2 (2026-02-20)
+
+### Changed
+
+- Mobile UX now disables Zen mode auto-activation, keeping touch navigation stable when composing from a phone.
+
 ## v1.0.1 (2026-02-20)
 
 Patch release for backend hardening and deployment compatibility.
