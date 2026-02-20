@@ -2,7 +2,14 @@
 
 All notable changes to TON3S are documented here.
 
-## Unreleased
+## v1.0.3 (2026-02-20)
+
+### Fixed
+
+- Stopped unintended Nostr auto-reconnect after explicit disconnect.
+- Prevented upload progress listener leaks during concurrent media uploads.
+- Enforced WebSocket proxy message limits by UTF-8 byte size (not character count).
+- Added regression tests for reconnect handling, upload listener cleanup, and byte-size checks.
 
 ## v1.0.2 (2026-02-20)
 
