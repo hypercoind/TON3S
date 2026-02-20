@@ -42,10 +42,13 @@ export function isPrivateIP(ip) {
         /^fe80:/i, // Link-local
         /^fc00:/i, // Unique local
         /^fd/i, // Unique local
+        /^::ffff:0\./i, // IPv4-mapped 0.0.0.0/8
         /^::ffff:127\./i, // IPv4-mapped loopback
         /^::ffff:10\./i, // IPv4-mapped private
+        /^::ffff:169\.254\./i, // IPv4-mapped link-local
         /^::ffff:192\.168\./i, // IPv4-mapped private
-        /^::ffff:172\.(1[6-9]|2[0-9]|3[0-1])\./i // IPv4-mapped private
+        /^::ffff:172\.(1[6-9]|2[0-9]|3[0-1])\./i, // IPv4-mapped private
+        /^::ffff:100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./i // IPv4-mapped CGNAT
     ];
 
     for (const range of privateRanges) {

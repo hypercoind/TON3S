@@ -78,6 +78,12 @@ describe('SSRF Utilities', () => {
             expect(isPrivateIP('fd12::1')).toBe(true);
         });
 
+        it('should detect IPv4-mapped private ranges', () => {
+            expect(isPrivateIP('::ffff:0.1.2.3')).toBe(true);
+            expect(isPrivateIP('::ffff:169.254.1.1')).toBe(true);
+            expect(isPrivateIP('::ffff:100.64.0.1')).toBe(true);
+        });
+
         it('should allow public IPs', () => {
             expect(isPrivateIP('8.8.8.8')).toBe(false);
             expect(isPrivateIP('1.1.1.1')).toBe(false);
@@ -118,6 +124,11 @@ describe('SSRF Utilities', () => {
             mockAddress = '192.168.1.1';
             await expect(validateRelayUrl('wss://relay.example.com')).rejects.toThrow('private IP');
         });
+
+        it('should reject IPv4-mapped private IP resolution', async () => {
+            mockAddress = '::ffff:169.254.169.254';
+            await expect(validateRelayUrl('wss://relay.example.com')).rejects.toThrow('private IP');
+        });
     });
 
     describe('validateHttpsUrl', () => {
@@ -144,6 +155,11 @@ describe('SSRF Utilities', () => {
 
         it('should reject private IP resolution', async () => {
             mockAddress = '10.0.0.1';
+            await expect(validateHttpsUrl('https://blossom.example.com')).rejects.toThrow('private IP');
+        });
+
+        it('should reject IPv4-mapped private IP resolution', async () => {
+            mockAddress = '::ffff:100.64.0.1';
             await expect(validateHttpsUrl('https://blossom.example.com')).rejects.toThrow('private IP');
         });
     });
