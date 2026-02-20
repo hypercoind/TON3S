@@ -1,533 +1,187 @@
 # Architecture
 
-System design and component overview for TON3S.
+> Looking for modular developer docs? Start at [System Architecture](developers/system-architecture.md).
 
-## System Overview
+This legacy long-form guide provides a complete architecture narrative for TON3S.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend (Vite)                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ Components  │  │  Services   │  │     State (AppState)    │  │
-│  │  - Editor   │  │  - Storage  │  │  - notes                │  │
-│  │  - Sidebar  │  │  - Export   │  │  - settings             │  │
-│  │  - Header   │  │  - Nostr    │  │  - nostr                │  │
-│  │  - NostrUI  │  │  - Auth     │  │  - media                │  │
-│  │  - Donation │  │  - Media    │  │  - ui                   │  │
-│  │  - Toast    │  │  - Blossom  │  │                         │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│          │              │                    │                   │
-│          └──────────────┼────────────────────┘                   │
-│                         │                                        │
-│                    IndexedDB                                     │
-└─────────────────────────│────────────────────────────────────────┘
-                          │
-                    WebSocket
-                          │
-┌─────────────────────────│────────────────────────────────────────┐
-│                   Backend (Fastify)                              │
-│  ┌──────────────────────┴───────────────────────────────────┐   │
-│  │                    NostrProxy                             │   │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐         │   │
-│  │  │ Relay 1 │ │ Relay 2 │ │ Relay 3 │ │ Relay N │         │   │
-│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘         │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+## Goals
+
+TON3S is designed to balance:
+
+- local-first writing,
+- optional decentralized publishing,
+- strong privacy defaults,
+- simple deployability.
+
+## High-Level Topology
+
+```text
+Browser (Frontend SPA)
+  - Editor, notes, settings, local persistence
+  - Optional Nostr signing and publishing
+  - Media orchestration
+        |
+        | HTTP + WebSocket
+        v
+Backend (Fastify)
+  - /health, /api/info, /api/relays
+  - /api/media/upload (small-file proxy)
+  - /ws/nostr (relay proxy)
+        |
+        +--> Nostr relays
+        +--> Blossom servers
 ```
 
 ## Frontend Architecture
 
-### Component Hierarchy
+### Layering
 
-```
-App
-├── Header
-│   ├── SidebarToggle
-│   ├── ThemeButton
-│   ├── FontButton
-│   ├── ZenModeButton
-│   ├── NostrButton
-│   └── SaveControls
-├── Sidebar
-│   ├── NewNoteButton
-│   ├── NoteList
-│   │   └── NoteItem (×n)
-│   └── SearchInput
-├── Editor
-│   └── ContentEditable
-├── StatusBar
-│   ├── StyleButtons (T, H, B)
-│   └── WordCount
-├── NostrPanel
-│   ├── ConnectionStatus
-│   ├── PublicKey
-│   └── PublishButtons
-├── DonationPanel
-│   ├── LightningTab
-│   └── OnchainTab
-└── Toast
-    └── Notification Stack
-```
+`frontend/src/` is organized into:
 
-### BaseComponent Pattern
+- `components/`: UI rendering and DOM events
+- `services/`: IO/business logic boundaries
+- `state/`: centralized app state and events
+- `utils/`: markdown/sanitization/keyboard utilities
+- `data/`: static theme/font catalogs
+- `styles/`: modular CSS
 
-All UI components extend `BaseComponent`:
+### Core Components
 
-```javascript
-class BaseComponent {
-  constructor() {
-    this.subscriptions = [];
-  }
+- `Header`: notes and Nostr panel toggles, theme/font rotation
+- `Sidebar`: note list, search, tagging, note actions
+- `Editor`: contenteditable writing surface and media insertion
+- `StatusBar`: counts and settings modal (import/export/clear)
+- `NostrPanel`: signer connection and publish actions
+- `DonationPanel`: support links and QR display
+- `Toast`: user notifications
 
-  // DOM helpers
-  $(selector) { return document.querySelector(selector); }
-  $$(selector) { return document.querySelectorAll(selector); }
+### Services (Frontend)
 
-  // Element creation with attributes and events
-  createElement(tag, options = {}) {
-    const el = document.createElement(tag);
-    if (options.className) el.className = options.className;
-    if (options.textContent) el.textContent = options.textContent;
-    if (options.innerHTML) el.innerHTML = options.innerHTML;
-    if (options.attributes) {
-      Object.entries(options.attributes).forEach(([k, v]) =>
-        el.setAttribute(k, v)
-      );
-    }
-    if (options.events) {
-      Object.entries(options.events).forEach(([event, handler]) =>
-        el.addEventListener(event, handler)
-      );
-    }
-    return el;
-  }
+- `StorageService`: IndexedDB persistence and settings
+- `NostrAuthService`: extension/local key signing
+- `NostrService`: proxy socket lifecycle + publish pipeline
+- `ExportService`: JSON/Markdown import/export
+- `BlossomService`: upload transport choice (proxy/direct)
+- `MediaService`: file validation, upload orchestration
 
-  // Event subscription with auto-cleanup
-  subscribe(emitter, event, handler) {
-    const unsubscribe = emitter.on(event, handler);
-    this.subscriptions.push(unsubscribe);
-    return unsubscribe;
-  }
+### State Model
 
-  // Lifecycle methods (override in subclasses)
-  init() {}
-  render() {}
-  bindEvents() {}
+`AppState` keeps normalized state for:
 
-  destroy() {
-    this.subscriptions.forEach(unsub => unsub());
-    this.subscriptions = [];
-  }
-}
-```
+- notes and current note,
+- settings (theme/font/zen/panel states),
+- Nostr session state,
+- media upload state,
+- UI state (search/save/mobile page).
 
-### Lifecycle Flow
-
-```
-1. constructor()  → Set up instance variables, get DOM references
-2. init()         → Subscribe to state changes
-3. bindEvents()   → Attach event listeners
-4. render()       → Update DOM based on state
-5. destroy()      → Cleanup subscriptions and listeners
-```
-
-## State Management
-
-### StateEmitter Base Class
-
-```javascript
-class StateEmitter {
-  constructor() {
-    this.listeners = new Map();
-  }
-
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event).add(callback);
-
-    // Return unsubscribe function
-    return () => this.listeners.get(event).delete(callback);
-  }
-
-  emit(event, data) {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event).forEach(cb => cb(data));
-    }
-  }
-}
-```
-
-### AppState Singleton
-
-```javascript
-class AppState extends StateEmitter {
-  constructor() {
-    super();
-    this.state = {
-      notes: [],
-      currentNoteId: null,
-      settings: {
-        themeIndex: 0,
-        fontIndex: 0,
-        zenMode: false,
-        sidebarVisible: true
-      },
-      nostr: {
-        connected: false,
-        pubkey: null,
-        extensionType: null
-      },
-      ui: {
-        searchQuery: '',
-        saveStatus: 'saved',
-        loading: false
-      }
-    };
-  }
-
-  getState() {
-    return this.state;
-  }
-
-  setState(partial) {
-    this.state = { ...this.state, ...partial };
-    this.emit('stateChange', this.state);
-  }
-}
-
-export const appState = new AppState();
-```
-
-### State Flow
-
-```
-User Action → Component Handler → Service Call → State Update → Re-render
-     │                               │              │              │
-     │                               │              │              │
-     └───────────────────────────────┴──────────────┴──────────────┘
-                              Event-driven updates
-```
-
-## Service Layer
-
-### Service Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                  Services                                    │
-├─────────────────┬─────────────────┬──────────────────┬──────────────────────┤
-│ StorageService  │  ExportService  │  NostrService    │  MediaService        │
-│ - Dexie.js      │ - toMarkdown()  │ - WS proxy       │ - File validation    │
-│ - IndexedDB     │ - toJSON()      │ - Relay mgmt     │ - Upload orchestrate │
-│ - CRUD ops      │ - importFile()  │ - Event publish  │                      │
-├─────────────────┼─────────────────┼──────────────────┼──────────────────────┤
-│ NostrAuthService│ BlossomService  │ QRCodeService    │ FaviconService       │
-│ - NIP-07 ext    │ - BUD-01/02     │ - SVG QR codes   │ - Theme-based icon   │
-│ - WASM signing  │ - Upload proxy  │ - Donation QR    │ - --accent color     │
-│ - Key mgmt      │ - Auth events   │                  │                      │
-└─────────────────┴─────────────────┴──────────────────┴──────────────────────┘
-```
-
-### StorageService
-
-```javascript
-class StorageService {
-  constructor() {
-    this.db = new Dexie('ton3s');
-    this.db.version(1).stores({
-      notes: '++id, title, createdAt, updatedAt, *tags'
-    });
-  }
-
-  async saveNote(doc) {
-    const now = Date.now();
-    if (doc.id) {
-      await this.db.notes.update(doc.id, { ...doc, updatedAt: now });
-    } else {
-      doc.id = await this.db.notes.add({
-        ...doc,
-        createdAt: now,
-        updatedAt: now
-      });
-    }
-    return doc;
-  }
-
-  async getNotes() {
-    return this.db.notes.orderBy('updatedAt').reverse().toArray();
-  }
-
-  async deleteNote(id) {
-    return this.db.notes.delete(id);
-  }
-}
-```
-
-### NostrService
-
-```javascript
-class NostrService extends StateEmitter {
-  constructor() {
-    super();
-    this.ws = null;
-    this.relays = new Map();
-    this.messageQueue = [];
-  }
-
-  connect() {
-    this.ws = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/nostr`);
-
-    this.ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      this.handleMessage(msg);
-    };
-  }
-
-  connectRelay(url) {
-    this.send({ type: 'CONNECT', relay: url });
-  }
-
-  publish(event) {
-    this.send({ type: 'BROADCAST', event });
-  }
-
-  send(message) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
-    } else {
-      this.messageQueue.push(message);
-    }
-  }
-}
-```
-
-## Storage Schema
-
-### IndexedDB Structure
-
-```javascript
-// Database: ton3s
-
-// Table: notes
-{
-  id: number,           // Auto-increment primary key
-  title: string,        // Note title
-  content: string,      // HTML content
-  plainText: string,    // Extracted for search
-  tags: string[],       // Indexed array
-  createdAt: number,    // Unix timestamp
-  updatedAt: number,    // Unix timestamp (indexed)
-  nostr: {
-    published: boolean,
-    eventId: string,
-    publishedAt: number
-  }
-}
-
-// Indexes: id (primary), updatedAt, tags (multi-entry)
-```
-
-### Migration from v1
-
-```javascript
-async migrateFromLocalStorage() {
-  const oldContent = localStorage.getItem('savedContent');
-  const oldTheme = localStorage.getItem('savedThemeIndex');
-  const oldFont = localStorage.getItem('savedFontIndex');
-
-  if (oldContent) {
-    await this.saveNote({
-      title: 'Migrated Note',
-      content: oldContent,
-      plainText: this.extractText(oldContent)
-    });
-    localStorage.removeItem('savedContent');
-  }
-
-  // Migrate settings...
-}
-```
+State updates emit events, and components reactively update.
 
 ## Backend Architecture
 
-### Fastify Server
+### Runtime
 
-```javascript
-// src/index.js
-import Fastify from 'fastify';
-import websocket from '@fastify/websocket';
-import { NostrProxy } from './websocket/NostrProxy.js';
+- Fastify server
+- WebSocket handling via `@fastify/websocket`
+- Multipart handling via `@fastify/multipart`
+- CORS + request rate limiting
 
-const fastify = Fastify({ logger: true });
+### HTTP Endpoints
 
-await fastify.register(websocket);
+- `GET /health`
+- `GET /api/info`
+- `GET /api/relays`
+- `POST /api/media/upload`
 
-// Health check endpoint
-fastify.get('/health', async () => ({ status: 'ok' }));
+### WebSocket Endpoint
 
-// WebSocket endpoint for Nostr proxy
-fastify.register(async (fastify) => {
-  fastify.get('/ws/nostr', { websocket: true }, (socket, req) => {
-    const proxy = new NostrProxy(socket);
-    proxy.init();
-  });
-});
+- `GET /ws/nostr` (upgrade)
 
-await fastify.listen({ port: 3001, host: '0.0.0.0' });
-```
+Used by browser client for relay management and event forwarding.
 
-### NostrProxy
+## Nostr Proxy Protocol
 
-```javascript
-class NostrProxy {
-  constructor(clientSocket) {
-    this.client = clientSocket;
-    this.relays = new Map(); // url -> WebSocket
-  }
+Client -> proxy:
 
-  init() {
-    this.client.on('message', (data) => {
-      const msg = JSON.parse(data);
-      this.handleClientMessage(msg);
-    });
+- `['CONNECT', relayUrl]`
+- `['DISCONNECT', relayUrl]`
+- `['SEND', relayUrl, relayMessage]`
+- `['BROADCAST', relayMessage]`
 
-    this.client.on('close', () => {
-      this.cleanup();
-    });
-  }
+Proxy -> client:
 
-  handleClientMessage(msg) {
-    switch (msg.type) {
-      case 'CONNECT':
-        this.connectRelay(msg.relay);
-        break;
-      case 'DISCONNECT':
-        this.disconnectRelay(msg.relay);
-        break;
-      case 'SEND':
-        this.sendToRelay(msg.relay, msg.data);
-        break;
-      case 'BROADCAST':
-        this.broadcastToRelays(msg.event);
-        break;
-    }
-  }
+- `['RELAY_STATUS', relayUrl, status, optionalError]`
+- `['RELAY_MESSAGE', relayUrl, message]`
+- `['ERROR', message]`
 
-  connectRelay(url) {
-    const ws = new WebSocket(url);
+## Key Data Flows
 
-    ws.on('open', () => {
-      this.relays.set(url, ws);
-      this.sendToClient({ type: 'RELAY_STATUS', relay: url, status: 'connected' });
-    });
+### Local Note Flow
 
-    ws.on('message', (data) => {
-      this.sendToClient({ type: 'RELAY_MESSAGE', relay: url, data: JSON.parse(data) });
-    });
+1. User edits in `Editor`.
+2. Component updates `AppState`.
+3. `StorageService` persists to IndexedDB.
+4. UI subscribers update counts/list/state indicators.
 
-    ws.on('close', () => {
-      this.relays.delete(url);
-      this.sendToClient({ type: 'RELAY_STATUS', relay: url, status: 'disconnected' });
-    });
-  }
+### Publish Flow
 
-  cleanup() {
-    this.relays.forEach(ws => ws.close());
-    this.relays.clear();
-  }
-}
-```
+1. User connects signer in `NostrPanel`.
+2. `NostrService` opens proxy socket (`/ws/nostr`).
+3. Client signs event locally.
+4. Event is sent via proxy to relays.
+5. Relay status/messages stream back to client.
 
-## Security Architecture
+### Media Flow
 
-### Content Security Policy
+1. File validated in `MediaService`.
+2. `BlossomService` chooses path:
+   - `<= 10 MB` via backend proxy,
+   - `> 10 MB` direct to Blossom.
+3. Descriptor returned and embedded in note.
 
-```html
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  style-src 'self' 'unsafe-inline';
-  font-src 'self';
-  script-src 'self' 'wasm-unsafe-eval';
-  img-src 'self' data: blob: https:;
-  connect-src 'self' ws://localhost:* http://localhost:* https:;
-  frame-ancestors 'none';
-  base-uri 'self';
-  form-action 'self';
-  object-src 'none';
-  media-src 'self' blob: https:;
-">
-```
+## Security Boundaries
 
-### Input Sanitization
+### Frontend
 
-```javascript
-function sanitizeInput(input) {
-  const div = document.createElement('div');
-  div.textContent = input;
-  return div.innerHTML;
-}
+- local-first storage,
+- sanitized note HTML rendering,
+- no account requirement.
 
-// Paste handler - strip all HTML
-editor.addEventListener('paste', (e) => {
-  e.preventDefault();
-  const text = e.clipboardData.getData('text/plain');
-  document.execCommand('insertText', false, sanitizeInput(text));
-});
-```
+### Backend
 
-### Security Headers (nginx)
+- strict WebSocket origin validation,
+- SSRF-safe relay/upload URL checks,
+- private IP and metadata endpoint blocking,
+- per-client limits for message size/rate/queue/relay count.
 
-```nginx
-add_header X-Frame-Options "DENY" always;
-add_header X-Content-Type-Options "nosniff" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-```
+### Privacy
 
-## Performance Considerations
+- Nostr relay traffic is proxied to hide client IP from relays.
+- Direct large-file uploads expose client IP to chosen Blossom server.
 
-### Auto-save Throttling
+## Deployability
 
-```javascript
-class Editor {
-  constructor() {
-    this.saveTimeout = null;
-    this.THROTTLE_MS = 100;
-  }
+### Local
 
-  onInput() {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
-    }
+- Docker Compose serves frontend at `http://localhost:3002`
+- Native dev uses frontend `http://localhost:3000` and backend `http://localhost:3001`
 
-    this.saveTimeout = setTimeout(() => {
-      this.save();
-    }, this.THROTTLE_MS);
-  }
-}
-```
+### Production
 
-### Lazy Loading
+- Compose production overlay adds Caddy for TLS and domain routing
+- Frontend reverse-proxies `/api` and `/ws/nostr` to backend
 
-- Fonts self-hosted in `/public/fonts/` with `font-display: swap` via `@font-face` in `base.css`
-- WASM signing module loaded non-blocking at startup
-- Notes loaded on-demand from IndexedDB
+## Extension Points
 
-### Bundle Optimization (Vite)
+Typical ways to extend TON3S:
 
-```javascript
-// vite.config.js
-export default {
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['dexie']
-        }
-      }
-    }
-  }
-};
-```
+1. Add UI behavior in `components/` + state events.
+2. Add integrations in `services/`.
+3. Add backend endpoint or proxy policy in `backend/src/`.
+4. Add tests and docs with every behavior change.
+
+## Related Guides
+
+- [System Architecture](developers/system-architecture.md)
+- [Frontend Guide](developers/frontend-guide.md)
+- [Backend Guide](developers/backend-guide.md)
+- [Testing and Quality](developers/testing-and-quality.md)

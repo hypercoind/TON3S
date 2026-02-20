@@ -61,31 +61,22 @@ Open `http://localhost:3000`
 
 | Shortcut | Action |
 |----------|--------|
-| `Cmd/Ctrl + 1` | Title style |
-| `Cmd/Ctrl + 2` | Heading style |
-| `Cmd/Ctrl + 3` | Body style |
 | `Cmd/Ctrl + T` | Rotate theme |
 | `Cmd/Ctrl + N` | New note |
 | `Cmd/Ctrl + K` | Search notes |
-| `Cmd/Ctrl + S` | Open save menu |
-| `Cmd/Ctrl + \` | Toggle sidebar |
+| `Cmd/Ctrl + F` | Search notes (in-app) |
 | `Cmd/Ctrl + Shift + U` | Upload media |
 | `Cmd/Ctrl + Shift + ?` | Show shortcuts |
-| `Escape` | Exit zen mode / close panels |
+| `Escape` | Exit zen mode / close panels and popups |
 
 ## Documentation
 
 | Guide | Audience | Description |
 |-------|----------|-------------|
-| [Getting Started](docs/getting-started.md) | Everyone | Quick setup for users and developers |
-| [User Guide](docs/user-guide.md) | End users | Complete feature documentation |
-| [Nostr Guide](docs/nostr-guide.md) | End users | Publishing to Nostr network |
-| [FAQ](docs/faq.md) | Everyone | Common questions answered |
-| [Self-Hosting](docs/self-hosting.md) | Operators | Production deployment with Caddy |
-| [Architecture](docs/architecture.md) | Developers | System design and components |
-| [Development](docs/development.md) | Developers | Local setup and workflow |
-| [Deployment](docs/deployment.md) | Developers | Docker deployment guide |
-| [Contributing](docs/contributing.md) | Developers | How to contribute |
+| [Documentation Hub](docs/README.md) | Everyone | Modular entry point for all docs |
+| [User Documentation](docs/users/README.md) | End users | Task-focused guides for writing and publishing |
+| [Developer Documentation](docs/developers/README.md) | Developers | Build, architecture, testing, and deployment modules |
+| [Legacy Long-Form Guides](docs/getting-started.md) | Everyone | Existing deep-dive documentation set |
 | [Changelog](CHANGELOG.md) | Everyone | Version history |
 
 ## Privacy

@@ -1,38 +1,57 @@
 # Getting Started
 
-This guide covers quick setup for both users and developers.
+> Looking for the modular docs experience? Start at [Documentation Hub](README.md).
 
-## For Users
+This legacy long-form guide gives a full onboarding path for both users and developers.
 
-### Using TON3S Online
+## Choose Your Path
 
-Visit [ton3s.com](https://ton3s.com) to start writing immediately. No installation required.
+| Goal | Best path |
+|---|---|
+| Start writing immediately | [Use TON3S Online](#use-ton3s-online) |
+| Run your own instance quickly | [Self-Host with Docker](#self-host-with-docker) |
+| Contribute code locally | [Developer Setup](#developer-setup) |
 
-### Self-Hosting with Docker
+## Use TON3S Online
 
-If you prefer to run your own instance:
+1. Open [https://ton3s.com](https://ton3s.com).
+2. Start typing in the editor.
+3. Notes auto-save in your browser profile.
+
+If this is your first session, export a JSON backup after creating notes.
+
+## Self-Host with Docker
 
 ```bash
-# Clone the repository
 git clone https://github.com/hypercoind/TON3S.git
 cd TON3S
-
-# Start the application
 docker compose up -d
 ```
 
-Access the app at `http://localhost:3002`
+Open `http://localhost:3002`.
 
-To stop:
+Stop services:
+
 ```bash
 docker compose down
 ```
 
-## For Developers
+## Developer Setup
 
-### Option 1: Docker (Recommended)
+### Prerequisites
 
-The easiest way to run the full stack for development and testing:
+- Node.js 22+
+- npm
+- Docker + Docker Compose plugin (recommended path)
+- Rust + `wasm-pack` (required for native frontend dev)
+
+Install `wasm-pack` if you use native frontend workflow:
+
+```bash
+cargo install wasm-pack
+```
+
+### Option A: Docker Dev Stack (fastest start)
 
 ```bash
 git clone https://github.com/hypercoind/TON3S.git
@@ -40,120 +59,56 @@ cd TON3S
 docker compose up --build -d
 ```
 
-Access the app at `http://localhost:3002`
+Open `http://localhost:3002`.
 
-To rebuild after changes:
-```bash
-docker compose up --build -d
-```
+View logs:
 
-To view logs:
 ```bash
 docker compose logs -f
 ```
 
-### Option 2: Local Node.js
+### Option B: Native Dev (best edit loop)
 
-For faster hot-reload during active development:
+Terminal 1:
 
-**Prerequisites:** Node.js 22+
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/hypercoind/TON3S.git
-   cd TON3S
-   ```
-
-2. **Start servers**
-
-   Frontend (terminal 1):
-   ```bash
-   cd frontend && npm install && npm run dev
-   ```
-
-   Backend (terminal 2):
-   ```bash
-   cd backend && npm install && npm run dev
-   ```
-
-3. **Open in browser**
-
-   Navigate to `http://localhost:3000`
-
-   The Vite dev server proxies API requests to the backend automatically.
-
-### Project Structure Overview
-
-```
-TON3S/
-├── frontend/           # Vite-based frontend
-│   ├── src/
-│   │   ├── components/ # UI components
-│   │   ├── services/   # Business logic
-│   │   ├── state/      # State management
-│   │   └── styles/     # CSS modules
-│   └── public/         # Static assets
-├── backend/            # Fastify API server
-│   └── src/
-│       └── websocket/  # Nostr relay proxy
-└── docs/               # Documentation
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-### Key Commands
+Terminal 2:
 
-| Command | Location | Purpose |
-|---------|----------|---------|
-| `npm run dev` | frontend/ | Start Vite dev server |
-| `npm run build` | frontend/ | Build for production |
-| `npm run dev` | backend/ | Start backend with hot reload |
-| `npm start` | backend/ | Start production server |
-| `docker compose up -d` | root | Start all services |
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-## First Steps
+Open `http://localhost:3000`.
 
-### Writing Your First Note
+## Verify Your Setup
 
-1. Open TON3S in your browser
-2. Click in the editor area
-3. Start typing - your content auto-saves
+1. Create a note and confirm it remains after refresh.
+2. Open settings and export JSON.
+3. If backend is running, check health:
 
-### Formatting Text
+```bash
+curl http://localhost:3001/health
+```
 
-Use the toolbar buttons:
-- **T** - Title (large heading)
-- **H** - Heading (section heading)
-- **B** - Body (regular paragraph)
+Expected response includes `status: "ok"`.
 
-Or use keyboard shortcuts:
-- `Ctrl/Cmd + 1` - Title
-- `Ctrl/Cmd + 2` - Heading
-- `Ctrl/Cmd + 3` - Body
+## First 15-Minute Checklist
 
-### Customizing Appearance
+1. Create and rename notes.
+2. Try search (`Cmd/Ctrl + K` or `Cmd/Ctrl + F`).
+3. Rotate theme (`Cmd/Ctrl + T`).
+4. Upload one small media file (`Cmd/Ctrl + Shift + U`).
+5. Export JSON backup.
 
-- Click the **theme button** to cycle through 72 themes
-- Click the **font button** to change fonts
-- Click the **zen mode** button for distraction-free writing
+## Where to Go Next
 
-### Saving Your Work
-
-Click the settings icon (gear) in the status bar to:
-- **Export Note (Markdown)** - `.md` file with YAML frontmatter
-- **Export Note (JSON)** - Structured data for single note
-- **Export All (JSON)** - Full backup of all notes and settings
-
-### Importing Notes
-
-Click the settings icon and select **Import** to load JSON or Markdown files.
-
-### Uploading Media
-
-Drag and drop images/video into the editor, paste from clipboard, or press `Ctrl/Cmd + Shift + U` to open the file picker.
-
-## Next Steps
-
-- [User Guide](user-guide.md) - Complete feature documentation
-- [Nostr Guide](nostr-guide.md) - Publishing to Nostr network
-- [FAQ](faq.md) - Common questions answered
-- [Development Guide](development.md) - Deep dive into codebase
-- [Architecture](architecture.md) - System design overview
+- Users: [User Documentation](users/README.md)
+- Developers: [Developer Documentation](developers/README.md)
+- Deployment operators: [Deployment and Operations](developers/deployment-and-operations.md)

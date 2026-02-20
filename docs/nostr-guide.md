@@ -1,234 +1,146 @@
 # Nostr Guide
 
-Publish your writing to the Nostr decentralized network.
+> Legacy long-form guide. For the modular path, start at [Nostr Publishing](users/nostr-publishing.md).
 
-## What is Nostr?
+This guide explains how TON3S publishes to Nostr, what data is shared, and how to troubleshoot common issues.
 
-Nostr (Notes and Other Stuff Transmitted by Relays) is a decentralized protocol for social networking. Unlike traditional platforms:
+## Nostr in TON3S
 
-- **No central authority** - Your content lives on multiple relays
-- **Censorship resistant** - No single point of control
-- **Portable identity** - Your keys work across all Nostr apps
-- **Open protocol** - Anyone can build compatible apps
+Nostr support is optional. You can use TON3S fully as a local writing app without ever connecting to relays.
 
-## Prerequisites
+When enabled, TON3S can publish:
 
-To publish to Nostr, you need one of the following:
+- Kind `1` events (short notes)
+- Kind `30023` events (long-form)
 
-1. **A browser extension** (NIP-07) that manages your keys
-2. **A private key** entered directly into TON3S (signed locally via WASM - your key never leaves the browser)
+## Signing Modes
 
-### Option 1: Browser Extension (Recommended)
+TON3S supports two signer paths:
 
-### Recommended Extensions
+1. NIP-07 extension signer (recommended)
+2. Local private key signer in WASM memory
 
-| Extension | Browser | Link |
-|-----------|---------|------|
-| **nos2x** | Chrome, Firefox | [GitHub](https://github.com/fiatjaf/nos2x) |
-| **Alby** | Chrome, Firefox, Safari | [getalby.com](https://getalby.com) |
-| **nos2x-fox** | Firefox | [Addons](https://addons.mozilla.org/addon/nos2x-fox/) |
-| **Flamingo** | Chrome | [Chrome Store](https://chrome.google.com/webstore/detail/flamingo/) |
+### Extension Signer
 
-These extensions implement [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md), allowing websites to request signatures without exposing your private key.
+Pros:
 
-### Installing an Extension
+- key management delegated to extension,
+- better separation from app logic.
 
-1. **Install the extension** from your browser's store
-2. **Create or import keys**
-   - New users: Create a new identity
-   - Existing users: Import your private key (nsec)
-3. **Secure your key** - Back up your private key safely
+### Local Key Signer
 
-### Option 2: WASM Private Key
+Pros:
 
-If you don't want to install a browser extension, you can enter your Nostr private key (nsec) directly in the Nostr panel. TON3S uses a Rust WASM module for Schnorr signing, so your private key is stored in WASM memory and never exposed to JavaScript.
+- no extension install required.
 
-## Connecting to TON3S
+Tradeoff:
 
-### First-Time Setup
+- key entry is your responsibility.
 
-1. Click the **Nostr button** in the header
-2. The Nostr panel opens on the right
-3. Click **Connect**
-4. Your extension will ask for permission - approve it
-5. Your public key (npub) appears when connected
+## Connection Model
 
-### Connection States
+TON3S does not connect directly from browser to relays. It uses backend proxy endpoint `/ws/nostr`.
 
-| State | Indicator | Meaning |
-|-------|-----------|---------|
-| Disconnected | Gray | Not connected to extension |
-| Connecting | Pulsing | Waiting for extension |
-| Connected | Green | Ready to publish |
+Flow:
 
-## Publishing
+1. Browser connects to proxy.
+2. Proxy opens relay sockets.
+3. Signed events are broadcast through proxy.
 
-### Event Types
+This protects client IP from relay operators in normal proxy flow.
 
-TON3S supports two Nostr event types:
+## Message Protocol (Client <-> Proxy)
 
-**Kind 1 - Short-form Notes**
-- Best for: Short posts, updates, thoughts
-- Content: Plain text version of your note
-- Limit: Works best under 280 characters
+Client to proxy:
 
-**Kind 30023 - Long-form Articles**
-- Best for: Blog posts, articles, essays
-- Content: Full note with metadata
-- Features: Title, publish date, tags
+- `['CONNECT', relayUrl]`
+- `['DISCONNECT', relayUrl]`
+- `['SEND', relayUrl, relayMessage]`
+- `['BROADCAST', relayMessage]`
 
-### How to Publish
+Proxy to client:
 
-1. **Connect** your Nostr extension
-2. **Write** your note
-3. Click **Publish** in the Nostr panel
-4. Choose **Note** (kind 1) or **Article** (kind 30023)
-5. Your extension will ask to sign - approve it
-6. Content is sent to connected relays
+- `['RELAY_STATUS', relayUrl, status, optionalError]`
+- `['RELAY_MESSAGE', relayUrl, message]`
+- `['ERROR', message]`
 
-### Relays
+## What Gets Published
 
-TON3S connects to these default relays:
+### Kind 1
 
-- `wss://relay.damus.io`
-- `wss://nos.lol`
-- `wss://relay.primal.net`
-- `wss://relay.snort.social`
-- `wss://nostr.mom`
-- `wss://relay.nostr.band`
+- Uses plain-text content from note.
+- Best for short posts.
 
-Your content is broadcast to all connected relays for redundancy.
+### Kind 30023
 
-## Privacy Features
+- Uses markdown-derived content for long form.
+- Includes tags like title and publish timestamp.
 
-### IP Address Protection
+## Relay Strategy
 
-TON3S protects your IP address through a **backend proxy**:
+- TON3S connects to configured default relays.
+- Defaults may evolve by release.
+- Backend also exposes relay defaults at `GET /api/relays`.
 
-```
-Your Browser → TON3S Backend → Nostr Relays
-              (Your IP hidden)    (Only sees backend IP)
-```
+Recommendation:
 
-Without the proxy, relays would see your IP address. The proxy ensures only the TON3S server's IP is visible to relays.
+- keep relay list small and reliable,
+- remove relays with repeated errors/timeouts.
 
-### What Relays Can See
+## Privacy Boundaries
 
-| Information | Visible? |
-|-------------|----------|
-| Your content | Yes (it's public) |
-| Your public key | Yes (identifies you) |
-| Your IP address | No (proxied) |
-| Your browser info | No |
+### Relays can see
 
-### What Stays Private
+- event content,
+- pubkey,
+- event metadata/tags.
 
-- Your private key (never leaves extension)
-- Your IP address (backend proxy)
-- Other notes (only published ones are sent)
-- Local storage content
+### Relays cannot see (proxy flow)
 
-## Managing Published Content
+- your browser IP address.
 
-### Viewing Published Status
+### Important exception
 
-Notes show their Nostr status:
-- **Published** - Event ID and timestamp shown
-- **Not published** - "Publish" button available
+Media uploads over 10 MB use direct Blossom upload and can expose your IP to that Blossom server.
 
-### Updating Content
+## Security Controls (Backend)
 
-Nostr events are immutable. To "update" content:
-1. Edit your note
-2. Publish again as a new event
-3. The new event has a new ID
-
-For long-form articles (kind 30023), the `d` tag allows clients to show the latest version.
-
-### Deleting Content
-
-You can request deletion by publishing a **kind 5** event, but:
-- Relays may ignore delete requests
-- Content may already be cached/copied
-- Deletion is not guaranteed
+- strict WebSocket origin validation,
+- relay URL validation and SSRF protections,
+- per-client relay/message/queue limits.
 
 ## Troubleshooting
 
-### Extension Not Detected
+### Extension not detected
 
-**Symptoms:** "No Nostr extension found" message
+- install/reload extension,
+- refresh page,
+- reconnect from Nostr panel.
 
-**Solutions:**
-1. Verify extension is installed
-2. Refresh the page
-3. Check extension is enabled for this site
-4. Try a different extension
+### Connected but publish fails
 
-### Connection Timeout
+- verify backend availability,
+- reduce relay set,
+- retry with signer reconnected.
 
-**Symptoms:** Connecting state never resolves
+### Persistent relay errors
 
-**Solutions:**
-1. Check extension is unlocked
-2. Approve the permission request in extension
-3. Disable other extensions that might conflict
-4. Try in incognito mode
+- check relay availability,
+- remove failing relay,
+- retry publish.
 
-### Publish Failed
+## Operational Verification (Self-Hosted)
 
-**Symptoms:** Error when trying to publish
+```bash
+curl http://localhost:3001/health
+curl http://localhost:3001/api/relays
+```
 
-**Solutions:**
-1. Check backend is running (self-hosted)
-2. Verify at least one relay is connected
-3. Check browser console for errors
-4. Try publishing a shorter note
+For browser path checks, ensure reverse proxy forwards `/ws/nostr` upgrades correctly.
 
-### Relay Connection Issues
+## Related Guides
 
-**Symptoms:** Relays show as disconnected
-
-**Solutions:**
-1. Check your internet connection
-2. Some relays may be temporarily down
-3. The proxy server might be unreachable
-4. Firewall may be blocking WebSocket
-
-### Signature Rejected
-
-**Symptoms:** Extension shows error when signing
-
-**Solutions:**
-1. Ensure you're approving the correct event
-2. Check extension hasn't locked/timed out
-3. Restart the extension
-4. Re-import your keys if needed
-
-## Best Practices
-
-### For Privacy
-
-- Use a dedicated Nostr identity for TON3S if desired
-- Review content before publishing (it's permanent)
-- Remember: Public content is truly public
-
-### For Reach
-
-- Publish to multiple relays for redundancy
-- Use descriptive titles for articles
-- Consider your audience when choosing note vs article
-
-### For Security
-
-- Never share your private key (nsec)
-- Use a hardware signer for high-value identities
-- Keep your extension updated
-- Use strong passwords for extension
-
-## Further Reading
-
-- [Nostr Protocol](https://github.com/nostr-protocol/nostr) - Protocol specification
-- [NIPs](https://github.com/nostr-protocol/nips) - Nostr Implementation Possibilities
-- [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) - Browser extension spec
-- [NIP-23](https://github.com/nostr-protocol/nips/blob/master/23.md) - Long-form content spec
-- [nostr.how](https://nostr.how) - Beginner's guide to Nostr
+- [Nostr Publishing](users/nostr-publishing.md)
+- [Privacy and Security](users/privacy-and-security.md)
+- [Backend Guide](developers/backend-guide.md)
+- [Developer Troubleshooting](developers/troubleshooting.md)

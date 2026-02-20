@@ -1,516 +1,201 @@
 # Development Guide
 
-Local setup, workflow, and code patterns for TON3S development.
+> Looking for modular developer docs? Start at [Developer Documentation](developers/README.md).
+
+This legacy long-form guide covers local setup, workflow, testing, and debugging in one place.
 
 ## Prerequisites
 
-- **Docker** and **Docker Compose** (recommended)
-- **Node.js** 22 or higher (for local development without Docker)
-- A modern browser (Chrome, Firefox, Safari, Edge)
+### Recommended path (Docker)
 
-## Local Setup
+- Docker
+- Docker Compose plugin
 
-### Option 1: Docker (Recommended)
+### Native path (for fastest edit loop)
 
-The simplest way to run the full application for development and testing:
+- Node.js 22+
+- npm
+- Rust toolchain (`cargo`)
+- `wasm-pack` (required for frontend dev/build)
+
+Install `wasm-pack`:
 
 ```bash
-# Clone repository
+cargo install wasm-pack
+```
+
+## Local Run Modes
+
+### Option A: Docker (full stack quickly)
+
+```bash
 git clone https://github.com/hypercoind/TON3S.git
 cd TON3S
-
-# Build and run all services
 docker compose up --build -d
-
-# View logs
-docker compose logs -f
 ```
 
-Access the app at `http://localhost:3002`
+Frontend is available at `http://localhost:3002`.
 
-**Ports:**
-- Frontend: `http://localhost:3002` (nginx serving built app)
-- Backend: `http://localhost:3001` (API and WebSocket proxy)
+Logs:
 
-To rebuild after changes:
 ```bash
-docker compose up --build -d
+docker compose logs -f
+docker compose logs -f frontend
+docker compose logs -f backend
 ```
 
-To stop:
+Stop:
+
 ```bash
 docker compose down
 ```
 
-### Option 2: Local Node.js
+### Option B: Native (best DX)
 
-For faster hot-reload during active development:
+Terminal 1:
 
 ```bash
-# Clone repository
-git clone https://github.com/hypercoind/TON3S.git
-cd TON3S
-
-# Frontend (Terminal 1)
 cd frontend
 npm install
 npm run dev
+```
 
-# Backend (Terminal 2)
+Terminal 2:
+
+```bash
 cd backend
 npm install
 npm run dev
 ```
 
-Access the app at `http://localhost:3000`
+Frontend dev URL: `http://localhost:3000`
 
-The Vite dev server proxies `/ws/*` requests to the backend at port 3001.
+Backend dev URL: `http://localhost:3001`
 
-## Development Commands
+## Core Commands
 
-### Frontend (`/frontend`)
+### Root
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server with HMR |
-| `npm run build` | Build production bundle to `dist/` |
-| `npm run preview` | Preview production build locally |
+- `npm test`
+- `npm run test:coverage`
+- `npm run lint`
+- `npm run lint:fix`
+- `npm run format`
+- `npm run format:check`
 
-### Backend (`/backend`)
+### Frontend
 
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start production server |
-| `npm run dev` | Start with `--watch` for auto-reload |
+- `npm run dev`
+- `npm run build`
+- `npm run test`
+- `npm run test:e2e`
 
-### Docker (root)
+### Backend
 
-| Command | Description |
-|---------|-------------|
-| `docker compose up -d` | Start all services detached |
-| `docker compose up --build -d` | Rebuild and start |
-| `docker compose down` | Stop all services |
-| `docker compose logs -f` | Follow logs |
-| `docker compose logs frontend` | View frontend logs |
-| `docker compose logs backend` | View backend logs |
+- `npm run dev`
+- `npm start`
+- `npm run test`
 
-## Project Structure
+## Project Layout
 
-```
+```text
 frontend/
-├── src/
-│   ├── main.js              # App entry point
-│   ├── components/          # UI components
-│   │   ├── BaseComponent.js # Base class
-│   │   ├── Editor.js
-│   │   ├── Header.js
-│   │   ├── Sidebar.js
-│   │   ├── SaveControls.js
-│   │   ├── StatusBar.js
-│   │   ├── NostrPanel.js
-│   │   └── index.js         # Exports
-│   ├── services/            # Business logic
-│   │   ├── StorageService.js
-│   │   ├── NostrService.js
-│   │   ├── NostrAuthService.js
-│   │   ├── ExportService.js
-│   │   └── index.js
-│   ├── state/               # State management
-│   │   ├── AppState.js
-│   │   └── StateEmitter.js
-│   ├── data/                # Static data
-│   │   ├── themes.js        # 72 themes
-│   │   └── fonts.js         # 27 fonts
-│   ├── utils/               # Utilities
-│   │   ├── keyboard.js
-│   │   ├── markdown.js
-│   │   └── sanitizer.js
-│   └── styles/              # CSS modules
-│       ├── main.css         # Entry
-│       ├── base.css
-│       ├── layout.css
-│       ├── components.css
-│       ├── editor.css
-│       ├── themes.css
-│       ├── fonts.css
-│       ├── animations.css
-│       ├── zen-mode.css
-│       └── responsive.css
-├── public/
-│   └── manifest.json        # PWA manifest
-├── index.html
-├── vite.config.js
-├── Dockerfile
-└── nginx.conf
-
+  src/
+    components/
+    services/
+    state/
+    utils/
+    data/
+    styles/
 backend/
-├── src/
-│   ├── index.js             # Fastify server
-│   └── websocket/
-│       └── NostrProxy.js    # Relay proxy
-├── Dockerfile
-└── package.json
+  src/
+    routes/
+    websocket/
+    utils/
+docs/
+  users/
+  developers/
+k8s/
 ```
 
-## Code Patterns
+## Recommended Development Workflow
 
-### Creating a Component
+1. Create a focused branch.
+2. Make minimal changes in the affected layer.
+3. Run targeted tests first.
+4. Run lint and full test suite.
+5. Update docs for behavior/API/ops changes.
 
-1. Create file in `frontend/src/components/`:
+## Practical Verification Checklist
 
-```javascript
-// MyComponent.js
-import BaseComponent from './BaseComponent.js';
-import { appState } from '../state/AppState.js';
+### Frontend changes
 
-class MyComponent extends BaseComponent {
-  constructor() {
-    super();
-    this.container = this.$('#my-container');
-  }
+- note creation/edit/delete,
+- search behavior,
+- settings open/close,
+- keyboard shortcuts,
+- mobile layout sanity.
 
-  init() {
-    // Subscribe to state changes
-    this.subscribe(appState, 'stateChange', this.handleStateChange.bind(this));
-  }
+### Nostr changes
 
-  handleStateChange(state) {
-    // React to state changes
-    this.render(state);
-  }
+- connect/disconnect,
+- publish kind 1 and kind 30023,
+- relay status/error behavior.
 
-  render(state) {
-    // Update DOM
-    this.container.innerHTML = `<div>${state.someValue}</div>`;
-  }
+### Media changes
 
-  bindEvents() {
-    // Attach event listeners
-    this.container.addEventListener('click', this.handleClick.bind(this));
-  }
+- type validation,
+- small file proxy upload,
+- large file direct upload warning path.
 
-  handleClick(event) {
-    // Handle user interaction
-    appState.setState({ someValue: 'clicked' });
-  }
-}
+### Backend changes
 
-export default new MyComponent();
-```
+When running backend natively:
 
-2. Export from `frontend/src/components/index.js`:
-
-```javascript
-export { default as myComponent } from './MyComponent.js';
-```
-
-3. Initialize in `frontend/src/main.js`:
-
-```javascript
-import { myComponent } from './components/index.js';
-
-myComponent.init();
-myComponent.bindEvents();
-```
-
-### Creating a Service
-
-```javascript
-// frontend/src/services/MyService.js
-
-class MyService {
-  constructor() {
-    this.cache = new Map();
-  }
-
-  async fetchData(id) {
-    if (this.cache.has(id)) {
-      return this.cache.get(id);
-    }
-
-    const data = await this.loadFromStorage(id);
-    this.cache.set(id, data);
-    return data;
-  }
-
-  async loadFromStorage(id) {
-    // Implementation
-  }
-}
-
-export const myService = new MyService();
-```
-
-### Adding a Theme
-
-1. Add to `frontend/src/data/themes.js`:
-
-```javascript
-export const themes = [
-  // ... existing themes
-  { class: 'theme-my-theme', name: 'MyTheme', full: 'My Custom Theme' }
-];
-```
-
-2. Add CSS in `frontend/src/styles/themes.css`:
-
-```css
-.theme-my-theme {
-  --bg: #1a1a2e;
-  --fg: #eaeaea;
-  --accent: #e94560;
-  --fg-dim: #888888;
-}
-```
-
-### Adding a Font
-
-1. Add to `frontend/src/data/fonts.js`:
-
-```javascript
-export const fonts = [
-  // ... existing fonts
-  { class: 'font-my-font', name: 'MyFont', full: 'My Custom Font' }
-];
-```
-
-2. Add CSS in `frontend/src/styles/fonts.css`:
-
-```css
-/* In base.css - add @font-face declarations */
-/* Download woff2 files (400 + 600 weights) to public/fonts/ */
-
-/* In fonts.css - add font class */
-.font-my-font { --font: 'My Font', monospace; }
-```
-
-## State Management
-
-### Reading State
-
-```javascript
-import { appState } from '../state/AppState.js';
-
-const { notes, currentNoteId, settings } = appState.getState();
-```
-
-### Updating State
-
-```javascript
-// Partial update (merged with existing state)
-appState.setState({ currentNoteId: 123 });
-
-// Nested update
-appState.setState({
-  settings: {
-    ...appState.getState().settings,
-    zenMode: true
-  }
-});
-```
-
-### Subscribing to Changes
-
-```javascript
-// In a component
-init() {
-  this.subscribe(appState, 'stateChange', (newState) => {
-    this.render(newState);
-  });
-}
-
-// Standalone subscription
-const unsubscribe = appState.on('stateChange', (state) => {
-  console.log('State changed:', state);
-});
-
-// Later: unsubscribe()
-```
-
-## Testing
-
-### Manual Testing Checklist
-
-**Editor:**
-- [ ] Text input works
-- [ ] Title style (Ctrl+1)
-- [ ] Heading style (Ctrl+2)
-- [ ] Body style (Ctrl+3)
-- [ ] Paste strips HTML
-- [ ] Auto-save indicator works
-- [ ] Zen mode activates after 3s of continuous typing
-- [ ] Mouse movement exits zen mode
-- [ ] Cursor positioned at end of text on auto-focus
-
-**Notes:**
-- [ ] Create new note
-- [ ] Switch between notes
-- [ ] Delete note
-- [ ] Search filters notes
-- [ ] Notes persist on refresh
-
-**Customization:**
-- [ ] Theme cycling works
-- [ ] Theme dropdown works
-- [ ] Font cycling works
-- [ ] Font dropdown works
-- [ ] Settings persist on refresh
-
-**Export:**
-- [ ] Markdown export with YAML frontmatter
-- [ ] JSON export (single note and all notes)
-
-**Nostr:**
-- [ ] Extension detection
-- [ ] Connect/disconnect
-- [ ] Publish note (kind 1)
-- [ ] Publish article (kind 30023)
-- [ ] Relay status indicators
-
-**Zen Mode:**
-- [ ] Hides sidebar and header
-- [ ] Escape exits zen mode
-- [ ] Button toggles correctly
-
-**PWA:**
-- [ ] Install prompt appears
-- [ ] Works offline after install
-
-### Browser DevTools
-
-**IndexedDB Inspection:**
-1. Open DevTools (F12)
-2. Go to Application > IndexedDB > ton3s
-3. Inspect notes table
-
-**State Debugging:**
-```javascript
-// In browser console
-import { appState } from '/src/state/AppState.js';
-console.log(appState.getState());
-```
-
-**WebSocket Monitoring:**
-1. Open DevTools Network tab
-2. Filter by WS
-3. Click the WebSocket connection
-4. View Messages tab
-
-## Debugging
-
-### Common Issues
-
-**Hot Reload Not Working:**
 ```bash
-# Restart Vite server
-cd frontend
-npm run dev
+curl http://localhost:3001/health
+curl http://localhost:3001/api/info
+curl http://localhost:3001/api/relays
 ```
 
-**WebSocket Connection Failed:**
+When running via Docker Compose, use:
+
 ```bash
-# Ensure backend is running
-cd backend
-npm run dev
-
-# Check port 3001 is available
-lsof -i :3001
+curl http://localhost:3002/api/info
+docker compose exec backend wget -qO- http://127.0.0.1:3001/health
 ```
 
-**IndexedDB Issues:**
-```javascript
-// Clear database in console
-indexedDB.deleteDatabase('ton3s');
-location.reload();
-```
+## Debugging Guide
 
-**CSS Not Updating:**
-- Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
-- Clear Vite cache: Delete `frontend/node_modules/.vite`
+### Frontend fails before Vite starts
 
-### Logging
+- usually missing `wasm-pack`.
 
-```javascript
-// Enable verbose logging
-localStorage.setItem('debug', 'true');
+### Proxy connection issues
 
-// In code
-if (localStorage.getItem('debug')) {
-  console.log('[MyComponent]', data);
-}
-```
+- confirm `/ws/nostr` path is reachable,
+- verify reverse proxy websocket upgrade headers.
 
-## Code Style
+### CORS/origin failures
 
-### JavaScript
+- check backend `FRONTEND_URL` and exact origin host.
 
-- ES Modules (`import`/`export`)
-- Classes for components and services
-- Async/await for async operations
-- Semicolons required (Prettier `semi: true`)
-- Single quotes for strings
+### Upload proxy failures
 
-### CSS
+- confirm Blossom URL is HTTPS and publicly reachable,
+- confirm file is <= proxy limit for proxy path.
 
-- CSS custom properties for theming
-- BEM-like naming for classes
-- Mobile-first responsive design
-- No CSS preprocessors
+## Architecture Pointers
 
-### Naming Conventions
+- Frontend state/events: `frontend/src/state/AppState.js`
+- Frontend keyboard handling: `frontend/src/utils/keyboard.js`
+- Nostr proxy backend: `backend/src/websocket/NostrProxy.js`
+- SSRF validation: `backend/src/utils/ssrf.js`
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | PascalCase | `SaveControls` |
-| Services | camelCase | `storageService` |
-| CSS classes | kebab-case | `note-list` |
-| Theme classes | `theme-*` | `theme-dracula` |
-| Font classes | `font-*` | `font-jetbrains` |
-| State events | SCREAMING_SNAKE_CASE | `NOTE_CREATED` |
+## Related Guides
 
-## Performance Tips
-
-### Avoid Unnecessary Renders
-
-```javascript
-// Bad: Always re-renders
-handleStateChange(state) {
-  this.render(state);
-}
-
-// Good: Check if relevant state changed
-handleStateChange(state) {
-  if (state.currentNoteId !== this.lastNoteId) {
-    this.lastNoteId = state.currentNoteId;
-    this.render(state);
-  }
-}
-```
-
-### Throttle Expensive Operations
-
-```javascript
-// Use throttling for frequent events
-let timeout;
-function throttledSave() {
-  if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    actualSave();
-  }, 100);
-}
-```
-
-### Use Event Delegation
-
-```javascript
-// Bad: Listener per item
-items.forEach(item => {
-  item.addEventListener('click', handleClick);
-});
-
-// Good: Single delegated listener
-container.addEventListener('click', (e) => {
-  const item = e.target.closest('.item');
-  if (item) handleClick(item);
-});
-```
+- [Local Setup](developers/local-setup.md)
+- [System Architecture](developers/system-architecture.md)
+- [Frontend Guide](developers/frontend-guide.md)
+- [Backend Guide](developers/backend-guide.md)
+- [Testing and Quality](developers/testing-and-quality.md)
