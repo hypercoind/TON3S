@@ -14,6 +14,8 @@ class NostrService {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
+        this.reconnectTimer = null;
+        this.shouldReconnect = true;
         this.messageHandlers = new Map();
         this.pendingPublishes = new Map();
         this.connectedRelays = new Set();
@@ -25,6 +27,12 @@ class NostrService {
      * Connect to the NOSTR proxy WebSocket
      */
     async connect() {
+        this.shouldReconnect = true;
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         const proxyUrl = appState.settings.nostr.proxyUrl;
         const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${proxyUrl}`;
 
@@ -50,7 +58,9 @@ class NostrService {
                     console.log('[NOSTR] Proxy disconnected');
                     this.connected = false;
                     this.connectedRelays.clear();
-                    this.attemptReconnect();
+                    if (this.shouldReconnect) {
+                        this.attemptReconnect();
+                    }
                 };
 
                 this.socket.onerror = error => {
@@ -67,6 +77,12 @@ class NostrService {
      * Disconnect from proxy
      */
     disconnect() {
+        this.shouldReconnect = false;
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         if (this.socket) {
             this.socket.close();
             this.socket = null;
@@ -81,8 +97,16 @@ class NostrService {
      * Attempt to reconnect
      */
     attemptReconnect() {
+        if (!this.shouldReconnect) {
+            return;
+        }
+
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.log('[NOSTR] Max reconnect attempts reached');
+            return;
+        }
+
+        if (this.reconnectTimer) {
             return;
         }
 
@@ -90,7 +114,15 @@ class NostrService {
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
         console.log(`[NOSTR] Reconnecting in ${delay}ms...`);
-        setTimeout(() => this.connect(), delay);
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            if (!this.shouldReconnect) {
+                return;
+            }
+            this.connect().catch(error => {
+                console.error('[NOSTR] Reconnect failed:', error);
+            });
+        }, delay);
     }
 
     /**

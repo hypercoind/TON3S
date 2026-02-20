@@ -102,6 +102,19 @@ describe('NostrProxy', () => {
             expect(sendToClientSpy).toHaveBeenCalledWith('client-1', ['ERROR', 'Invalid message format']);
         });
 
+        it('should enforce message size limit by bytes (not char count)', () => {
+            const sendToClientSpy = vi.spyOn(proxy, 'sendToClient');
+            const broadcastSpy = vi.spyOn(proxy, 'broadcastToRelays');
+            // 20k emoji = 40k UTF-16 code units but ~80k UTF-8 bytes (> 64KB limit)
+            const oversizedUnicode = '😀'.repeat(20000);
+            const payload = JSON.stringify(['BROADCAST', ['EVENT', oversizedUnicode]]);
+
+            proxy.handleClientMessage('client-1', payload);
+
+            expect(sendToClientSpy).toHaveBeenCalledWith('client-1', ['ERROR', 'Message too large']);
+            expect(broadcastSpy).not.toHaveBeenCalled();
+        });
+
         it('should log warning for unknown message type', () => {
             const warnSpy = vi.spyOn(console, 'warn');
             proxy.handleClientMessage('client-1', JSON.stringify(['UNKNOWN']));

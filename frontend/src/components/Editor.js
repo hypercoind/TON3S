@@ -25,6 +25,7 @@ export class Editor extends BaseComponent {
         this.isTyping = false;
         this.savedRange = null;
         this._selectedMedia = null;
+        this._uploadProgressUnsubs = new Map();
     }
 
     render() {
@@ -355,6 +356,7 @@ export class Editor extends BaseComponent {
             this._replaceWithMedia(wrapper, descriptor, file);
             this.handleInput();
         } catch (err) {
+            this._cleanupUploadProgress(wrapper);
             // Remove placeholder on failure
             wrapper?.remove();
             toast.error(`Upload failed: ${err.message}`);
@@ -391,7 +393,8 @@ export class Editor extends BaseComponent {
             progressBar.style.width = `${progress}%`;
             label.textContent = `Uploading ${progress}%`;
         };
-        this._uploadProgressUnsub = appState.on(StateEvents.MEDIA_UPLOAD_PROGRESS, progressHandler);
+        const unsubscribe = appState.on(StateEvents.MEDIA_UPLOAD_PROGRESS, progressHandler);
+        this._uploadProgressUnsubs.set(wrapper, unsubscribe);
 
         // Insert at cursor or append
         const selection = window.getSelection();
@@ -420,15 +423,20 @@ export class Editor extends BaseComponent {
         return wrapper;
     }
 
+    _cleanupUploadProgress(wrapper) {
+        const unsubscribe = this._uploadProgressUnsubs.get(wrapper);
+        if (unsubscribe) {
+            unsubscribe();
+            this._uploadProgressUnsubs.delete(wrapper);
+        }
+    }
+
     /**
      * Replace upload placeholder with final media element
      */
     _replaceWithMedia(wrapper, descriptor, file) {
         // Cleanup progress listener
-        if (this._uploadProgressUnsub) {
-            this._uploadProgressUnsub();
-            this._uploadProgressUnsub = null;
-        }
+        this._cleanupUploadProgress(wrapper);
 
         const url = descriptor.url;
         const isImage = mediaService.isImage(file);
@@ -856,6 +864,20 @@ export class Editor extends BaseComponent {
      */
     focus() {
         this.editorElement.focus();
+    }
+
+    destroy() {
+        if (this.autoFocusHandler) {
+            document.removeEventListener('keydown', this.autoFocusHandler);
+            this.autoFocusHandler = null;
+        }
+
+        for (const unsubscribe of this._uploadProgressUnsubs.values()) {
+            unsubscribe();
+        }
+        this._uploadProgressUnsubs.clear();
+
+        super.destroy();
     }
 }
 

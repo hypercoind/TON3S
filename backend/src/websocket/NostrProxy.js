@@ -64,14 +64,15 @@ export class NostrProxy {
      */
     handleClientMessage(clientId, data) {
         try {
-            const dataStr = data.toString();
+            const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
 
-            // Validate message size
-            if (dataStr.length > MAX_MESSAGE_SIZE) {
+            // Validate message size in bytes (UTF-8 safe)
+            if (dataBuffer.length > MAX_MESSAGE_SIZE) {
                 this.sendToClient(clientId, ['ERROR', 'Message too large']);
                 return;
             }
 
+            const dataStr = dataBuffer.toString('utf8');
             const message = JSON.parse(dataStr);
 
             // Validate message structure
@@ -232,12 +233,13 @@ export class NostrProxy {
             relaySocket.on('message', data => {
                 // Forward relay message to client
                 try {
-                    const dataStr = data.toString();
-                    // Validate message size from relay
-                    if (dataStr.length > MAX_MESSAGE_SIZE) {
+                    const relayBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+                    // Validate message size from relay in bytes
+                    if (relayBuffer.length > MAX_MESSAGE_SIZE) {
                         console.warn(`[NostrProxy] Relay message too large from ${relayUrl}`);
                         return;
                     }
+                    const dataStr = relayBuffer.toString('utf8');
                     const message = JSON.parse(dataStr);
                     this.sendToClient(clientId, ['RELAY_MESSAGE', relayUrl, message]);
                 } catch (error) {

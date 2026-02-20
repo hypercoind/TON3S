@@ -47,7 +47,12 @@ describe('NostrService', () => {
         nostrService.socket = null;
         nostrService.connected = false;
         nostrService.reconnectAttempts = 0;
+        nostrService.reconnectTimer = null;
+        nostrService.shouldReconnect = true;
         nostrService.pendingPublishes.clear();
+        nostrService.connectedRelays.clear();
+        nostrService.pendingRelays.clear();
+        nostrService.sentEventIds.clear();
 
         // Create a mock WebSocket instance
         mockWebSocket = {
@@ -105,6 +110,7 @@ describe('NostrService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.unstubAllGlobals();
     });
 
@@ -181,9 +187,31 @@ describe('NostrService', () => {
 
             expect(() => nostrService.disconnect()).not.toThrow();
         });
+
+        it('should not reconnect after manual disconnect', async () => {
+            const connectPromise = nostrService.connect();
+            mockWebSocket.onopen();
+            await connectPromise;
+
+            const reconnectSpy = vi.spyOn(nostrService, 'attemptReconnect');
+
+            nostrService.disconnect();
+            mockWebSocket.onclose();
+
+            expect(reconnectSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('attemptReconnect', () => {
+        it('should not reconnect when reconnect is disabled', () => {
+            nostrService.shouldReconnect = false;
+
+            nostrService.attemptReconnect();
+
+            expect(nostrService.reconnectAttempts).toBe(0);
+            expect(nostrService.reconnectTimer).toBeNull();
+        });
+
         it('should not reconnect after max attempts', () => {
             nostrService.reconnectAttempts = nostrService.maxReconnectAttempts;
 
@@ -191,6 +219,27 @@ describe('NostrService', () => {
 
             // Should not create new timeout
             expect(nostrService.reconnectAttempts).toBe(nostrService.maxReconnectAttempts);
+        });
+
+        it('should catch reconnect errors from scheduled connect', async () => {
+            vi.useFakeTimers();
+            const connectSpy = vi
+                .spyOn(nostrService, 'connect')
+                .mockRejectedValue(new Error('boom'));
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            nostrService.attemptReconnect();
+            expect(nostrService.reconnectTimer).not.toBeNull();
+
+            await vi.runOnlyPendingTimersAsync();
+            await Promise.resolve();
+
+            expect(connectSpy).toHaveBeenCalled();
+            expect(consoleSpy).toHaveBeenCalled();
+            expect(nostrService.reconnectTimer).toBeNull();
+
+            connectSpy.mockRestore();
+            consoleSpy.mockRestore();
         });
     });
 
