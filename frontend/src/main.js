@@ -11,6 +11,7 @@ import { faviconService } from './services/FaviconService.js';
 import { keyboardManager } from './utils/keyboard.js';
 import { themes } from './data/themes.js';
 import { fonts } from './data/fonts.js';
+import { shouldDisableAutoZen } from './utils/device.js';
 
 import { Header } from './components/Header.js';
 import { Sidebar } from './components/Sidebar.js';
@@ -31,6 +32,8 @@ class TON3SApp {
         this.dragOverHandler = null;
         this.dropHandler = null;
         this.zenModeHandler = null;
+        this.touchStartHandler = null;
+        this.resizeHandler = null;
     }
 
     async init() {
@@ -134,6 +137,10 @@ class TON3SApp {
                 'mobile-page-donate'
             );
             document.body.classList.add(`mobile-page-${page}`);
+
+            if (page !== 'editor' && shouldDisableAutoZen() && appState.settings.zenMode) {
+                appState.setZenMode(false);
+            }
         };
         appState.on(StateEvents.ACTIVE_PAGE_CHANGED, this.activePageHandler);
     }
@@ -221,6 +228,12 @@ class TON3SApp {
     }
 
     applyZenMode() {
+        if (appState.settings.zenMode && shouldDisableAutoZen()) {
+            appState.setZenMode(false);
+            document.body.classList.remove('zen-mode');
+            return;
+        }
+
         if (appState.settings.zenMode) {
             document.body.classList.add('zen-mode');
         } else {
@@ -246,6 +259,11 @@ class TON3SApp {
         // Subscribe to zen mode changes
         // Simplified handler: just toggle CSS class, state remains intact
         this.zenModeHandler = zenMode => {
+            if (zenMode && shouldDisableAutoZen()) {
+                appState.setZenMode(false);
+                return;
+            }
+
             if (zenMode) {
                 document.body.classList.add('zen-mode');
             } else {
@@ -288,6 +306,25 @@ class TON3SApp {
             }
         };
         document.addEventListener('mousemove', this.mouseMoveHandler);
+
+        // Touch fallback: always allow immediate zen exit on touch devices.
+        this.touchStartHandler = () => {
+            if (appState.settings.zenMode && shouldDisableAutoZen()) {
+                appState.setZenMode(false);
+            }
+        };
+        document.addEventListener('touchstart', this.touchStartHandler, { passive: true });
+
+        // Guard against device/viewport transitions (desktop <-> mobile/tablet).
+        this.resizeHandler = () => {
+            if (shouldDisableAutoZen()) {
+                this.components.editor?.clearAutoZenTimer();
+                if (appState.settings.zenMode) {
+                    appState.setZenMode(false);
+                }
+            }
+        };
+        window.addEventListener('resize', this.resizeHandler);
 
         // Escape key resets app to default state
         this.escapeHandler = e => {
@@ -372,6 +409,12 @@ class TON3SApp {
         }
         if (this.dropHandler) {
             document.removeEventListener('drop', this.dropHandler);
+        }
+        if (this.touchStartHandler) {
+            document.removeEventListener('touchstart', this.touchStartHandler);
+        }
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
         }
         if (this.zenModeHandler) {
             appState.off(StateEvents.ZEN_MODE_TOGGLED, this.zenModeHandler);

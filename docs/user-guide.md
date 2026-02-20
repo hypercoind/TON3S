@@ -68,9 +68,10 @@ Search matches across:
 
 ### Zen Mode
 
-- Zen mode can activate automatically while typing.
+- On desktop, zen mode can activate automatically while typing.
 - `Escape` exits zen mode and closes open panels/popups.
 - Significant mouse movement also exits zen mode.
+- On mobile/touch devices, auto-zen is disabled.
 
 ## Media Uploads
 

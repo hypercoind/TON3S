@@ -23,8 +23,9 @@
 
 ## Zen Mode
 
-- While typing, TON3S can enter zen mode automatically.
+- On desktop, TON3S can enter zen mode automatically while typing.
 - Move your mouse or press `Escape` to exit zen mode.
+- On mobile/touch devices, auto-zen is disabled so navigation controls stay accessible.
 
 ## Mobile Navigation
 

@@ -10,6 +10,7 @@ import { mediaService } from '../services/MediaService.js';
 import { blossomService } from '../services/BlossomService.js';
 import { countWords, countCharacters } from '../utils/markdown.js';
 import { sanitizeHtml } from '../utils/sanitizer.js';
+import { shouldDisableAutoZen } from '../utils/device.js';
 import { toast } from './Toast.js';
 
 export class Editor extends BaseComponent {
@@ -750,12 +751,21 @@ export class Editor extends BaseComponent {
         if (selection.rangeCount > 0) {
             this.savedRange = selection.getRangeAt(0).cloneRange();
         }
+
+        // Keep mobile navigation controls available while keyboard is active.
+        if (shouldDisableAutoZen() && appState.settings.zenMode) {
+            appState.setZenMode(false);
+        }
     }
 
     /**
      * Start auto-zen timer on input (only starts if not already running)
      */
     startAutoZenTimer() {
+        if (shouldDisableAutoZen()) {
+            return;
+        }
+
         // Only start timer if one isn't already running
         if (this.autoZenTimeout) {
             return;
