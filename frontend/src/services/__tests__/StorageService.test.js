@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { storageService } from '../StorageService.js';
+import { EXPORT_SCHEMA_VERSION } from '../../constants/versions.js';
 
 describe('StorageService', () => {
     describe('extractPlainText', () => {
@@ -94,7 +95,7 @@ describe('StorageService', () => {
     });
 
     describe('data export format', () => {
-        it('should use version 2.0 format', async () => {
+        it('should use schema version format', async () => {
             // Mock the database calls for this test
             const originalDb = storageService.db;
             storageService.db = {
@@ -112,7 +113,8 @@ describe('StorageService', () => {
 
             const result = await storageService.exportData();
 
-            expect(result.version).toBe('2.0');
+            expect(result.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
+            expect(result.version).toBe(EXPORT_SCHEMA_VERSION);
             expect(result.exportedAt).toBeDefined();
             expect(result.notes).toBeDefined();
             expect(Array.isArray(result.notes)).toBe(true);

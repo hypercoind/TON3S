@@ -11,6 +11,7 @@ import multipart from '@fastify/multipart';
 import { NostrProxy } from './websocket/NostrProxy.js';
 import { mediaUploadRoutes } from './routes/mediaUpload.js';
 import { randomUUID } from 'crypto';
+import { APP_VERSION } from './config/appVersion.js';
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -97,7 +98,7 @@ fastify.get('/health', async () => {
 fastify.get('/api/info', async () => {
     return {
         name: 'TON3S Backend',
-        version: '2.0.0',
+        version: APP_VERSION,
         features: ['nostr-proxy'],
         timestamp: new Date().toISOString()
     };

@@ -5,6 +5,7 @@
 
 import { storageService } from './StorageService.js';
 import { htmlToMarkdown, markdownToHtml } from '../utils/markdown.js';
+import { EXPORT_SCHEMA_VERSION } from '../constants/versions.js';
 
 class ExportService {
     /**
@@ -21,7 +22,9 @@ class ExportService {
      */
     async exportNoteAsJSON(note) {
         const data = {
-            version: '2.0',
+            schemaVersion: EXPORT_SCHEMA_VERSION,
+            // Keep `version` for backwards compatibility with existing importers.
+            version: EXPORT_SCHEMA_VERSION,
             exportedAt: new Date().toISOString(),
             notes: [this.prepareNoteForExport(note)],
             settings: null

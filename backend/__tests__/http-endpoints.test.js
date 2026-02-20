@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
+import { APP_VERSION } from '../src/config/appVersion.js';
 
 describe('HTTP Endpoints', () => {
     let fastify;
@@ -21,7 +22,7 @@ describe('HTTP Endpoints', () => {
         fastify.get('/api/info', async () => {
             return {
                 name: 'TON3S Backend',
-                version: '2.0.0',
+                version: APP_VERSION,
                 features: ['nostr-proxy'],
                 timestamp: new Date().toISOString()
             };
@@ -91,7 +92,7 @@ describe('HTTP Endpoints', () => {
 
             const body = JSON.parse(response.body);
             expect(body.name).toBe('TON3S Backend');
-            expect(body.version).toBe('2.0.0');
+            expect(body.version).toBe(APP_VERSION);
             expect(body.features).toContain('nostr-proxy');
             expect(body.timestamp).toBeDefined();
         });

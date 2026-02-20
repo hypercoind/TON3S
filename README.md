@@ -78,6 +78,7 @@ Open `http://localhost:3000`
 | [Developer Documentation](docs/developers/README.md) | Developers | Build, architecture, testing, and deployment modules |
 | [Legacy Long-Form Guides](docs/getting-started.md) | Everyone | Existing deep-dive documentation set |
 | [Changelog](CHANGELOG.md) | Everyone | Version history |
+| [Versioning Policy](docs/versioning.md) | Maintainers | App SemVer + export schema rules |
 
 ## Privacy
 

@@ -1,7 +1,7 @@
 # CHECKPOINT.md
 
 > Auto-generated project checkpoint for AI-assisted development sessions.
-> Last updated: 2026-02-01
+> Last updated: 2026-02-20
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Attribute | Value |
 |-----------|-------|
-| Project | TON3S v2.0.0 |
+| Project | TON3S v1.0.0 |
 | Type | Full-stack JavaScript + Rust WASM (Vite + Fastify) |
 | Purpose | Privacy-focused writing app with NOSTR integration |
 | Frontend | Vite 6.0 + Dexie (IndexedDB) + Rust WASM signing |

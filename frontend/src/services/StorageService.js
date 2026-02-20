@@ -7,6 +7,7 @@ import Dexie from 'dexie';
 import { appState } from '../state/AppState.js';
 import { htmlToPlainText } from '../utils/markdown.js';
 import { sanitizeHtml } from '../utils/sanitizer.js';
+import { EXPORT_SCHEMA_VERSION } from '../constants/versions.js';
 
 // Database schema
 class TON3SDatabase extends Dexie {
@@ -370,7 +371,9 @@ class StorageService {
         const settings = await this.getSetting('appSettings');
 
         return {
-            version: '2.0',
+            schemaVersion: EXPORT_SCHEMA_VERSION,
+            // Keep `version` for backwards compatibility with existing importers.
+            version: EXPORT_SCHEMA_VERSION,
             exportedAt: new Date().toISOString(),
             notes,
             settings

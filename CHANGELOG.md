@@ -2,9 +2,9 @@
 
 All notable changes to TON3S are documented here.
 
-## v2.0.0 (2026-02-01)
+## v1.0.0 (2026-02-18)
 
-Major release with multi-note support, media uploads, donations, and production deployment.
+Initial public release.
 
 ### Added
 
@@ -35,14 +35,3 @@ Major release with multi-note support, media uploads, donations, and production 
 - Paste handler strips all HTML to plain text
 - Rate limiting: 100 req/min (HTTP), 30 msg/sec (WebSocket)
 - Max 10 relay connections per client, 64KB max message size
-
-## v1.0.0 (2025-06-01)
-
-Initial release.
-
-### Added
-
-- Single-note writing editor with contenteditable
-- Theme and font support
-- Local storage persistence
-- Basic export functionality

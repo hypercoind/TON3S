@@ -1,5 +1,5 @@
 /**
- * TON3S v2.0 Main Entry Point
+ * TON3S Main Entry Point
  * Privacy-focused writing application with NOSTR integration
  */
 
@@ -70,7 +70,7 @@ class TON3SApp {
             // Hide loading overlay
             this.hideLoading();
 
-            console.log('TON3S v2.0 initialized');
+            console.log('TON3S initialized');
         } catch (error) {
             console.error('Failed to initialize TON3S:', error);
             this.showLoadingError(error);
