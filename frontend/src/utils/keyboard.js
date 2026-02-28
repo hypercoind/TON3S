@@ -20,7 +20,7 @@ class KeyboardManager {
             return;
         }
 
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        document.addEventListener('keydown', this.handleKeyDown.bind(this), true);
         this.initialized = true;
     }
 
@@ -108,6 +108,13 @@ class KeyboardManager {
             handler: () => appState.rotateTheme(),
             description: 'Change theme'
         });
+        this.register('theme-alt', {
+            key: 't',
+            cmdOrCtrl: true,
+            alt: true,
+            handler: () => appState.rotateTheme(),
+            description: 'Change theme (alternative)'
+        });
 
         // New note
         this.register('new', {
@@ -115,6 +122,13 @@ class KeyboardManager {
             cmdOrCtrl: true,
             handler: callbacks.onNewNote || (() => {}),
             description: 'New note'
+        });
+        this.register('new-alt', {
+            key: 'n',
+            cmdOrCtrl: true,
+            alt: true,
+            handler: callbacks.onNewNote || (() => {}),
+            description: 'New note (alternative)'
         });
 
         // Escape is now handled by individual modals/popups
@@ -126,6 +140,13 @@ class KeyboardManager {
             handler: callbacks.onSearch || (() => {}),
             description: 'Focus search'
         });
+        this.register('search-alt', {
+            key: 'k',
+            cmdOrCtrl: true,
+            alt: true,
+            handler: callbacks.onSearch || (() => {}),
+            description: 'Focus search (alternative)'
+        });
 
         // Find (Cmd+F) - hijack browser find for sidebar search
         this.register('find', {
@@ -133,6 +154,13 @@ class KeyboardManager {
             cmdOrCtrl: true,
             handler: callbacks.onSearch || (() => {}),
             description: 'Search notes'
+        });
+        this.register('find-alt', {
+            key: 'f',
+            cmdOrCtrl: true,
+            alt: true,
+            handler: callbacks.onSearch || (() => {}),
+            description: 'Search notes (alternative)'
         });
 
         // Help modal
@@ -142,6 +170,20 @@ class KeyboardManager {
             cmdOrCtrl: true,
             handler: () => this.showHelpModal(),
             description: 'Show keyboard shortcuts'
+        });
+        this.register('help-alt', {
+            key: '/',
+            shift: true,
+            cmdOrCtrl: true,
+            handler: () => this.showHelpModal(),
+            description: 'Show keyboard shortcuts (alternative)'
+        });
+        this.register('help-alt2', {
+            key: 'h',
+            shift: true,
+            cmdOrCtrl: true,
+            handler: () => this.showHelpModal(),
+            description: 'Show keyboard shortcuts (alternative)'
         });
     }
 

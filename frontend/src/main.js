@@ -193,6 +193,21 @@ class TON3SApp {
         const notes = await storageService.getAllNotes();
         appState.notes = notes;
 
+        const pinnedNote =
+            appState.pinnedNoteId !== null
+                ? notes.find(note => note.id === appState.pinnedNoteId)
+                : null;
+
+        if (pinnedNote) {
+            appState.selectNote(pinnedNote.id);
+            return;
+        }
+
+        if (appState.pinnedNoteId !== null) {
+            appState.setPinnedNoteId(null);
+            await storageService.saveSettings(appState.settings);
+        }
+
         // Select first note or create one if none exist
         if (notes.length > 0) {
             appState.selectNote(notes[0].id);

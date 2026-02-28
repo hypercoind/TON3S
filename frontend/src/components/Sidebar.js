@@ -136,6 +136,9 @@ export class Sidebar extends BaseComponent {
         this.subscribe(appState.on(StateEvents.NOTE_CREATED, this.renderNoteList.bind(this)));
         this.subscribe(appState.on(StateEvents.NOTE_UPDATED, this.renderNoteList.bind(this)));
         this.subscribe(appState.on(StateEvents.NOTE_DELETED, this.renderNoteList.bind(this)));
+        this.subscribe(
+            appState.on(StateEvents.NOTE_PINNED_CHANGED, this.renderNoteList.bind(this))
+        );
         this.subscribe(appState.on(StateEvents.NOTE_SELECTED, this.updateActiveNote.bind(this)));
         // Close tag popup before zen mode transition starts
         this.subscribe(appState.on(StateEvents.PRE_ZEN_MODE, this.closeTagEditorPopup.bind(this)));
@@ -187,11 +190,12 @@ export class Sidebar extends BaseComponent {
         listEl.innerHTML = notes
             .map(note => {
                 const isActive = note.id === currentId;
+                const isPinned = appState.isPinnedNote(note.id);
                 const updatedAt = this.formatDate(note.updatedAt);
                 const tags = (note.tags || []).slice(0, 3);
 
                 return `
-                <div class="note-item ${isActive ? 'active' : ''}"
+                <div class="note-item ${isActive ? 'active' : ''} ${isPinned ? 'pinned' : ''}"
                      data-id="${note.id}"
                      role="button"
                      tabindex="0"
@@ -208,6 +212,9 @@ export class Sidebar extends BaseComponent {
                             : ''
                     }
                     <div class="note-item-actions">
+                        <button class="note-pin-btn ${isPinned ? 'pinned' : ''}" data-pin-id="${note.id}" aria-label="${isPinned ? 'Unpin note' : 'Pin note'}">
+                            ${isPinned ? '&#128204;' : '&#128205;'}
+                        </button>
                         <button class="note-tag-btn" data-tag-id="${note.id}" aria-label="Edit tags">
                             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
@@ -247,6 +254,14 @@ export class Sidebar extends BaseComponent {
         });
 
         // Add tag button handlers
+        listEl.querySelectorAll('.note-pin-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const noteId = parseInt(btn.dataset.pinId);
+                this.togglePin(noteId);
+            });
+        });
+
         listEl.querySelectorAll('.note-tag-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
@@ -323,6 +338,14 @@ export class Sidebar extends BaseComponent {
         });
 
         appState.selectNote(note.id);
+    }
+
+    /**
+     * Toggle the pin state of a note
+     */
+    togglePin(noteId) {
+        appState.togglePinnedNote(noteId);
+        storageService.saveSettings(appState.settings);
     }
 
     /**
@@ -769,7 +792,9 @@ export class Sidebar extends BaseComponent {
         const menu = document.createElement('div');
         menu.className = 'context-menu dropdown-menu show';
         menu.style.position = 'fixed';
+        const isPinned = appState.isPinnedNote(noteId);
         menu.innerHTML = `
+            <div class="dropdown-item" data-action="pin">${isPinned ? 'Unpin Note' : 'Pin Note'}</div>
             <div class="dropdown-item" data-action="delete">Delete Note</div>
         `;
 
@@ -799,6 +824,11 @@ export class Sidebar extends BaseComponent {
 
         menu.style.left = `${left}px`;
         menu.style.top = `${top}px`;
+
+        menu.querySelector('[data-action="pin"]').addEventListener('click', () => {
+            menu.remove();
+            this.togglePin(noteId);
+        });
 
         menu.querySelector('[data-action="delete"]').addEventListener('click', () => {
             menu.remove();

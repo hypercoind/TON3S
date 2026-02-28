@@ -14,6 +14,7 @@ export const StateEvents = {
     NOTE_UPDATED: 'note:updated',
     NOTE_DELETED: 'note:deleted',
     NOTE_SELECTED: 'note:selected',
+    NOTE_PINNED_CHANGED: 'note:pinnedChanged',
     NOTES_LOADED: 'notes:loaded',
 
     // Settings events
@@ -69,6 +70,7 @@ class AppState extends StateEmitter {
             sidebarOpen: false,
             nostrPanelOpen: false,
             donationPanelOpen: false,
+            pinnedNoteId: null,
             nostr: {
                 enabled: false,
                 defaultRelays: [
@@ -132,9 +134,41 @@ class AppState extends StateEmitter {
         return this._notes.find(n => n.id === this._currentNoteId) || null;
     }
 
+    get pinnedNoteId() {
+        return this._settings.pinnedNoteId;
+    }
+
+    get pinnedNote() {
+        return this._notes.find(note => note.id === this._settings.pinnedNoteId) || null;
+    }
+
+    isPinnedNote(id) {
+        return this._settings.pinnedNoteId === id;
+    }
+
     selectNote(id) {
         this._currentNoteId = id;
         this.emit(StateEvents.NOTE_SELECTED, this.currentNote);
+    }
+
+    setPinnedNoteId(id) {
+        const nextPinnedId = id === null ? null : Number(id);
+        if (nextPinnedId !== null && Number.isNaN(nextPinnedId)) {
+            return;
+        }
+        const currentPinnedId = this._settings.pinnedNoteId;
+
+        if (currentPinnedId === nextPinnedId) {
+            return;
+        }
+
+        this._settings.pinnedNoteId = nextPinnedId;
+        this.emit(StateEvents.NOTE_PINNED_CHANGED, this.pinnedNote);
+    }
+
+    togglePinnedNote(id) {
+        const noteId = Number(id);
+        this.setPinnedNoteId(this.isPinnedNote(noteId) ? null : noteId);
     }
 
     addNote(note) {
@@ -158,8 +192,19 @@ class AppState extends StateEmitter {
 
             // If deleted note was selected, select another
             if (this._currentNoteId === id) {
-                this._currentNoteId = this._notes[0]?.id || null;
+                const pinnedFallback =
+                    this._settings.pinnedNoteId &&
+                    this._notes.some(n => n.id === this._settings.pinnedNoteId)
+                        ? this._settings.pinnedNoteId
+                        : null;
+
+                this._currentNoteId = pinnedFallback || this._notes[0]?.id || null;
                 this.emit(StateEvents.NOTE_SELECTED, this.currentNote);
+            }
+
+            if (this._settings.pinnedNoteId === id) {
+                this._settings.pinnedNoteId = null;
+                this.emit(StateEvents.NOTE_PINNED_CHANGED, null);
             }
         }
     }

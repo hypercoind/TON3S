@@ -240,6 +240,23 @@
     border-left-color: var(--accent);
 }
 
+.note-item.pinned {
+    border-left-color: var(--accent);
+}
+
+.note-item.pinned .note-item-title {
+    font-weight: 600;
+}
+
+.note-item.pinned .note-item-title::before {
+    content: 'Pin ';
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+    opacity: 0.8;
+}
+
 /* Note item actions container */
 .note-item-actions {
     position: absolute;
@@ -254,6 +271,32 @@
 
 .note-item:hover .note-item-actions {
     opacity: 1;
+}
+
+/* Pin button */
+.note-pin-btn {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.note-pin-btn:hover {
+    color: var(--accent);
+    background: var(--hover);
+}
+
+.note-pin-btn.pinned,
+.note-pin-btn.pinned:hover {
+    color: var(--accent);
 }
 
 /* Tag button */

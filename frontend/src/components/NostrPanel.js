@@ -674,9 +674,13 @@ export class NostrPanel extends BaseComponent {
             // Delete from persistent storage
             await storageService.deleteNote(noteId);
 
-            // Select next note or create new one
+            // Select pinned note, next note, or create new one
+            const pinnedId = appState.pinnedNoteId;
             if (appState.notes.length > 0) {
-                appState.selectNote(appState.notes[0].id);
+                const preferredNote = pinnedId
+                    ? appState.notes.find(note => note.id === pinnedId)
+                    : null;
+                appState.selectNote(preferredNote?.id || appState.notes[0].id);
             } else {
                 const newNote = await storageService.createNote({
                     title: 'Untitled',
