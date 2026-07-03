@@ -10,7 +10,6 @@ const APP_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 
 const PACKAGE_FILES = ['package.json', 'backend/package.json', 'frontend/package.json'];
 const PACKAGE_LOCK_FILES = ['package-lock.json', 'backend/package-lock.json', 'frontend/package-lock.json'];
-const CHART_FILE = 'k8s/Chart.yaml';
 const CHANGELOG_FILE = 'CHANGELOG.md';
 const BACKEND_INFO_FILE = 'backend/src/index.js';
 
@@ -41,16 +40,6 @@ for (const file of PACKAGE_LOCK_FILES) {
             `${file} packages[\"\"] version is "${json.packages[''].version}" but VERSION is "${appVersion}"`
         );
     }
-}
-
-const chartContent = readText(CHART_FILE);
-const chartAppVersionMatch = chartContent.match(/^appVersion:\s*"([^"]+)"\s*$/m);
-if (!chartAppVersionMatch) {
-    errors.push(`${CHART_FILE} is missing appVersion`);
-} else if (chartAppVersionMatch[1] !== appVersion) {
-    errors.push(
-        `${CHART_FILE} appVersion is "${chartAppVersionMatch[1]}" but VERSION is "${appVersion}"`
-    );
 }
 
 const changelogContent = readText(CHANGELOG_FILE);

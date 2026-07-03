@@ -115,7 +115,6 @@ backend/
 docs/
   users/
   developers/
-k8s/
 ```
 
 ## Recommended Development Workflow

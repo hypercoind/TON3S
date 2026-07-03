@@ -11,7 +11,6 @@ const APP_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 
 const PACKAGE_FILES = ['package.json', 'backend/package.json', 'frontend/package.json'];
 const PACKAGE_LOCK_FILES = ['package-lock.json', 'backend/package-lock.json', 'frontend/package-lock.json'];
-const CHART_FILE = 'k8s/Chart.yaml';
 
 const readText = relativePath => readFileSync(path.join(REPO_ROOT, relativePath), 'utf8');
 const writeText = (relativePath, content) => writeFileSync(path.join(REPO_ROOT, relativePath), content);
@@ -59,18 +58,6 @@ const updatePackageLockVersion = (relativePath, appVersion) => {
     return changed;
 };
 
-const updateChartAppVersion = (relativePath, appVersion) => {
-    const content = readText(relativePath);
-    const nextContent = content.replace(/^appVersion:\s*"?[^"\n]+"?\s*$/m, `appVersion: "${appVersion}"`);
-
-    if (nextContent === content) {
-        return false;
-    }
-
-    writeText(relativePath, nextContent);
-    return true;
-};
-
 const main = () => {
     // Ensures file existence before any write attempts.
     readFileSync(APP_VERSION_FILE, 'utf8');
@@ -88,10 +75,6 @@ const main = () => {
         if (updatePackageLockVersion(file, appVersion)) {
             changedFiles.push(file);
         }
-    }
-
-    if (updateChartAppVersion(CHART_FILE, appVersion)) {
-        changedFiles.push(CHART_FILE);
     }
 
     if (changedFiles.length === 0) {

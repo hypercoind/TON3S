@@ -29,5 +29,4 @@ This track is for contributors and operators working on TON3S internals.
 - `frontend/`: Vite app, UI components, state, services, CSS.
 - `backend/`: Fastify API, WebSocket Nostr proxy, media upload proxy.
 - `docs/`: user and developer documentation.
-- `k8s/`: Helm chart and Kubernetes manifests.
 - `scripts/`: operational scripts such as VPS bootstrap.

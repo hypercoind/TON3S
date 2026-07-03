@@ -8,7 +8,7 @@ TON3S uses two independent version tracks:
 ## Single Source of Truth
 
 - App version source is the root `VERSION` file.
-- Do not manually edit version fields in `package.json`, `package-lock.json`, or `k8s/Chart.yaml`.
+- Do not manually edit version fields in `package.json` or `package-lock.json`.
 
 ## Commands
 

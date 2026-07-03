@@ -72,10 +72,6 @@ docker compose logs -f frontend
 docker compose logs -f backend
 ```
 
-## Kubernetes
-
-Helm chart and templates are under `k8s/` for cluster-based deployment variants.
-
 ## Next Step
 
 If deployments fail, continue with [Developer Troubleshooting](troubleshooting.md).

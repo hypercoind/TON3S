@@ -2,6 +2,18 @@
 
 All notable changes to TON3S are documented here.
 
+## v1.0.4 (2026-07-02)
+
+### Added
+
+- Sidebar note pinning, with pinned notes kept above the regular list.
+- Additional keyboard hotkeys for common note actions.
+
+### Removed
+
+- Dropped the unused `k8s/` Helm chart and `skaffold.yaml` (deploys run via `docker-compose` on the VPS, not Kubernetes).
+- Removed legacy `AGENTS.md` and `CLAUDE.md` instruction docs.
+
 ## v1.0.3 (2026-02-20)
 
 ### Fixed
